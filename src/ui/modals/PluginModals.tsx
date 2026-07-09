@@ -88,7 +88,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
       });
     } else if (editor) {
       editor.commands.insertContent(
-        `<div class="p-4 my-3 bg-slate-50 border border-slate-200 rounded-lg text-center font-mono text-base text-indigo-950 font-semibold shadow-sm">$$ ${latex} $$</div><p></p>`
+        `<div class="mathjax-render p-4 my-3 bg-slate-50 border border-slate-200 rounded-lg text-center font-mono text-base text-indigo-950 font-semibold shadow-sm" contenteditable="false" data-latex="${latex.replace(/"/g, '&quot;')}">$$ ${latex} $$</div><p></p>`
       );
     }
     onClose();
@@ -104,7 +104,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
       });
     } else if (editor) {
       editor.commands.insertContent(
-        `<pre class="p-4 my-3 bg-white border border-slate-200 rounded-lg overflow-x-auto text-xs font-mono text-slate-800 shadow-sm">${abcNotation}</pre><p></p>`
+        `<div class="abcjs-render p-4 my-3 bg-white border border-slate-200 rounded-lg overflow-x-auto text-xs font-mono text-slate-800 shadow-sm" contenteditable="false" data-abc="${abcNotation.replace(/"/g, '&quot;')}"></div><p></p>`
       );
     }
     onClose();

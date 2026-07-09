@@ -62,7 +62,7 @@ export default function Editor() {
       >
         {/* Left Sidebar */}
         <LeftSidebar
-          engine={engineRef.current}
+          engine={isCanvasMode ? engineRef.current : null}
           onOpenModal={(type) => setActiveModal(type)}
         />
 
@@ -76,7 +76,7 @@ export default function Editor() {
 
         {/* Right Inspector Sidebar */}
         <RightSidebar
-          engine={engineRef.current}
+          engine={isCanvasMode ? engineRef.current : null}
           editor={editorInstance || (window as any).__activeEditor}
         />
       </div>
@@ -84,12 +84,12 @@ export default function Editor() {
       {/* Contextual & Overlay Menus */}
       <FloatingMenu
         editor={editorInstance || (window as any).__activeEditor}
-        engine={engineRef.current}
+        engine={isCanvasMode ? engineRef.current : null}
         onOpenModal={(type) => setActiveModal(type)}
       />
 
       <ContextMenu
-        engine={engineRef.current}
+        engine={isCanvasMode ? engineRef.current : null}
         visible={contextMenu.visible}
         x={contextMenu.x}
         y={contextMenu.y}
@@ -100,7 +100,7 @@ export default function Editor() {
       <PluginModals
         activeModal={activeModal}
         onClose={() => setActiveModal(null)}
-        engine={engineRef.current}
+        engine={isCanvasMode ? engineRef.current : null}
         editor={editorInstance || (window as any).__activeEditor}
       />
 

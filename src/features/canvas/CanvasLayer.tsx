@@ -27,6 +27,19 @@ export const CanvasLayer: React.FC<CanvasLayerProps> = ({
       onEngineReady(engine);
     }
 
+    // Forward clicks to the text editor when clicking empty canvas space in Hybrid mode
+    const fabricCanvas = engine.canvas;
+    if (fabricCanvas) {
+      fabricCanvas.on('mouse:down', (e: any) => {
+        if (!e.target) {
+          const editor = (window as any).__activeEditor;
+          if (editor) {
+            editor.commands.focus();
+          }
+        }
+      });
+    }
+
     return () => {
       engine.dispose();
       engineRef.current = null;

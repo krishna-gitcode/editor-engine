@@ -18,6 +18,7 @@ import { TextEffectExtension } from './TextEffectExtension';
 import { FontSizeExtension } from './FontSizeExtension';
 import { IframeExtension } from './IframeExtension';
 import { useDocumentStore } from '../../store/documentStore';
+import { PluginService } from '../../services/PluginService';
 import { PlusMenu } from './PlusMenu';
 import { TableHoverMenu } from '../../ui/menus/TableHoverMenu';
 import './DocumentPage.css';
@@ -88,6 +89,29 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({ onEditorReady, onOpe
       editor.commands.setContent(activePage.content, false);
     }
   }, [activePageId]);
+
+  // Render Math and ABC Notation inside the Editor
+  useEffect(() => {
+    const processPlugins = () => {
+      const mathNodes = document.querySelectorAll('.mathjax-render:not([data-rendered="true"])');
+      mathNodes.forEach((node) => {
+        node.setAttribute('data-rendered', 'true');
+        const latex = node.getAttribute('data-latex') || '';
+        if (latex) PluginService.renderMathJax(node as HTMLElement, latex);
+      });
+
+      const abcNodes = document.querySelectorAll('.abcjs-render:not([data-rendered="true"])');
+      abcNodes.forEach((node) => {
+        node.setAttribute('data-rendered', 'true');
+        const abc = node.getAttribute('data-abc') || '';
+        if (abc) PluginService.renderAbc(node as HTMLElement, abc);
+      });
+    };
+
+    processPlugins();
+    const timer = setTimeout(processPlugins, 200);
+    return () => clearTimeout(timer);
+  }, [activePageId, activePage.content]);
 
   return (
     <div
