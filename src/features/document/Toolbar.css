@@ -1,0 +1,4 @@
+/* Toolbar ribbon custom buttons */
+.ribbon-select {
+  @apply bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-indigo-500;
+}

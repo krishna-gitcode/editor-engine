@@ -1,0 +1,14 @@
+:root {
+  --ruler-bg: #1a1f2e;
+  --ruler-tick: #3d4663;
+  --ruler-label: #5a657d;
+  --guide-color: #6366f1;
+  --margin-handle-color: #f59e0b;
+}
+
+.ruler {
+  display: block;
+  flex-shrink: 0;
+  user-select: none;
+  cursor: crosshair;
+}

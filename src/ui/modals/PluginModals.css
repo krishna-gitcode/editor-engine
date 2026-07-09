@@ -1,0 +1,55 @@
+/* PluginModals & ABCjs Custom Styling */
+@import url("https://cdn.jsdelivr.net/npm/abcjs@6.2.2/dist/abcjs-audio.css");
+
+.abcjs-midi-synth {
+  width: 100%;
+}
+
+.abcjs-inline-audio {
+  height: 44px;
+  padding: 6px 12px;
+  background: #0f172a !important;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 1px solid #1e293b;
+}
+
+.abcjs-inline-audio .abcjs-btn {
+  background: #1e293b !important;
+  color: #f8fafc !important;
+  border-radius: 6px;
+  padding: 4px 8px;
+  margin: 0 4px;
+  border: 1px solid #334155 !important;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.abcjs-inline-audio .abcjs-btn:hover {
+  background: #334155 !important;
+  border-color: #475569 !important;
+}
+
+.abcjs-inline-audio .abcjs-progress-bar {
+  background-color: #334155 !important;
+  border-radius: 4px;
+  height: 6px;
+}
+
+.abcjs-inline-audio .abcjs-progress-background {
+  background-color: #6366f1 !important;
+}
+
+/* SVG notation styling when rendered inside preview/canvas */
+svg.abcjs-svg {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+}
+
+.abcjs-note, .abcjs-staff, .abcjs-beam, .abcjs-stem {
+  fill: #0f172a;
+  stroke: #0f172a;
+}

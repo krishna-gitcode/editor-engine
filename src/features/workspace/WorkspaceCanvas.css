@@ -1,0 +1,5 @@
+/* Workspace grid background */
+.workspace-grid-bg {
+  background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+  background-size: 20px 20px;
+}

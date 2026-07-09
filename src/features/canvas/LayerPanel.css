@@ -1,0 +1,5 @@
+/* LayerPanel custom list styling */
+.layer-item-active {
+  border-color: #6366f1 !important;
+  background-color: rgba(99, 102, 241, 0.1) !important;
+}
