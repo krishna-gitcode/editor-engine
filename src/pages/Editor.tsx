@@ -1,8 +1,10 @@
 import React, { useState, useRef } from 'react';
+import { useEditorStore } from '../store/editorStore';
 import { MainMenuBar } from '../ui/toolbar/MainMenuBar';
 import { Toolbar } from '../features/document/Toolbar';
 import { LeftSidebar } from '../ui/panels/LeftSidebar';
 import { RightSidebar } from '../ui/panels/RightSidebar';
+import { BottomPageStrip } from '../ui/panels/BottomPageStrip';
 import { WorkspaceCanvas } from '../features/workspace/WorkspaceCanvas';
 import { FloatingMenu } from '../ui/menus/FloatingMenu';
 import { ContextMenu } from '../ui/menus/ContextMenu';
@@ -12,6 +14,7 @@ import { initPostMessageBridge } from '../api/postMessageApi';
 import './Editor.css';
 
 export default function Editor() {
+  const showRightSidebar = useEditorStore((s) => s.showRightSidebar);
   const [isCanvasMode, setIsCanvasMode] = useState<boolean>(true);
   const [activeModal, setActiveModal] = useState<'mathjax' | 'abcjs' | 'openrouter' | null>(null);
   const [showFontManager, setShowFontManager] = useState<boolean>(false);
@@ -66,19 +69,24 @@ export default function Editor() {
           onOpenModal={(type) => setActiveModal(type)}
         />
 
-        {/* Center Viewport */}
-        <WorkspaceCanvas
-          onEngineReady={handleEngineReady}
-          onEditorReady={(editor: any) => setEditorInstance(editor)}
-          onOpenModal={(type) => setActiveModal(type)}
-          isCanvasMode={isCanvasMode}
-        />
+        {/* Center Viewport + Sticky Bottom Pages Strip */}
+        <div className="flex-1 flex flex-col h-full overflow-hidden relative">
+          <WorkspaceCanvas
+            onEngineReady={handleEngineReady}
+            onEditorReady={(editor: any) => setEditorInstance(editor)}
+            onOpenModal={(type) => setActiveModal(type)}
+            isCanvasMode={isCanvasMode}
+          />
+          <BottomPageStrip />
+        </div>
 
         {/* Right Inspector Sidebar */}
-        <RightSidebar
-          engine={isCanvasMode ? engineRef.current : null}
-          editor={editorInstance || (window as any).__activeEditor}
-        />
+        {showRightSidebar && (
+          <RightSidebar
+            engine={isCanvasMode ? engineRef.current : null}
+            editor={editorInstance || (window as any).__activeEditor}
+          />
+        )}
       </div>
 
       {/* Contextual & Overlay Menus */}

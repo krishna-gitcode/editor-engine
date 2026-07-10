@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useEditorStore } from '../../store/editorStore';
-import { useWorkspaceStore } from '../../store/workspaceStore';
 import { ExportEngine } from '../../core/engine/ExportEngine';
 import { FileCode, Download, Printer, Share2, Layers, FileText, Moon, Sun } from 'lucide-react';
 import './MainMenuBar.css';
@@ -18,8 +17,6 @@ export const MainMenuBar: React.FC<MainMenuBarProps> = ({
 }) => {
   const theme = useEditorStore((s) => s.theme);
   const setTheme = useEditorStore((s) => s.setTheme);
-  const zoom = useWorkspaceStore((s) => s.zoom);
-  const setZoom = useWorkspaceStore((s) => s.setZoom);
 
   const [showFileMenu, setShowFileMenu] = useState(false);
 
@@ -111,13 +108,6 @@ export const MainMenuBar: React.FC<MainMenuBarProps> = ({
             <Layers className="w-3.5 h-3.5" />
             <span>Hybrid Canvas</span>
           </button>
-        </div>
-
-        {/* Zoom Control */}
-        <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-xs text-slate-300">
-          <button onClick={() => setZoom((z) => z - 0.1)} className="hover:text-white px-1">-</button>
-          <span className="w-12 text-center font-medium">{Math.round(zoom * 100)}%</span>
-          <button onClick={() => setZoom((z) => z + 0.1)} className="hover:text-white px-1">+</button>
         </div>
 
         {/* Theme Toggle */}

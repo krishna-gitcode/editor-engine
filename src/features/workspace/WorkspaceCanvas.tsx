@@ -80,11 +80,8 @@ export const WorkspaceCanvas: React.FC<WorkspaceCanvasProps> = ({
 
   return (
     <div className={`relative flex-1 w-full h-full bg-[#0f172a] overflow-auto flex p-12 transition-all ${alignmentClass}`}>
-      {showRuler && <Ruler orientation="horizontal" length={PAGE_WIDTH} zoom={zoom} />}
-      {showRuler && <Ruler orientation="vertical" length={PAGE_HEIGHT} zoom={zoom} />}
-
       <div
-        className={`relative transition-transform duration-150 bg-white shadow-2xl rounded-sm ${
+        className={`relative transition-transform duration-150 bg-white shadow-2xl rounded-sm overflow-visible ${
           showGrid ? 'workspace-grid-bg' : ''
         }`}
         style={{
@@ -95,6 +92,9 @@ export const WorkspaceCanvas: React.FC<WorkspaceCanvasProps> = ({
           margin: getPageMargin(),
         }}
       >
+        {showRuler && <Ruler orientation="horizontal" length={PAGE_WIDTH} zoom={1} />}
+        {showRuler && <Ruler orientation="vertical" length={PAGE_HEIGHT} zoom={1} />}
+
         <MarginHandles pageWidth={PAGE_WIDTH} pageHeight={PAGE_HEIGHT} />
         
         {/* Rich Text Document Layer */}
