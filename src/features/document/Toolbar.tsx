@@ -82,12 +82,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onOpenModal, onOpenFon
 
   const applyLineSpacing = (spacing: string) => {
     setLineSpacing(spacing);
-    // TipTap line-height or paragraph styling
-    if (editor.commands.setLineHeight) {
-      editor.chain().focus().setLineHeight(spacing).run();
-    } else {
-      editor.chain().focus().setMark('textStyle', { lineHeight: spacing }).run();
-    }
+    // Use the LineHeightExtension setLineHeight command (applies to paragraphs & headings)
+    editor.chain().focus().setLineHeight(spacing).run();
   };
 
   const handleMarginChange = (side: 'top' | 'right' | 'bottom' | 'left', val: number) => {
@@ -366,13 +362,15 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onOpenModal, onOpenFon
                   value={lineSpacing}
                   onChange={(e) => applyLineSpacing(e.target.value)}
                   className="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs focus:outline-none ml-1"
-                  title="Line Spacing"
+                  title="Line Height"
                 >
-                  <option value="1.0">1.0x Line</option>
-                  <option value="1.15">1.15x Line</option>
-                  <option value="1.5">1.5x Line</option>
-                  <option value="2.0">2.0x Line</option>
-                  <option value="2.5">2.5x Line</option>
+                  <option value="1.0">1.0x</option>
+                  <option value="1.15">1.15x</option>
+                  <option value="1.5">1.5x</option>
+                  <option value="1.75">1.75x</option>
+                  <option value="2.0">2.0x</option>
+                  <option value="2.5">2.5x</option>
+                  <option value="3.0">3.0x</option>
                 </select>
               </div>
 
@@ -629,6 +627,22 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onOpenModal, onOpenFon
                 </div>
               </div>
 
+              {/* Show / Hide Margin Lines Toggle */}
+              <div className="flex items-center gap-1.5 bg-slate-950/40 px-2.5 py-1.5 rounded border border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => updatePageSettings(activePage.id, { showMargins: !(activePage.showMargins ?? true) })}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                    (activePage.showMargins ?? true)
+                      ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/50'
+                      : 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700'
+                  }`}
+                >
+                  <span className={`w-2 h-2 rounded-full ${(activePage.showMargins ?? true) ? 'bg-indigo-400 animate-pulse' : 'bg-slate-600'}`} />
+                  {(activePage.showMargins ?? true) ? 'Hide Margin Lines' : 'Show Margin Lines'}
+                </button>
+              </div>
+
               {/* Watermark Controls */}
               <div className="flex items-center gap-1.5 bg-slate-950/40 px-2.5 py-1.5 rounded border border-slate-800">
                 <span className="text-slate-400">Watermark:</span>
@@ -758,6 +772,47 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onOpenModal, onOpenFon
                 >
                   Delete Table
                 </button>
+              </div>
+
+              {/* Cell Border Size & Color */}
+              <div className="flex items-center gap-2 border-l border-slate-800 pl-4">
+                <span className="text-slate-400 text-xs">Cell Border:</span>
+                <select
+                  onChange={(e) => {
+                    editor.chain().focus().setCellAttribute('borderWidth', e.target.value).run();
+                  }}
+                  className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white"
+                  defaultValue="1px"
+                  title="Cell Border Width"
+                >
+                  <option value="0px">None</option>
+                  <option value="1px">1px</option>
+                  <option value="2px">2px</option>
+                  <option value="3px">3px</option>
+                  <option value="4px">4px</option>
+                  <option value="6px">6px</option>
+                </select>
+                <select
+                  onChange={(e) => {
+                    editor.chain().focus().setCellAttribute('borderStyle', e.target.value).run();
+                  }}
+                  className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white"
+                  defaultValue="solid"
+                  title="Cell Border Style"
+                >
+                  <option value="solid">Solid</option>
+                  <option value="dashed">Dashed</option>
+                  <option value="dotted">Dotted</option>
+                  <option value="double">Double</option>
+                  <option value="none">None</option>
+                </select>
+                <input
+                  type="color"
+                  onChange={(e) => editor.chain().focus().setCellAttribute('borderColor', e.target.value).run()}
+                  className="w-6 h-6 p-0 border-0 bg-transparent cursor-pointer rounded"
+                  defaultValue="#cbd5e1"
+                  title="Cell Border Color"
+                />
               </div>
             </div>
           )}

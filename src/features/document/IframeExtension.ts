@@ -1,4 +1,6 @@
 import { Node, mergeAttributes } from '@tiptap/core';
+import { ReactNodeViewRenderer } from '@tiptap/react';
+import { IframeComponent } from './IframeComponent';
 
 export interface IframeOptions {
   allowFullscreen: boolean;
@@ -8,7 +10,7 @@ export interface IframeOptions {
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     iframe: {
-      setIframe: (options: { src: string; width?: number; height?: number }) => ReturnType;
+      setIframe: (options: { src: string; width?: number | string; height?: number | string; alignment?: string }) => ReturnType;
     };
   }
 }
@@ -41,6 +43,9 @@ export const IframeExtension = Node.create<IframeOptions>({
       frameBorder: {
         default: 0,
       },
+      alignment: {
+        default: 'center',
+      },
     };
   },
 
@@ -50,6 +55,10 @@ export const IframeExtension = Node.create<IframeOptions>({
 
   renderHTML({ HTMLAttributes }) {
     return ['div', this.options.HTMLAttributes, ['iframe', mergeAttributes(HTMLAttributes)]];
+  },
+
+  addNodeView() {
+    return ReactNodeViewRenderer(IframeComponent);
   },
 
   addCommands() {

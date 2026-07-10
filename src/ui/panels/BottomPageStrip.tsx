@@ -19,8 +19,26 @@ export const BottomPageStrip: React.FC = () => {
 
   const [viewOverlay, setViewOverlay] = useState<'grid' | 'list' | null>(null);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [pageInputValue, setPageInputValue] = useState<string>('');
+  const [isPageInputFocused, setIsPageInputFocused] = useState(false);
 
   const activePageIndex = Math.max(0, pages.findIndex((p) => p.id === activePageId));
+
+  // Keep input in sync with active page when not being edited
+  useEffect(() => {
+    if (!isPageInputFocused) {
+      setPageInputValue(String(activePageIndex + 1));
+    }
+  }, [activePageIndex, isPageInputFocused]);
+
+  const navigateToPageNumber = (val: string) => {
+    const num = parseInt(val, 10);
+    if (!isNaN(num) && num >= 1 && num <= pages.length) {
+      setActivePageId(pages[num - 1].id);
+    }
+    setPageInputValue(String(activePageIndex + 1));
+    setIsPageInputFocused(false);
+  };
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -273,9 +291,33 @@ export const BottomPageStrip: React.FC = () => {
 
         {/* Right Controls: Page count, Zoom, Full screen, Grid/List view (Point #3) */}
         <div className="flex items-center gap-3 flex-shrink-0">
-          {/* Page Count */}
-          <div className="hidden sm:flex items-center bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-300">
-            <span>{activePageIndex + 1} / {pages.length} Pages</span>
+          {/* Page Count — editable page number jump input */}
+          <div className="hidden sm:flex items-center bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1 text-xs font-semibold text-slate-300 gap-1.5">
+            <input
+              type="text"
+              inputMode="numeric"
+              value={isPageInputFocused ? pageInputValue : String(activePageIndex + 1)}
+              onFocus={() => {
+                setIsPageInputFocused(true);
+                setPageInputValue(String(activePageIndex + 1));
+              }}
+              onChange={(e) => setPageInputValue(e.target.value.replace(/[^0-9]/g, ''))}
+              onBlur={(e) => navigateToPageNumber(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  navigateToPageNumber(pageInputValue);
+                  (e.target as HTMLInputElement).blur();
+                }
+                if (e.key === 'Escape') {
+                  setIsPageInputFocused(false);
+                  setPageInputValue(String(activePageIndex + 1));
+                  (e.target as HTMLInputElement).blur();
+                }
+              }}
+              className="w-7 text-center bg-slate-800 hover:bg-slate-700 focus:bg-slate-700 border border-slate-700 focus:border-indigo-500 rounded px-1 py-0.5 text-indigo-300 font-bold focus:outline-none transition-colors cursor-text select-all"
+              title={`Page ${activePageIndex + 1} of ${pages.length} — type a number and press Enter to jump`}
+            />
+            <span className="text-slate-500">/ {pages.length} Pages</span>
           </div>
 
           {/* Zoom Control */}

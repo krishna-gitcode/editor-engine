@@ -21,10 +21,14 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({ engine }) => {
   const activeEditor = (window as any).__activeEditor;
 
   useEffect(() => {
-    if (!activeEditor) return;
     const updateDocLayers = () => {
+      const activeEditor = (window as any).__activeEditor;
+      if (!activeEditor || !activeEditor.state || !activeEditor.state.doc) {
+        setDocLayers([]);
+        return;
+      }
       const items: DocLayerItem[] = [];
-      activeEditor.state.doc.forEach((node: any, offset: number) => {
+      activeEditor.state.doc.descendants((node: any, offset: number) => {
         if (node.type.name === 'table' || node.type.name === 'customTable') {
           const rows = node.childCount;
           const cols = node.firstChild?.childCount || 0;
@@ -91,13 +95,39 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({ engine }) => {
     };
 
     updateDocLayers();
-    activeEditor.on('update', updateDocLayers);
-    return () => {
-      activeEditor.off('update', updateDocLayers);
+    const ed = (window as any).__activeEditor;
+    if (ed) {
+      ed.on('update', updateDocLayers);
+      ed.on('selectionUpdate', updateDocLayers);
+    }
+
+    const handleEditorChanged = () => {
+      updateDocLayers();
+      const currEditor = (window as any).__activeEditor;
+      if (currEditor) {
+        currEditor.off('update', updateDocLayers);
+        currEditor.off('selectionUpdate', updateDocLayers);
+        currEditor.on('update', updateDocLayers);
+        currEditor.on('selectionUpdate', updateDocLayers);
+      }
     };
-  }, [activeEditor]);
+
+    window.addEventListener('activeEditorChanged', handleEditorChanged);
+    const interval = setInterval(updateDocLayers, 800);
+
+    return () => {
+      window.removeEventListener('activeEditorChanged', handleEditorChanged);
+      clearInterval(interval);
+      const currEditor = (window as any).__activeEditor;
+      if (currEditor) {
+        currEditor.off('update', updateDocLayers);
+        currEditor.off('selectionUpdate', updateDocLayers);
+      }
+    };
+  }, []);
 
   const handleSelectDocNode = (layer: DocLayerItem) => {
+    const activeEditor = (window as any).__activeEditor;
     if (!activeEditor) return;
     try {
       activeEditor.commands.setNodeSelection(layer.pos);
@@ -111,6 +141,7 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({ engine }) => {
   };
 
   const handleDeleteDocNode = (layer: DocLayerItem) => {
+    const activeEditor = (window as any).__activeEditor;
     if (!activeEditor) return;
     try {
       activeEditor.chain().focus().deleteRange({ from: layer.pos, to: layer.pos + layer.nodeSize }).run();

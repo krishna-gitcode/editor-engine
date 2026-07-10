@@ -31,21 +31,31 @@
   margin-bottom: 0.25rem !important;
   line-height: 1.5 !important;
 }
-.ProseMirror table {
+.ProseMirror table,
+.custom-prosemirror-table {
   border-collapse: collapse;
+  /* fixed layout means columns split equally when no explicit widths are set */
   table-layout: fixed;
   width: 100%;
   margin: 1.5em 0;
-  overflow: hidden;
+  overflow: visible;
+  border: none !important;
 }
 .ProseMirror table td,
-.ProseMirror table th {
-  min-width: 1em;
-  border: 1px solid #cbd5e1;
+.ProseMirror table th,
+.custom-prosemirror-table td,
+.custom-prosemirror-table th {
+  min-width: 35px;
+  border-style: solid;
+  border-color: var(--custom-table-border-color, #cbd5e1);
+  border-width: var(--custom-table-border-width, 1px);
   padding: 8px 12px;
   vertical-align: top;
   box-sizing: border-box;
   position: relative;
+  overflow: hidden;
+  /* Allow explicit width attrs to override */
+  width: auto;
 }
 .ProseMirror table th {
   font-weight: 600;
@@ -53,43 +63,60 @@
   background-color: #f8fafc;
 }
 
-/* Table themes */
-.table-theme-modern-dark {
-  background-color: #0f172a;
-  color: #f8fafc;
+/* Table themes - High Specificity */
+.ProseMirror table.table-theme-modern-dark,
+.custom-prosemirror-table.table-theme-modern-dark {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
 }
-.table-theme-modern-dark th {
-  background-color: #1e293b;
-  color: #38bdf8;
-  border-color: #334155;
+.ProseMirror table.table-theme-modern-dark th,
+.custom-prosemirror-table.table-theme-modern-dark th {
+  background-color: #1e293b !important;
+  color: #38bdf8 !important;
+  border-color: #334155 !important;
 }
-.table-theme-modern-dark td {
-  border-color: #334155;
-}
-
-.table-theme-classic-blue th {
-  background-color: #2563eb;
-  color: #ffffff;
-  border-color: #1d4ed8;
-}
-.table-theme-classic-blue td {
-  border-color: #bfdbfe;
+.ProseMirror table.table-theme-modern-dark td,
+.custom-prosemirror-table.table-theme-modern-dark td {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
 }
 
-.table-theme-minimal-gray th {
-  background-color: #f1f5f9;
-  color: #334155;
-  border-color: #e2e8f0;
+.ProseMirror table.table-theme-classic-blue th,
+.custom-prosemirror-table.table-theme-classic-blue th {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #1d4ed8 !important;
 }
-.table-theme-minimal-gray td {
-  border-color: #e2e8f0;
+.ProseMirror table.table-theme-classic-blue td,
+.custom-prosemirror-table.table-theme-classic-blue td {
+  background-color: #eff6ff !important;
+  color: #1e3a8a !important;
+  border-color: #bfdbfe !important;
 }
 
-.table-theme-warm-amber th {
-  background-color: #d97706;
-  color: #ffffff;
-  border-color: #b45309;
+.ProseMirror table.table-theme-minimal-gray th,
+.custom-prosemirror-table.table-theme-minimal-gray th {
+  background-color: #f1f5f9 !important;
+  color: #334155 !important;
+  border-color: #cbd5e1 !important;
 }
-.table-theme-warm-amber td {
-  border-color: #fde68a;
+.ProseMirror table.table-theme-minimal-gray td,
+.custom-prosemirror-table.table-theme-minimal-gray td {
+  background-color: #ffffff !important;
+  color: #334155 !important;
+  border-color: #e2e8f0 !important;
+}
+
+.ProseMirror table.table-theme-warm-amber th,
+.custom-prosemirror-table.table-theme-warm-amber th {
+  background-color: #d97706 !important;
+  color: #ffffff !important;
+  border-color: #b45309 !important;
+}
+.ProseMirror table.table-theme-warm-amber td,
+.custom-prosemirror-table.table-theme-warm-amber td {
+  background-color: #fffbeb !important;
+  color: #78350f !important;
+  border-color: #fde68a !important;
 }

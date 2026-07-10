@@ -154,24 +154,17 @@ To ensure rapid delivery, architectural stability, and minimal regression, the 2
 
 ## Phase 4: Table, Iframe & Interactive Manipulations
 
-### 11. Table's Dimension/Position/rotation (`#8`) & Table column/row dimensions dynamically adjustment (`#9`)
-* **Current State:** Tables in TipTap (`@tiptap/extension-table`) are standard block elements without free-floating position/rotation transforms or visual drag resizing handles for columns/rows.
-* **Actionable Steps:**
-  1. **Activate Resizable Columns & Rows (`DocumentPage.tsx`):**
-     * Enable `Table.configure({ resizable: true, handleWidth: 5, cellMinWidth: 40 })` alongside `TableRow`, `TableHeader`, and `TableCell`.
-     * Import and apply `@tiptap/extension-table/dist/Table.css` or custom resize-handle CSS to display blue drag bars between columns when hovering.
-  2. **Free-Floating Table Container (`TableWrapperNodeView.tsx`):**
-     * Create a custom TipTap Node View (`WrapperNode`) or Fabric.js Table Object (`fabric.TableGroup`) that wraps tables with resizing bounding boxes and a rotation handle (`transform: rotate(Xdeg)`).
-     * Include a floating mini-menu on table selection (`Row +`, `Row -`, `Col +`, `Col -`, `Delete Table`, `Align Left/Center/Right`).
+### 11. Table's Dimension/Position/rotation (`#8`) & Table column/row dimensions dynamically adjustment (`#9`) — [COMPLETED - Verified]
+* **Current State & Fix Applied:**
+  * Created custom `TableComponent.tsx` (React NodeView) with **Interactive Mouse Drag Stretching Handles** (4 corners + right/bottom edges) and an **Interactive Rotation Twist Handle** (circular top anchor) allowing direct resizing and twisting by mouse.
+  * Eliminated duplicated hover controls by keeping only one unified hover panel in `TableComponent.tsx` (with options for Drag Table, Align Left/Center/Right, Width Presets, Rotation +15°/Reset, + Row, + Col, Merge Cells, Split Cell, and Delete Table) and removing `TableHoverMenu` from `DocumentPage.tsx`.
+  * Updated `LayerPanel.tsx` using `activeEditor.state.doc.descendants` and listening to `activeEditorChanged` so every table node is now listed, selectable, and scrollable in the "Document Layers" list (`#11`).
+  * Created `updateTableAttributes` and `updateActiveCellAttributes` custom commands (`CustomTable.ts`) ensuring reliable attribute syncing (`width`, `height`, `rotation`, `alignment`, `backgroundColor`) across cells and table containers without fragmentation.
 
-### 12. Inserted iframe position/dimensions adjustment dynamically not available (`#10`)
-* **Current State:** Embedded iframes (`@tiptap/extension-youtube` or custom HTML embedded code) have static `width` and `height` attributes without interactive resize anchors.
-* **Actionable Steps:**
-  1. **Build `IframeNodeView.tsx` (`src/features/document/nodeviews/IframeNodeView.tsx`):**
-     * Implement a custom TipTap Node View using `NodeViewWrapper`.
-     * Render the `<iframe>` with `pointer-events-none` when selected (so drag handles capture mouse events instead of the iframe's internal web content).
-     * Add 4 corner resize drag handles (`onMouseDown` tracking mouse delta to update `updateAttributes({ width: newWidth, height: newHeight })`).
-     * Include an alignment toolbar above the selected iframe (`Float Left`, `Center`, `Float Right`, `Full Width`).
+### 12. Inserted iframe position/dimensions adjustment dynamically not available (`#10`) — [COMPLETED - Verified]
+* **Current State & Fix Applied:**
+  * Implemented `IframeComponent.tsx` NodeView (`IframeExtension.ts`) with 4 corner drag-stretching handles, an alignment toolbar (`Embed: Align Left/Center/Right`), quick width presets (`Small/Medium/Large/Full`), and a `Drag Embed` drag-and-drop handle.
+  * Added `handleDrop` directly to `DocumentPage.tsx`'s `editorProps` (`application/x-tiptap-node-drag`) so tables and iframes can be seamlessly relocated by dragging their grip handles and dropping anywhere on the page.
 
 ---
 

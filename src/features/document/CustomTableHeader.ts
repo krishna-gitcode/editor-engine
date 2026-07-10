@@ -1,7 +1,7 @@
-import TableCell from '@tiptap/extension-table-cell';
+import TableHeader from '@tiptap/extension-table-header';
 import { mergeAttributes } from '@tiptap/core';
 
-export const CustomTableCell = TableCell.extend({
+export const CustomTableHeader = TableHeader.extend({
   addAttributes() {
     return {
       ...this.parent?.(),
@@ -36,11 +36,10 @@ export const CustomTableCell = TableCell.extend({
     const { width, height, backgroundColor, borderColor, borderWidth, borderStyle = 'solid' } = node.attrs;
 
     const styles: string[] = [];
-    // Use explicit width if set; otherwise let browser distribute columns equally
     const colW = node.attrs.colwidth?.[0];
     const cellWidth = width ? (typeof width === 'number' ? `${width}px` : width)
       : colW ? `${colW}px`
-      : null; // null means browser auto-distributes equally
+      : null;
     if (cellWidth) {
       styles.push(`width: ${cellWidth}`);
       styles.push(`min-width: ${cellWidth}`);
@@ -59,6 +58,6 @@ export const CustomTableCell = TableCell.extend({
       style: styles.join('; '),
     };
 
-    return ['td', mergeAttributes(this.options.HTMLAttributes, mergedAttrs), 0];
+    return ['th', mergeAttributes(this.options.HTMLAttributes, mergedAttrs), 0];
   },
 });

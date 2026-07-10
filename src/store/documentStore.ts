@@ -19,6 +19,7 @@ export interface DocumentPageData {
   header?: string;
   footer?: string;
   showPageNumber?: boolean;
+  showMargins?: boolean;
 }
 
 interface DocumentStoreState {
@@ -42,6 +43,7 @@ const DEFAULT_PAGE: DocumentPageData = {
   orientation: 'portrait',
   margins: { top: 72, right: 72, bottom: 72, left: 72 }, // 1 inch default (72pt)
   showPageNumber: true,
+  showMargins: true,
   header: '',
   footer: '',
 };

@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
+import { Selection } from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
 import TextStyle from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
@@ -10,20 +11,20 @@ import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import TableRow from '@tiptap/extension-table-row';
-import TableHeader from '@tiptap/extension-table-header';
+import { CustomTableHeader } from './CustomTableHeader';
 import { CustomTable } from './CustomTable';
 import { CustomTableCell } from './CustomTableCell';
 import { IndentExtension } from './IndentExtension';
 import { ListStyleExtension } from './ListStyleExtension';
 import { TextEffectExtension } from './TextEffectExtension';
 import { FontSizeExtension } from './FontSizeExtension';
+import { LineHeightExtension } from './LineHeightExtension';
 import { IframeExtension } from './IframeExtension';
 import { MathJaxExtension } from './MathJaxExtension';
 import { AbcJsExtension } from './AbcJsExtension';
 import { useDocumentStore } from '../../store/documentStore';
 import { PluginService } from '../../services/PluginService';
 import { PlusMenu } from './PlusMenu';
-import { TableHoverMenu } from '../../ui/menus/TableHoverMenu';
 import './DocumentPage.css';
 
 interface DocumentPageProps {
@@ -54,30 +55,86 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({ onEditorReady, onOpe
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       CustomTable.configure({ resizable: true }),
       TableRow,
-      TableHeader,
+      CustomTableHeader,
       CustomTableCell,
       IndentExtension,
       ListStyleExtension,
       TextEffectExtension,
       FontSizeExtension,
+      LineHeightExtension,
       IframeExtension,
       MathJaxExtension,
       AbcJsExtension,
     ],
     content: activePage.content,
+    editorProps: {
+      handleKeyDown: (view, event) => {
+        // Delete / Backspace on selected node views (e.g. table, image, iframe)
+        if (event.key === 'Delete' || event.key === 'Backspace') {
+          const { selection, tr } = view.state;
+          if (selection && (selection as any).node) {
+            view.dispatch(tr.deleteSelection());
+            event.preventDefault();
+            return true;
+          }
+        }
+        // Ctrl/Cmd + A — Select all
+        if ((event.ctrlKey || event.metaKey) && event.key === 'a') {
+          return false; // let prosemirror handle
+        }
+        return false;
+      },
+      handleDrop: (view, event, _slice, _moved) => {
+        const dragData = event.dataTransfer?.getData('application/x-tiptap-node-drag');
+        if (dragData) {
+          try {
+            const { pos, type } = JSON.parse(dragData);
+            const coords = view.posAtCoords({ left: event.clientX, top: event.clientY });
+            if (coords && typeof pos === 'number' && pos >= 0) {
+              event.preventDefault();
+              const tr = view.state.tr;
+              const nodeToMove = view.state.doc.nodeAt(pos);
+              if (nodeToMove && nodeToMove.type.name === type) {
+                const targetPos = coords.pos;
+                if (targetPos !== pos) {
+                  if (targetPos > pos) {
+                    tr.delete(pos, pos + nodeToMove.nodeSize);
+                    tr.insert(Math.max(0, targetPos - nodeToMove.nodeSize), nodeToMove);
+                  } else {
+                    tr.delete(pos, pos + nodeToMove.nodeSize);
+                    tr.insert(targetPos, nodeToMove);
+                  }
+                  tr.setSelection(Selection.near(tr.doc.resolve(targetPos)));
+                  view.dispatch(tr);
+                  return true;
+                }
+              }
+            }
+          } catch (err) {
+            console.error('Failed to drag-and-drop node:', err);
+          }
+        }
+        return false;
+      },
+    },
     onUpdate: ({ editor }) => {
       updatePageContent(activePage.id, editor.getHTML());
     },
   });
 
   useEffect(() => {
-    if (editor && onEditorReady) {
-      onEditorReady(editor);
+    if (editor) {
+      (window as any).__activeEditor = editor;
+      window.dispatchEvent(new Event('activeEditorChanged'));
+      if (onEditorReady) {
+        onEditorReady(editor);
+      }
     }
     // Clean up window.__activeEditor on unmount
     return () => {
       if ((window as any).__activeEditor === editor) {
         delete (window as any).__activeEditor;
+        window.dispatchEvent(new Event('activeEditorChanged'));
       }
     };
   }, [editor, onEditorReady]);
@@ -86,6 +143,7 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({ onEditorReady, onOpe
   useEffect(() => {
     if (editor) {
       (window as any).__activeEditor = editor;
+      window.dispatchEvent(new Event('activeEditorChanged'));
     }
   }, [editor]);
 
@@ -148,7 +206,6 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({ onEditorReady, onOpe
       {/* Editor Main Content Area */}
       <div className="relative z-10 flex-1 min-h-[500px]">
         {editor && <PlusMenu editor={editor} onOpenModal={onOpenModal} />}
-        {editor && <TableHoverMenu editor={editor} />}
         <EditorContent editor={editor} className="prose max-w-none focus:outline-none min-h-full" />
       </div>
 

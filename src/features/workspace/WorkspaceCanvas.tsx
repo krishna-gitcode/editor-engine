@@ -30,6 +30,16 @@ export const WorkspaceCanvas: React.FC<WorkspaceCanvasProps> = ({
   const activePageId = useDocumentStore((s) => s.activePageId);
   const activePage = pages.find((p) => p.id === activePageId) || pages[0];
 
+  // Subscribe to showMargins and margins at the WorkspaceCanvas level
+  // so it renders on the outer page white-box — not inside the padded content div.
+  const showMargins = useDocumentStore(
+    (s) => (s.pages.find((p) => p.id === s.activePageId) || s.pages[0])?.showMargins ?? true
+  );
+  const pageMargins = useDocumentStore(
+    (s) => (s.pages.find((p) => p.id === s.activePageId) || s.pages[0])?.margins
+  );
+  const { top = 72, right = 72, bottom = 72, left = 72 } = pageMargins || {};
+
   const getPageDimensions = () => {
     let w = 816; // Letter width @ 96dpi
     let h = 1056;
@@ -95,8 +105,8 @@ export const WorkspaceCanvas: React.FC<WorkspaceCanvasProps> = ({
         {showRuler && <Ruler orientation="horizontal" length={PAGE_WIDTH} zoom={1} />}
         {showRuler && <Ruler orientation="vertical" length={PAGE_HEIGHT} zoom={1} />}
 
-        <MarginHandles pageWidth={PAGE_WIDTH} pageHeight={PAGE_HEIGHT} />
-        
+        {showMargins && <MarginHandles pageWidth={PAGE_WIDTH} pageHeight={PAGE_HEIGHT} />}
+
         {/* Rich Text Document Layer */}
         <div className="absolute inset-0 z-0 overflow-hidden">
           <DocumentPage onEditorReady={onEditorReady} onOpenModal={onOpenModal} />

@@ -240,7 +240,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ engine, editor }) =>
               <label className="block text-slate-400 text-[11px] mb-1 font-semibold">Table Theme & Color Scheme</label>
               <select
                 value={tableAttrs.theme || 'none'}
-                onChange={(e) => activeEditor.chain().focus().updateAttributes('table', { theme: e.target.value }).run()}
+                onChange={(e) => activeEditor.chain().focus().updateTableAttributes({ theme: e.target.value }).run()}
                 className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100"
               >
                 <option value="none">Standard Plain Border</option>
@@ -256,8 +256,8 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ engine, editor }) =>
                 <label className="block text-slate-400 text-[11px] mb-1">Border Color</label>
                 <input
                   type="color"
-                  value={tableAttrs.borderColor || '#334155'}
-                  onChange={(e) => activeEditor.chain().focus().updateAttributes('table', { borderColor: e.target.value }).run()}
+                  value={tableAttrs.borderColor || '#cbd5e1'}
+                  onChange={(e) => activeEditor.chain().focus().updateTableAttributes({ borderColor: e.target.value }).run()}
                   className="w-full h-8 p-1 bg-slate-800 border border-slate-700 rounded cursor-pointer"
                 />
               </div>
@@ -265,7 +265,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ engine, editor }) =>
                 <label className="block text-slate-400 text-[11px] mb-1">Border Width</label>
                 <select
                   value={tableAttrs.borderWidth || '1px'}
-                  onChange={(e) => activeEditor.chain().focus().updateAttributes('table', { borderWidth: e.target.value }).run()}
+                  onChange={(e) => activeEditor.chain().focus().updateTableAttributes({ borderWidth: e.target.value }).run()}
                   className="w-full h-8 bg-slate-800 border border-slate-700 rounded px-2 text-slate-100"
                 >
                   <option value="0px">0px (Invisible)</option>
@@ -277,10 +277,90 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ engine, editor }) =>
             </div>
           </div>
 
+          {/* Table Dimensions, Alignment & Rotation (#8) */}
+          <div className="space-y-3 pt-2 border-t border-slate-800">
+            <div className="font-semibold text-slate-300 text-[11px]">Table Dimensions & Alignment</div>
+
+            <div>
+              <label className="block text-slate-400 text-[10px] mb-1">Table Overall Width</label>
+              <div className="grid grid-cols-4 gap-1 mb-1.5">
+                {['100%', '75%', '50%', 'auto'].map((w) => (
+                  <button
+                    key={w}
+                    onClick={() => activeEditor.chain().focus().updateTableAttributes({ width: w }).run()}
+                    className={`py-1 rounded text-center text-[10px] ${tableAttrs.width === w ? 'bg-indigo-600 text-white font-medium' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'}`}
+                  >
+                    {w}
+                  </button>
+                ))}
+              </div>
+              <input
+                type="text"
+                placeholder="Custom width (e.g. 500px or 80%)"
+                value={tableAttrs.width || '100%'}
+                onChange={(e) => activeEditor.chain().focus().updateTableAttributes({ width: e.target.value }).run()}
+                className="w-full bg-slate-800 border border-slate-700 rounded p-1.5 text-xs text-slate-100"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-400 text-[10px] mb-1">Table Position / Alignment</label>
+              <select
+                value={tableAttrs.alignment || 'center'}
+                onChange={(e) => activeEditor.chain().focus().updateTableAttributes({ alignment: e.target.value }).run()}
+                className="w-full bg-slate-800 border border-slate-700 rounded p-1.5 text-xs text-slate-100"
+              >
+                <option value="left">Left Aligned</option>
+                <option value="center">Center Aligned</option>
+                <option value="right">Right Aligned</option>
+                <option value="float-left">Float Left (Wrap Text Right)</option>
+                <option value="float-right">Float Right (Wrap Text Left)</option>
+              </select>
+            </div>
+
+            <div>
+              <div className="flex justify-between text-slate-400 text-[10px] mb-1">
+                <span>Table Rotation</span>
+                <span className="font-mono text-cyan-300">{tableAttrs.rotation || 0}°</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="range"
+                  min="-180"
+                  max="180"
+                  step="5"
+                  value={tableAttrs.rotation || 0}
+                  onChange={(e) => activeEditor.chain().focus().updateTableAttributes({ rotation: parseInt(e.target.value) || 0 }).run()}
+                  className="w-full accent-emerald-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
+                />
+                <button
+                  onClick={() => activeEditor.chain().focus().updateTableAttributes({ rotation: 0 }).run()}
+                  className="px-1.5 py-0.5 bg-slate-800 hover:bg-slate-700 text-[10px] text-red-300 rounded"
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-slate-400 text-[10px] mb-1">Cell Padding</label>
+              <select
+                value={tableAttrs.cellPadding || '8px 12px'}
+                onChange={(e) => activeEditor.chain().focus().updateTableAttributes({ cellPadding: e.target.value }).run()}
+                className="w-full bg-slate-800 border border-slate-700 rounded p-1.5 text-xs text-slate-100"
+              >
+                <option value="4px 8px">Small / Compact (4px 8px)</option>
+                <option value="8px 12px">Medium Standard (8px 12px)</option>
+                <option value="12px 16px">Large Spacious (12px 16px)</option>
+                <option value="16px 24px">Extra Large (16px 24px)</option>
+              </select>
+            </div>
+          </div>
+
           {/* Column & Row Dimensions (#9) */}
           <div className="space-y-2.5 pt-2 border-t border-slate-800">
             <div className="font-semibold text-slate-300 text-[11px] flex items-center justify-between">
-              <span>Column & Cell Dimensions</span>
+              <span>Column & Row Dimensions</span>
               <span className="text-[10px] text-emerald-400 font-normal">Active Cell</span>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -288,19 +368,37 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ engine, editor }) =>
                 <label className="block text-[10px] text-slate-400 mb-1">Cell Width (px/% / auto)</label>
                 <input
                   type="text"
-                  placeholder="e.g. 150px"
-                  onBlur={(e) => activeEditor.chain().focus().setCellAttribute('width', e.target.value).run()}
-                  onKeyDown={(e) => e.key === 'Enter' && activeEditor.chain().focus().setCellAttribute('width', e.currentTarget.value).run()}
+                  placeholder="e.g. 150px or 25%"
+                  onBlur={(e) => activeEditor.chain().focus().updateActiveCellAttributes({ width: e.target.value }).run()}
+                  onKeyDown={(e) => e.key === 'Enter' && activeEditor.chain().focus().updateActiveCellAttributes({ width: e.currentTarget.value }).run()}
                   className="w-full bg-slate-800 border border-slate-700 rounded p-1.5 text-xs text-slate-100"
                 />
               </div>
               <div>
-                <label className="block text-[10px] text-slate-400 mb-1">Cell Background</label>
+                <label className="block text-[10px] text-slate-400 mb-1">Row Height (px / auto)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 45px or auto"
+                  onBlur={(e) => activeEditor.chain().focus().updateActiveCellAttributes({ height: e.target.value }).run()}
+                  onKeyDown={(e) => e.key === 'Enter' && activeEditor.chain().focus().updateActiveCellAttributes({ height: e.currentTarget.value }).run()}
+                  className="w-full bg-slate-800 border border-slate-700 rounded p-1.5 text-xs text-slate-100"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-[10px] text-slate-400 mb-1">Cell Background Color</label>
+              <div className="flex items-center gap-2">
                 <input
                   type="color"
-                  onChange={(e) => activeEditor.chain().focus().setCellAttribute('backgroundColor', e.target.value).run()}
-                  className="w-full h-7 bg-slate-800 border border-slate-700 rounded cursor-pointer"
+                  onChange={(e) => activeEditor.chain().focus().updateActiveCellAttributes({ backgroundColor: e.target.value }).run()}
+                  className="w-12 h-7 bg-slate-800 border border-slate-700 rounded cursor-pointer"
                 />
+                <button
+                  onClick={() => activeEditor.chain().focus().updateActiveCellAttributes({ backgroundColor: null }).run()}
+                  className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-[10px] text-slate-300 rounded"
+                >
+                  Clear Color
+                </button>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2 pt-1">
@@ -444,6 +542,51 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ engine, editor }) =>
                 className="w-full accent-cyan-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
               />
             </div>
+
+            <div className="pt-2 border-t border-slate-800">
+              <label className="block text-slate-400 text-[11px] mb-1 font-semibold">Iframe Alignment & Wrapping</label>
+              <select
+                value={iframeAttrs.alignment || 'center'}
+                onChange={(e) => activeEditor.chain().focus().updateAttributes('iframe', { alignment: e.target.value }).run()}
+                className="w-full bg-slate-800 border border-slate-700 rounded p-1.5 text-xs text-slate-100"
+              >
+                <option value="left">Left Aligned</option>
+                <option value="center">Center Aligned</option>
+                <option value="right">Right Aligned</option>
+                <option value="float-left">Float Left (Wrap Text Right)</option>
+                <option value="float-right">Float Right (Wrap Text Left)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-slate-400 text-[11px] mb-1 font-semibold">Quick Aspect Ratio Presets</label>
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  onClick={() => activeEditor.chain().focus().updateAttributes('iframe', { width: 480, height: 270 }).run()}
+                  className="p-1.5 bg-slate-800 hover:bg-slate-700 rounded text-center text-[11px] text-slate-300"
+                >
+                  Small (480×270)
+                </button>
+                <button
+                  onClick={() => activeEditor.chain().focus().updateAttributes('iframe', { width: 640, height: 360 }).run()}
+                  className="p-1.5 bg-slate-800 hover:bg-slate-700 rounded text-center text-[11px] text-slate-300"
+                >
+                  Medium 16:9 (640×360)
+                </button>
+                <button
+                  onClick={() => activeEditor.chain().focus().updateAttributes('iframe', { width: 800, height: 450 }).run()}
+                  className="p-1.5 bg-slate-800 hover:bg-slate-700 rounded text-center text-[11px] text-slate-300"
+                >
+                  Large 16:9 (800×450)
+                </button>
+                <button
+                  onClick={() => activeEditor.chain().focus().updateAttributes('iframe', { width: '100%', height: 480 }).run()}
+                  className="p-1.5 bg-slate-800 hover:bg-slate-700 rounded text-center text-[11px] text-slate-300"
+                >
+                  Full Width (100%×480)
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       ) : (
@@ -547,6 +690,16 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ engine, editor }) =>
                 type="checkbox"
                 checked={activePage.showPageNumber ?? true}
                 onChange={(e) => updatePageSettings(activePage.id, { showPageNumber: e.target.checked })}
+                className="w-4 h-4 rounded accent-indigo-600 cursor-pointer"
+              />
+            </div>
+
+            <div className="pt-2 flex items-center justify-between">
+              <span className="text-slate-300">Show Margin Guidelines</span>
+              <input
+                type="checkbox"
+                checked={activePage.showMargins ?? true}
+                onChange={(e) => updatePageSettings(activePage.id, { showMargins: e.target.checked })}
                 className="w-4 h-4 rounded accent-indigo-600 cursor-pointer"
               />
             </div>
