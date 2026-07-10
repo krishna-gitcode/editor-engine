@@ -140,83 +140,111 @@ export class CanvasEngine {
     this.syncSelectedProps();
   }
 
+  private ensureCanvasActive(cb: () => void) {
+    if (!this.canvas) {
+      if ((window as any).__setIsCanvasMode) {
+        (window as any).__setIsCanvasMode(true);
+        setTimeout(() => {
+          if (this.canvas) cb();
+        }, 150);
+      }
+      return;
+    }
+    if ((window as any).__isCanvasMode === false && (window as any).__setIsCanvasMode) {
+      (window as any).__setIsCanvasMode(true);
+    }
+    cb();
+  }
+
   public addRect(options: fabric.IRectOptions = {}) {
-    if (!this.canvas) return;
-    const rect = new fabric.Rect({
-      left: 100,
-      top: 100,
-      width: 150,
-      height: 100,
-      fill: '#6366f1',
-      rx: 8,
-      ry: 8,
-      ...options,
+    this.ensureCanvasActive(() => {
+      if (!this.canvas) return;
+      const rect = new fabric.Rect({
+        left: 100,
+        top: 100,
+        width: 150,
+        height: 100,
+        fill: '#6366f1',
+        rx: 8,
+        ry: 8,
+        ...options,
+      });
+      historyManager.executeCommand(new AddObjectCommand(this.canvas, rect));
     });
-    historyManager.executeCommand(new AddObjectCommand(this.canvas, rect));
   }
 
   public addCircle(options: fabric.ICircleOptions = {}) {
-    if (!this.canvas) return;
-    const circle = new fabric.Circle({
-      left: 120,
-      top: 120,
-      radius: 60,
-      fill: '#ec4899',
-      ...options,
+    this.ensureCanvasActive(() => {
+      if (!this.canvas) return;
+      const circle = new fabric.Circle({
+        left: 120,
+        top: 120,
+        radius: 60,
+        fill: '#ec4899',
+        ...options,
+      });
+      historyManager.executeCommand(new AddObjectCommand(this.canvas, circle));
     });
-    historyManager.executeCommand(new AddObjectCommand(this.canvas, circle));
   }
 
   public addTriangle(options: fabric.ITriangleOptions = {}) {
-    if (!this.canvas) return;
-    const triangle = new fabric.Triangle({
-      left: 140,
-      top: 140,
-      width: 120,
-      height: 120,
-      fill: '#3b82f6',
-      ...options,
+    this.ensureCanvasActive(() => {
+      if (!this.canvas) return;
+      const triangle = new fabric.Triangle({
+        left: 140,
+        top: 140,
+        width: 120,
+        height: 120,
+        fill: '#3b82f6',
+        ...options,
+      });
+      historyManager.executeCommand(new AddObjectCommand(this.canvas, triangle));
     });
-    historyManager.executeCommand(new AddObjectCommand(this.canvas, triangle));
   }
 
   public addLine(options: fabric.ILineOptions = {}) {
-    if (!this.canvas) return;
-    const line = new fabric.Line([50, 50, 200, 50], {
-      left: 100,
-      top: 100,
-      stroke: '#f59e0b',
-      strokeWidth: 4,
-      ...options,
+    this.ensureCanvasActive(() => {
+      if (!this.canvas) return;
+      const line = new fabric.Line([50, 50, 200, 50], {
+        left: 100,
+        top: 100,
+        stroke: '#f59e0b',
+        strokeWidth: 4,
+        ...options,
+      });
+      historyManager.executeCommand(new AddObjectCommand(this.canvas, line));
     });
-    historyManager.executeCommand(new AddObjectCommand(this.canvas, line));
   }
 
   public addTextbox(options: fabric.ITextboxOptions = {}) {
-    if (!this.canvas) return;
-    const textbox = new fabric.Textbox('Heading or Text', {
-      left: 100,
-      top: 100,
-      width: 250,
-      fontSize: 28,
-      fontFamily: 'Inter',
-      fill: '#ffffff',
-      ...options,
+    this.ensureCanvasActive(() => {
+      if (!this.canvas) return;
+      const textbox = new fabric.Textbox('Heading or Text', {
+        left: 100,
+        top: 100,
+        width: 250,
+        fontSize: 28,
+        fontFamily: 'Inter',
+        fill: '#ffffff',
+        ...options,
+      });
+      historyManager.executeCommand(new AddObjectCommand(this.canvas, textbox));
     });
-    historyManager.executeCommand(new AddObjectCommand(this.canvas, textbox));
   }
 
   public addImageFromUrl(url: string) {
-    if (!this.canvas) return;
-    fabric.Image.fromURL(url, (img) => {
+    this.ensureCanvasActive(() => {
       if (!this.canvas) return;
-      img.set({
-        left: 100,
-        top: 100,
-      });
-      img.scaleToWidth(300);
-      historyManager.executeCommand(new AddObjectCommand(this.canvas, img));
-    }, { crossOrigin: 'anonymous' });
+      fabric.Image.fromURL(url, (img) => {
+        if (!this.canvas) return;
+        img.set({
+          left: 100,
+          top: 100,
+        });
+        img.scaleToWidth(300);
+        historyManager.executeCommand(new AddObjectCommand(this.canvas, img));
+      }, { crossOrigin: 'anonymous' });
+    });
   }
 
   public scaleImage(scale: number) {

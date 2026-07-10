@@ -27,8 +27,31 @@ export const CanvasLayer: React.FC<CanvasLayerProps> = ({
       onEngineReady(engine);
     }
 
-    // Forward clicks to the text editor when clicking empty canvas space in Hybrid mode
-    const fabricCanvas = engine.canvas;
+    // Dynamic pointer pass-through for Hybrid Canvas mode (Point #5)
+    const fabricCanvas = engine.canvas as any;
+    const handlePointerPassThrough = (e: MouseEvent) => {
+      if (!fabricCanvas || !fabricCanvas.upperCanvasEl) return;
+      const upperCanvas = fabricCanvas.upperCanvasEl;
+
+      const state = useCanvasStore.getState();
+      const activeObj = fabricCanvas.getActiveObject();
+
+      if (state.isDrawingPolygon || activeObj || (fabricCanvas as any)._isCurrentlyDrawing) {
+        upperCanvas.style.pointerEvents = 'auto';
+        return;
+      }
+
+      // Check if mouse coordinate hits any vector object on canvas
+      const target = fabricCanvas.findTarget(e as any, false);
+      if (target) {
+        upperCanvas.style.pointerEvents = 'auto';
+      } else {
+        upperCanvas.style.pointerEvents = 'none';
+      }
+    };
+
+    window.addEventListener('mousemove', handlePointerPassThrough);
+
     if (fabricCanvas) {
       fabricCanvas.on('mouse:down', (e: any) => {
         if (!e.target) {
@@ -41,6 +64,7 @@ export const CanvasLayer: React.FC<CanvasLayerProps> = ({
     }
 
     return () => {
+      window.removeEventListener('mousemove', handlePointerPassThrough);
       engine.dispose();
       engineRef.current = null;
     };
@@ -54,7 +78,7 @@ export const CanvasLayer: React.FC<CanvasLayerProps> = ({
   }, [width, height]);
 
   return (
-    <div className="absolute inset-0 pointer-events-auto z-10 overflow-hidden">
+    <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
       <canvas ref={canvasRef} className="block w-full h-full" />
     </div>
   );

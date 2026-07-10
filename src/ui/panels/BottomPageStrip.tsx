@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDocumentStore } from '../../store/documentStore';
 import { useWorkspaceStore } from '../../store/workspaceStore';
 import { useEditorStore } from '../../store/editorStore';
-import { Plus, Trash2, Maximize, Minimize, LayoutGrid, List, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { Plus, Trash2, Maximize, Minimize, LayoutGrid, List, X, ZoomIn, ZoomOut, ArrowLeft, ArrowRight } from 'lucide-react';
 
 export const BottomPageStrip: React.FC = () => {
   const pages = useDocumentStore((s) => s.pages);
@@ -10,6 +10,7 @@ export const BottomPageStrip: React.FC = () => {
   const addPage = useDocumentStore((s) => s.addPage);
   const removePage = useDocumentStore((s) => s.removePage);
   const setActivePageId = useDocumentStore((s) => s.setActivePageId);
+  const movePage = useDocumentStore((s) => s.movePage);
 
   const zoom = useWorkspaceStore((s) => s.zoom);
   const setZoom = useWorkspaceStore((s) => s.setZoom);
@@ -114,18 +115,44 @@ export const BottomPageStrip: React.FC = () => {
                         </div>
                       </div>
 
-                      {pages.length > 1 && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removePage(p.id);
-                          }}
-                          className="p-1.5 rounded-lg hover:bg-red-500/20 text-slate-500 hover:text-red-400 transition-colors"
-                          title="Delete Page"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
+                      <div className="flex items-center gap-1">
+                        {i > 0 && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              movePage(p.id, 'left');
+                            }}
+                            className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white"
+                            title="Shift Page Left/Previous"
+                          >
+                            <ArrowLeft className="w-4 h-4" />
+                          </button>
+                        )}
+                        {i < pages.length - 1 && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              movePage(p.id, 'right');
+                            }}
+                            className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white"
+                            title="Shift Page Right/Next"
+                          >
+                            <ArrowRight className="w-4 h-4" />
+                          </button>
+                        )}
+                        {pages.length > 1 && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removePage(p.id);
+                            }}
+                            className="p-1.5 rounded-lg hover:bg-red-500/20 text-slate-500 hover:text-red-400 transition-colors"
+                            title="Delete Page"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     {/* Miniature Page Thumbnail Simulation */}
@@ -172,12 +199,26 @@ export const BottomPageStrip: React.FC = () => {
                     setActivePageId(p.id);
                   }
                 }}
-                className={`flex items-center gap-2.5 px-3 py-1.5 rounded-xl border cursor-pointer transition-all flex-shrink-0 group ${
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border cursor-pointer transition-all flex-shrink-0 group ${
                   isActive
                     ? 'bg-indigo-600/20 border-indigo-500 text-white shadow-md shadow-indigo-600/10'
                     : 'bg-slate-900/80 border-slate-800 hover:border-slate-700 text-slate-300 hover:bg-slate-800'
                 }`}
               >
+                {/* Shift Left Arrow (#14) */}
+                {i > 0 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      movePage(p.id, 'left');
+                    }}
+                    className="p-0.5 rounded text-slate-400 hover:text-white hover:bg-slate-700/60"
+                    title="Shift Page Left"
+                  >
+                    <ArrowLeft className="w-3 h-3" />
+                  </button>
+                )}
+
                 {/* Click on page number badge toggles Inspector (Point #1) */}
                 <div
                   onClick={(e) => {
@@ -196,6 +237,20 @@ export const BottomPageStrip: React.FC = () => {
                     {p.pageSize} • {p.orientation === 'landscape' ? 'Land' : 'Port'}
                   </div>
                 </div>
+
+                {/* Shift Right Arrow (#14) */}
+                {i < pages.length - 1 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      movePage(p.id, 'right');
+                    }}
+                    className="p-0.5 rounded text-slate-400 hover:text-white hover:bg-slate-700/60"
+                    title="Shift Page Right"
+                  >
+                    <ArrowRight className="w-3 h-3" />
+                  </button>
+                )}
 
                 {pages.length > 1 && (
                   <button

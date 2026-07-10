@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { useDocumentStore } from '../../store/documentStore';
 import { ImageTools } from '../../features/canvas/ImageTools';
-import { Sliders, ArrowUp, ArrowDown, Trash2, Copy, Layers } from 'lucide-react';
+import { Sliders, ArrowUp, ArrowDown, Trash2, Copy, Layers, Table, Monitor, RotateCw, Maximize2 } from 'lucide-react';
 import './RightSidebar.css';
 
 interface RightSidebarProps {
@@ -10,17 +10,36 @@ interface RightSidebarProps {
   editor?: any;
 }
 
-export const RightSidebar: React.FC<RightSidebarProps> = ({ engine }) => {
+export const RightSidebar: React.FC<RightSidebarProps> = ({ engine, editor }) => {
   const selectedObject = useCanvasStore((s) => s.selectedObjectProps);
   const pages = useDocumentStore((s) => s.pages);
   const activePageId = useDocumentStore((s) => s.activePageId);
   const updatePageSettings = useDocumentStore((s) => s.updatePageSettings);
   const activePage = pages.find((p) => p.id === activePageId) || pages[0];
 
+  const activeEditor = editor || (window as any).__activeEditor;
+  const [, setEditorTick] = useState(0);
+
+  useEffect(() => {
+    if (!activeEditor) return;
+    const forceUpdate = () => setEditorTick((t) => t + 1);
+    activeEditor.on('selectionUpdate', forceUpdate);
+    activeEditor.on('update', forceUpdate);
+    return () => {
+      activeEditor.off('selectionUpdate', forceUpdate);
+      activeEditor.off('update', forceUpdate);
+    };
+  }, [activeEditor]);
+
   const handlePropChange = (key: string, value: any) => {
     if (!engine) return;
     engine.updateSelected({ [key]: value });
   };
+
+  const isTableActive = activeEditor && activeEditor.isActive('table');
+  const isIframeActive = activeEditor && activeEditor.isActive('iframe');
+  const iframeAttrs = isIframeActive ? activeEditor.getAttributes('iframe') : {};
+  const tableAttrs = isTableActive ? activeEditor.getAttributes('table') : {};
 
   return (
     <div className="w-72 h-full bg-slate-900 border-l border-slate-800 flex flex-col overflow-y-auto p-4 select-none z-20 text-slate-200">
@@ -195,8 +214,240 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ engine }) => {
             </div>
           </div>
         </div>
+      ) : isTableActive ? (
+        /* Table Dynamic Adjustment Inspector (#8, #9) */
+        <div className="space-y-5 text-xs">
+          <div className="border-b border-slate-800 pb-3 flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1.5">
+                <Table className="w-4 h-4" />
+                <span>Table Inspector</span>
+              </h3>
+              <p className="text-[10px] text-slate-400 mt-0.5">Dynamically adjust table dimensions, position & columns.</p>
+            </div>
+            <button
+              onClick={() => activeEditor.chain().focus().deleteTable().run()}
+              className="p-1.5 hover:bg-red-950 text-red-400 rounded"
+              title="Delete Table"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Table Theme & Borders */}
+          <div className="space-y-3">
+            <div>
+              <label className="block text-slate-400 text-[11px] mb-1 font-semibold">Table Theme & Color Scheme</label>
+              <select
+                value={tableAttrs.theme || 'none'}
+                onChange={(e) => activeEditor.chain().focus().updateAttributes('table', { theme: e.target.value }).run()}
+                className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100"
+              >
+                <option value="none">Standard Plain Border</option>
+                <option value="modern-dark">Modern Dark (Indigo Accent)</option>
+                <option value="classic-blue">Classic Blue Header</option>
+                <option value="minimal-gray">Minimal Slate Gray</option>
+                <option value="warm-amber">Warm Amber Highlight</option>
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-slate-400 text-[11px] mb-1">Border Color</label>
+                <input
+                  type="color"
+                  value={tableAttrs.borderColor || '#334155'}
+                  onChange={(e) => activeEditor.chain().focus().updateAttributes('table', { borderColor: e.target.value }).run()}
+                  className="w-full h-8 p-1 bg-slate-800 border border-slate-700 rounded cursor-pointer"
+                />
+              </div>
+              <div>
+                <label className="block text-slate-400 text-[11px] mb-1">Border Width</label>
+                <select
+                  value={tableAttrs.borderWidth || '1px'}
+                  onChange={(e) => activeEditor.chain().focus().updateAttributes('table', { borderWidth: e.target.value }).run()}
+                  className="w-full h-8 bg-slate-800 border border-slate-700 rounded px-2 text-slate-100"
+                >
+                  <option value="0px">0px (Invisible)</option>
+                  <option value="1px">1px Standard</option>
+                  <option value="2px">2px Medium</option>
+                  <option value="3px">3px Bold</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Column & Row Dimensions (#9) */}
+          <div className="space-y-2.5 pt-2 border-t border-slate-800">
+            <div className="font-semibold text-slate-300 text-[11px] flex items-center justify-between">
+              <span>Column & Cell Dimensions</span>
+              <span className="text-[10px] text-emerald-400 font-normal">Active Cell</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-[10px] text-slate-400 mb-1">Cell Width (px/% / auto)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 150px"
+                  onBlur={(e) => activeEditor.chain().focus().setCellAttribute('width', e.target.value).run()}
+                  onKeyDown={(e) => e.key === 'Enter' && activeEditor.chain().focus().setCellAttribute('width', e.currentTarget.value).run()}
+                  className="w-full bg-slate-800 border border-slate-700 rounded p-1.5 text-xs text-slate-100"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] text-slate-400 mb-1">Cell Background</label>
+                <input
+                  type="color"
+                  onChange={(e) => activeEditor.chain().focus().setCellAttribute('backgroundColor', e.target.value).run()}
+                  className="w-full h-7 bg-slate-800 border border-slate-700 rounded cursor-pointer"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                onClick={() => activeEditor.chain().focus().addColumnBefore().run()}
+                className="py-1.5 px-2 bg-slate-800 hover:bg-slate-700 rounded text-center text-slate-300 text-[11px]"
+              >
+                + Col Before
+              </button>
+              <button
+                onClick={() => activeEditor.chain().focus().addColumnAfter().run()}
+                className="py-1.5 px-2 bg-slate-800 hover:bg-slate-700 rounded text-center text-slate-300 text-[11px]"
+              >
+                + Col After
+              </button>
+              <button
+                onClick={() => activeEditor.chain().focus().addRowBefore().run()}
+                className="py-1.5 px-2 bg-slate-800 hover:bg-slate-700 rounded text-center text-slate-300 text-[11px]"
+              >
+                + Row Before
+              </button>
+              <button
+                onClick={() => activeEditor.chain().focus().addRowAfter().run()}
+                className="py-1.5 px-2 bg-slate-800 hover:bg-slate-700 rounded text-center text-slate-300 text-[11px]"
+              >
+                + Row After
+              </button>
+            </div>
+          </div>
+
+          {/* Table Structural Operations */}
+          <div className="space-y-2 pt-2 border-t border-slate-800">
+            <div className="font-semibold text-slate-300 text-[11px]">Table Structure</div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => activeEditor.chain().focus().toggleHeaderRow().run()}
+                className="py-1.5 px-2 bg-slate-800 hover:bg-slate-700 rounded text-center text-slate-300 text-[11px]"
+              >
+                Toggle Header
+              </button>
+              <button
+                onClick={() => activeEditor.chain().focus().mergeCells().run()}
+                className="py-1.5 px-2 bg-slate-800 hover:bg-slate-700 rounded text-center text-amber-300 text-[11px]"
+              >
+                Merge Cells
+              </button>
+              <button
+                onClick={() => activeEditor.chain().focus().deleteRow().run()}
+                className="py-1.5 px-2 bg-red-950/40 hover:bg-red-900/50 rounded text-center text-red-300 text-[11px]"
+              >
+                Delete Row
+              </button>
+              <button
+                onClick={() => activeEditor.chain().focus().deleteColumn().run()}
+                className="py-1.5 px-2 bg-red-950/40 hover:bg-red-900/50 rounded text-center text-red-300 text-[11px]"
+              >
+                Delete Column
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : isIframeActive ? (
+        /* Iframe Position & Dimension Inspector (#10) */
+        <div className="space-y-5 text-xs">
+          <div className="border-b border-slate-800 pb-3 flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-cyan-400 uppercase tracking-wide flex items-center gap-1.5">
+                <Monitor className="w-4 h-4" />
+                <span>Iframe Inspector</span>
+              </h3>
+              <p className="text-[10px] text-slate-400 mt-0.5">Dynamically resize & position embedded iframe.</p>
+            </div>
+            <button
+              onClick={() => activeEditor.chain().focus().deleteSelection().run()}
+              className="p-1.5 hover:bg-red-950 text-red-400 rounded"
+              title="Delete Iframe Embed"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <label className="block text-slate-400 text-[11px] mb-1 font-semibold">Iframe Source URL</label>
+              <input
+                type="text"
+                value={iframeAttrs.src || ''}
+                onChange={(e) => activeEditor.chain().focus().updateAttributes('iframe', { src: e.target.value }).run()}
+                className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-xs text-slate-100"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-slate-400 text-[11px] mb-1">Width (px)</label>
+                <input
+                  type="number"
+                  value={iframeAttrs.width || 640}
+                  onChange={(e) => activeEditor.chain().focus().updateAttributes('iframe', { width: parseInt(e.target.value) || 200 }).run()}
+                  className="w-full bg-slate-800 border border-slate-700 rounded p-1.5 text-xs text-slate-100"
+                />
+              </div>
+              <div>
+                <label className="block text-slate-400 text-[11px] mb-1">Height (px)</label>
+                <input
+                  type="number"
+                  value={iframeAttrs.height || 360}
+                  onChange={(e) => activeEditor.chain().focus().updateAttributes('iframe', { height: parseInt(e.target.value) || 150 }).run()}
+                  className="w-full bg-slate-800 border border-slate-700 rounded p-1.5 text-xs text-slate-100"
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between text-[11px] text-slate-400 mb-1">
+                <span>Width Scale</span>
+                <span>{iframeAttrs.width || 640}px</span>
+              </div>
+              <input
+                type="range"
+                min="200"
+                max="1200"
+                step="20"
+                value={iframeAttrs.width || 640}
+                onChange={(e) => activeEditor.chain().focus().updateAttributes('iframe', { width: parseInt(e.target.value) }).run()}
+                className="w-full accent-cyan-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
+              />
+            </div>
+            <div>
+              <div className="flex justify-between text-[11px] text-slate-400 mb-1">
+                <span>Height Scale</span>
+                <span>{iframeAttrs.height || 360}px</span>
+              </div>
+              <input
+                type="range"
+                min="150"
+                max="900"
+                step="20"
+                value={iframeAttrs.height || 360}
+                onChange={(e) => activeEditor.chain().focus().updateAttributes('iframe', { height: parseInt(e.target.value) }).run()}
+                className="w-full accent-cyan-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
+              />
+            </div>
+          </div>
+        </div>
       ) : (
-        /* If No Object is Selected: Show Document Page Settings */
+        /* If No Object/Table/Iframe is Selected: Show Document Page Settings */
         <div className="space-y-6 text-xs">
           <div className="border-b border-slate-800 pb-3">
             <h3 className="text-sm font-bold text-slate-100 uppercase tracking-wide">Document Inspector</h3>
@@ -217,6 +468,33 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ engine }) => {
                 <option value="Custom">Custom Dimensions</option>
               </select>
             </div>
+
+            {activePage.pageSize === 'Custom' && (
+              <div className="grid grid-cols-2 gap-2 bg-slate-950/60 p-2.5 rounded border border-slate-700 animate-in fade-in duration-150">
+                <div>
+                  <label className="block text-[10px] text-slate-400 mb-1 uppercase font-mono">Width (px)</label>
+                  <input
+                    type="number"
+                    min={200}
+                    max={4000}
+                    value={activePage.customWidth || 800}
+                    onChange={(e) => updatePageSettings(activePage.id, { customWidth: parseInt(e.target.value) || 800 })}
+                    className="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-100 text-center font-mono focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-slate-400 mb-1 uppercase font-mono">Height (px)</label>
+                  <input
+                    type="number"
+                    min={200}
+                    max={4000}
+                    value={activePage.customHeight || 1000}
+                    onChange={(e) => updatePageSettings(activePage.id, { customHeight: parseInt(e.target.value) || 1000 })}
+                    className="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-100 text-center font-mono focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="block text-slate-400 mb-1">Orientation</label>

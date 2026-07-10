@@ -11,6 +11,8 @@ export interface DocumentPageData {
   id: string;
   content: string;
   pageSize: 'A4' | 'Letter' | 'A3' | 'Custom';
+  customWidth?: number;
+  customHeight?: number;
   orientation: 'portrait' | 'landscape';
   margins: PageMargins;
   watermark?: string;
@@ -27,6 +29,7 @@ interface DocumentStoreState {
   updatePageContent: (id: string, content: string) => void;
   updatePageSettings: (id: string, settings: Partial<DocumentPageData>) => void;
   setActivePageId: (id: string) => void;
+  movePage: (id: string, direction: 'left' | 'right' | number) => void;
   applyTemplateData: (data: Record<string, string>) => void;
 }
 
@@ -34,6 +37,8 @@ const DEFAULT_PAGE: DocumentPageData = {
   id: 'page-1',
   content: '<p>Welcome to <strong>Editor Engine</strong>. Start typing or formatting using the Ribbon above...</p>',
   pageSize: 'A4',
+  customWidth: 800,
+  customHeight: 1000,
   orientation: 'portrait',
   margins: { top: 72, right: 72, bottom: 72, left: 72 }, // 1 inch default (72pt)
   showPageNumber: true,
@@ -68,6 +73,20 @@ export const useDocumentStore = create<DocumentStoreState>((set) => ({
     pages: s.pages.map((p) => (p.id === id ? { ...p, ...settings } : p)),
   })),
   setActivePageId: (activePageId) => set({ activePageId }),
+  movePage: (id, direction) => set((s) => {
+    const idx = s.pages.findIndex((p) => p.id === id);
+    if (idx === -1) return s;
+    let targetIdx = idx;
+    if (direction === 'left') targetIdx = Math.max(0, idx - 1);
+    else if (direction === 'right') targetIdx = Math.min(s.pages.length - 1, idx + 1);
+    else if (typeof direction === 'number') targetIdx = Math.max(0, Math.min(s.pages.length - 1, direction));
+
+    if (targetIdx === idx) return s;
+    const newPages = [...s.pages];
+    const [moved] = newPages.splice(idx, 1);
+    newPages.splice(targetIdx, 0, moved);
+    return { pages: newPages };
+  }),
   applyTemplateData: (data) => set((s) => ({
     pages: s.pages.map((p) => {
       let updatedContent = p.content;

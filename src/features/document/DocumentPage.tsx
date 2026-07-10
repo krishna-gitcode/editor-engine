@@ -14,9 +14,12 @@ import TableHeader from '@tiptap/extension-table-header';
 import { CustomTable } from './CustomTable';
 import { CustomTableCell } from './CustomTableCell';
 import { IndentExtension } from './IndentExtension';
+import { ListStyleExtension } from './ListStyleExtension';
 import { TextEffectExtension } from './TextEffectExtension';
 import { FontSizeExtension } from './FontSizeExtension';
 import { IframeExtension } from './IframeExtension';
+import { MathJaxExtension } from './MathJaxExtension';
+import { AbcJsExtension } from './AbcJsExtension';
 import { useDocumentStore } from '../../store/documentStore';
 import { PluginService } from '../../services/PluginService';
 import { PlusMenu } from './PlusMenu';
@@ -54,9 +57,12 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({ onEditorReady, onOpe
       TableHeader,
       CustomTableCell,
       IndentExtension,
+      ListStyleExtension,
       TextEffectExtension,
       FontSizeExtension,
       IframeExtension,
+      MathJaxExtension,
+      AbcJsExtension,
     ],
     content: activePage.content,
     onUpdate: ({ editor }) => {

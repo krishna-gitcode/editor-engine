@@ -40,8 +40,8 @@ export const WorkspaceCanvas: React.FC<WorkspaceCanvasProps> = ({
       w = 1123;
       h = 1587;
     } else if (activePage.pageSize === 'Custom') {
-      w = 850;
-      h = 1100;
+      w = activePage.customWidth || 800;
+      h = activePage.customHeight || 1000;
     }
     if (activePage.orientation === 'landscape') {
       const temp = w;
@@ -104,7 +104,7 @@ export const WorkspaceCanvas: React.FC<WorkspaceCanvasProps> = ({
 
         {/* Vector Canvas Overlay */}
         {isCanvasMode && (
-          <div className="absolute inset-0 z-10 pointer-events-auto">
+          <div className="absolute inset-0 z-10 pointer-events-none">
             <CanvasLayer width={PAGE_WIDTH} height={PAGE_HEIGHT} onEngineReady={onEngineReady} />
           </div>
         )}

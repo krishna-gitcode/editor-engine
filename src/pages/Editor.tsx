@@ -29,12 +29,20 @@ export default function Editor() {
 
   const handleEngineReady = (engine: any) => {
     engineRef.current = engine;
+    (window as any).__canvasEngine = engine;
     initPostMessageBridge(engine);
   };
 
+  React.useEffect(() => {
+    (window as any).__setIsCanvasMode = setIsCanvasMode;
+    (window as any).__isCanvasMode = isCanvasMode;
+    if (engineRef.current) {
+      (window as any).__canvasEngine = engineRef.current;
+    }
+  }, [isCanvasMode]);
+
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!engineRef.current) return;
     setContextMenu({
       visible: true,
       x: e.clientX,
@@ -46,7 +54,7 @@ export default function Editor() {
     <div className="w-full h-full flex flex-col overflow-hidden bg-[#0f172a] text-slate-100 select-none">
       {/* Top Navigation Chrome */}
       <MainMenuBar
-        engine={engineRef.current}
+        engine={engineRef.current || (window as any).__canvasEngine}
         isCanvasMode={isCanvasMode}
         setIsCanvasMode={setIsCanvasMode}
       />
@@ -65,7 +73,7 @@ export default function Editor() {
       >
         {/* Left Sidebar */}
         <LeftSidebar
-          engine={isCanvasMode ? engineRef.current : null}
+          engine={engineRef.current || (window as any).__canvasEngine}
           onOpenModal={(type) => setActiveModal(type)}
         />
 
@@ -83,7 +91,7 @@ export default function Editor() {
         {/* Right Inspector Sidebar */}
         {showRightSidebar && (
           <RightSidebar
-            engine={isCanvasMode ? engineRef.current : null}
+            engine={engineRef.current || (window as any).__canvasEngine}
             editor={editorInstance || (window as any).__activeEditor}
           />
         )}
@@ -92,12 +100,12 @@ export default function Editor() {
       {/* Contextual & Overlay Menus */}
       <FloatingMenu
         editor={editorInstance || (window as any).__activeEditor}
-        engine={isCanvasMode ? engineRef.current : null}
+        engine={engineRef.current || (window as any).__canvasEngine}
         onOpenModal={(type) => setActiveModal(type)}
       />
 
       <ContextMenu
-        engine={isCanvasMode ? engineRef.current : null}
+        engine={engineRef.current || (window as any).__canvasEngine}
         visible={contextMenu.visible}
         x={contextMenu.x}
         y={contextMenu.y}
@@ -108,7 +116,7 @@ export default function Editor() {
       <PluginModals
         activeModal={activeModal}
         onClose={() => setActiveModal(null)}
-        engine={isCanvasMode ? engineRef.current : null}
+        engine={engineRef.current || (window as any).__canvasEngine}
         editor={editorInstance || (window as any).__activeEditor}
       />
 

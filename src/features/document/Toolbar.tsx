@@ -9,6 +9,8 @@ import {
   Undo, Redo, RemoveFormatting, Upload, Calendar, Hash, Link, Move, BarChart2
 } from 'lucide-react';
 import './Toolbar.css';
+import { ColorPickerDropdown } from '../../ui/menus/ColorPickerDropdown';
+import { ListDropdown } from '../../ui/menus/ListDropdown';
 
 interface ToolbarProps {
   editor: any;
@@ -116,7 +118,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onOpenModal, onOpenFon
 
   return (
     <div
-      className="w-full bg-slate-900 border-b border-slate-800 flex flex-col select-none z-20 shadow-lg"
+      className="w-full bg-slate-900 border-b border-slate-800 flex flex-col select-none z-[9999] relative shadow-lg"
       onMouseDown={(e) => {
         if (
           e.target instanceof HTMLInputElement ||
@@ -166,7 +168,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onOpenModal, onOpenFon
 
       {/* Ribbon Panels */}
       {!isRibbonMinimized && (
-        <div className="p-3 overflow-x-auto flex items-center gap-5 min-h-[68px] text-xs text-slate-200">
+        <div className="p-3 overflow-visible flex items-center gap-5 min-h-[68px] text-xs text-slate-200 flex-wrap">
           {/* HOME TAB */}
           {ribbonTab === 'home' && (
             <>
@@ -296,26 +298,25 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onOpenModal, onOpenFon
               </div>
 
               {/* Color & Effects Group */}
-              <div className="flex items-center gap-2 border-r border-slate-800 pr-4">
-                <div className="flex flex-col items-center">
-                  <span className="text-[10px] text-slate-400 mb-0.5">Text Color</span>
-                  <input
-                    type="color"
-                    onChange={(e) => editor.chain().focus().setColor(e.target.value).run()}
-                    className="w-6 h-6 p-0 border-0 bg-transparent cursor-pointer rounded"
-                    defaultValue="#000000"
-                  />
-                </div>
-                <div className="flex flex-col items-center">
-                  <span className="text-[10px] text-slate-400 mb-0.5">Highlight</span>
-                  <input
-                    type="color"
-                    onChange={(e) => editor.chain().focus().toggleHighlight({ color: e.target.value }).run()}
-                    className="w-6 h-6 p-0 border-0 bg-transparent cursor-pointer rounded"
-                    defaultValue="#fef08a"
-                  />
-                </div>
-                <div className="flex flex-col items-center">
+              <div className="flex items-center gap-1.5 border-r border-slate-800 pr-4">
+                <ColorPickerDropdown
+                  label="Text Color"
+                  defaultColor="#000000"
+                  onSelectColor={(hex) => editor.chain().focus().setColor(hex).run()}
+                />
+                <ColorPickerDropdown
+                  label="Highlight"
+                  defaultColor="#fef08a"
+                  isHighlight={true}
+                  onSelectColor={(hex) => {
+                    if (hex === 'transparent') {
+                      editor.chain().focus().unsetHighlight().run();
+                    } else {
+                      editor.chain().focus().toggleHighlight({ color: hex }).run();
+                    }
+                  }}
+                />
+                <div className="flex flex-col items-center ml-1">
                   <span className="text-[10px] text-slate-400 mb-0.5">Effect</span>
                   <select
                     onChange={(e) => applyTextEffect(e.target.value)}
@@ -377,20 +378,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onOpenModal, onOpenFon
 
               {/* Lists & Indent Group */}
               <div className="flex items-center gap-1">
-                <button
-                  onClick={() => editor.chain().focus().toggleBulletList().run()}
-                  className={`p-1.5 rounded ${editor.isActive('bulletList') ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300'}`}
-                  title="Bullet List"
-                >
-                  <List className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => editor.chain().focus().toggleOrderedList().run()}
-                  className={`p-1.5 rounded ${editor.isActive('orderedList') ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300'}`}
-                  title="Numbered List"
-                >
-                  <ListOrdered className="w-4 h-4" />
-                </button>
+                <ListDropdown editor={editor} isOrdered={false} />
+                <ListDropdown editor={editor} isOrdered={true} />
                 <button
                   onClick={() => (editor.commands as any).indent?.()}
                   className="p-1.5 hover:bg-slate-800 rounded text-slate-300"
@@ -533,6 +522,32 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onOpenModal, onOpenFon
                   <option value="A3">A3 Large</option>
                   <option value="Custom">Custom Dimensions</option>
                 </select>
+
+                {activePage.pageSize === 'Custom' && (
+                  <div className="flex items-center gap-1.5 ml-1 pl-2 border-l border-slate-800 animate-in fade-in duration-150">
+                    <span className="text-slate-400 uppercase font-mono text-[10px]">W:</span>
+                    <input
+                      type="number"
+                      min={200}
+                      max={4000}
+                      value={activePage.customWidth || 800}
+                      onChange={(e) => updatePageSettings(activePage.id, { customWidth: parseInt(e.target.value) || 800 })}
+                      className="w-15 bg-slate-800 border border-slate-700 rounded px-1 py-0.5 text-center font-mono text-white focus:outline-none focus:border-indigo-500"
+                    />
+                    <span className="text-slate-500 text-[10px]">px</span>
+
+                    <span className="text-slate-400 uppercase font-mono text-[10px] ml-1">H:</span>
+                    <input
+                      type="number"
+                      min={200}
+                      max={4000}
+                      value={activePage.customHeight || 1000}
+                      onChange={(e) => updatePageSettings(activePage.id, { customHeight: parseInt(e.target.value) || 1000 })}
+                      className="w-15 bg-slate-800 border border-slate-700 rounded px-1 py-0.5 text-center font-mono text-white focus:outline-none focus:border-indigo-500"
+                    />
+                    <span className="text-slate-500 text-[10px]">px</span>
+                  </div>
+                )}
 
                 <span className="text-slate-400 font-medium ml-2">Orientation:</span>
                 <select

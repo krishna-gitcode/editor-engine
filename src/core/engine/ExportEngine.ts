@@ -18,10 +18,13 @@ export class ExportEngine {
   public static async exportToPDF(containerElement: HTMLElement, fileName: string = 'document.pdf') {
     const pages = useDocumentStore.getState().pages;
     const firstPage = pages[0] || { orientation: 'portrait', pageSize: 'A4' };
+    const formatVal = firstPage.pageSize === 'Custom'
+      ? [firstPage.customWidth || 800, firstPage.customHeight || 1000]
+      : firstPage.pageSize.toLowerCase();
     const pdf = new jsPDF({
       orientation: firstPage.orientation,
       unit: 'pt',
-      format: firstPage.pageSize.toLowerCase(),
+      format: formatVal as any,
     });
 
     const canvas = await html2canvas(containerElement, {

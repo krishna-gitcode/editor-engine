@@ -79,33 +79,59 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
   };
 
   const handleInsertMath = () => {
-    if (engine) {
+    const activeEditor = editor || (window as any).__activeEditor;
+    const isCanvasActive = (window as any).__isCanvasMode;
+    if (isCanvasActive && engine) {
       engine.addTextbox({
         text: `$$ ${latex} $$`,
         fontSize: 24,
         fill: '#1e293b',
         pluginType: 'mathjax',
       });
-    } else if (editor) {
-      editor.commands.insertContent(
-        `<div class="mathjax-render p-4 my-3 bg-slate-50 border border-slate-200 rounded-lg text-center font-mono text-base text-indigo-950 font-semibold shadow-sm" contenteditable="false" data-latex="${latex.replace(/"/g, '&quot;')}">$$ ${latex} $$</div><p></p>`
-      );
+    } else if (activeEditor) {
+      if (activeEditor.commands.insertMathJax) {
+        activeEditor.commands.insertMathJax({ latex });
+      } else {
+        activeEditor.commands.insertContent(
+          `<div class="mathjax-render p-4 my-3 bg-slate-50 border border-slate-200 rounded-lg text-center font-mono text-base text-indigo-950 font-semibold shadow-sm" contenteditable="false" data-latex="${latex.replace(/"/g, '&quot;')}">$$ ${latex} $$</div><p></p>`
+        );
+      }
+    } else if (engine) {
+      engine.addTextbox({
+        text: `$$ ${latex} $$`,
+        fontSize: 24,
+        fill: '#1e293b',
+        pluginType: 'mathjax',
+      });
     }
     onClose();
   };
 
   const handleInsertAbc = () => {
-    if (engine) {
+    const activeEditor = editor || (window as any).__activeEditor;
+    const isCanvasActive = (window as any).__isCanvasMode;
+    if (isCanvasActive && engine) {
       engine.addTextbox({
         text: `[Sheet Music: ${abcNotation.split('\n')[1] || 'Tune'}]\n${abcNotation}`,
         fontSize: 16,
         fill: '#0f172a',
         pluginType: 'abcjs',
       });
-    } else if (editor) {
-      editor.commands.insertContent(
-        `<div class="abcjs-render p-4 my-3 bg-white border border-slate-200 rounded-lg overflow-x-auto text-xs font-mono text-slate-800 shadow-sm" contenteditable="false" data-abc="${abcNotation.replace(/"/g, '&quot;')}"></div><p></p>`
-      );
+    } else if (activeEditor) {
+      if (activeEditor.commands.insertAbcJs) {
+        activeEditor.commands.insertAbcJs({ abc: abcNotation });
+      } else {
+        activeEditor.commands.insertContent(
+          `<div class="abcjs-render p-4 my-3 bg-white border border-slate-200 rounded-lg overflow-x-auto text-xs font-mono text-slate-800 shadow-sm" contenteditable="false" data-abc="${abcNotation.replace(/"/g, '&quot;')}"></div><p></p>`
+        );
+      }
+    } else if (engine) {
+      engine.addTextbox({
+        text: `[Sheet Music: ${abcNotation.split('\n')[1] || 'Tune'}]\n${abcNotation}`,
+        fontSize: 16,
+        fill: '#0f172a',
+        pluginType: 'abcjs',
+      });
     }
     onClose();
   };

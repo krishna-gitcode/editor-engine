@@ -15,7 +15,7 @@ export const IndentExtension = Extension.create({
   addGlobalAttributes() {
     return [
       {
-        types: ['paragraph', 'heading'],
+        types: ['paragraph', 'heading', 'bulletList', 'orderedList', 'listItem'],
         attributes: {
           indent: {
             default: 0,
@@ -27,7 +27,7 @@ export const IndentExtension = Extension.create({
               if (!attributes.indent || attributes.indent === 0) return {};
               return {
                 'data-indent': attributes.indent,
-                style: `padding-left: ${attributes.indent * 24}px;`,
+                style: `margin-left: ${attributes.indent * 24}px !important;`,
               };
             },
           },
@@ -38,32 +38,47 @@ export const IndentExtension = Extension.create({
 
   addCommands() {
     return {
-      indent: () => ({ tr, state, dispatch }) => {
+      indent: () => ({ tr, state, dispatch, editor }) => {
+        if (editor.can().sinkListItem('listItem')) {
+          return editor.chain().focus().sinkListItem('listItem').run();
+        }
         const { selection } = state;
         tr.doc.nodesBetween(selection.from, selection.to, (node, pos) => {
-          if (['paragraph', 'heading'].includes(node.type.name)) {
+          if (['bulletList', 'orderedList', 'listItem', 'paragraph', 'heading'].includes(node.type.name)) {
             const currentIndent = node.attrs.indent || 0;
-            if (currentIndent < 8) {
+            if (currentIndent < 12) {
               tr.setNodeMarkup(pos, undefined, { ...node.attrs, indent: currentIndent + 1 });
             }
+            return false;
           }
         });
         if (dispatch) dispatch(tr);
         return true;
       },
-      outdent: () => ({ tr, state, dispatch }) => {
+      outdent: () => ({ tr, state, dispatch, editor }) => {
+        if (editor.can().liftListItem('listItem')) {
+          return editor.chain().focus().liftListItem('listItem').run();
+        }
         const { selection } = state;
         tr.doc.nodesBetween(selection.from, selection.to, (node, pos) => {
-          if (['paragraph', 'heading'].includes(node.type.name)) {
+          if (['bulletList', 'orderedList', 'listItem', 'paragraph', 'heading'].includes(node.type.name)) {
             const currentIndent = node.attrs.indent || 0;
             if (currentIndent > 0) {
               tr.setNodeMarkup(pos, undefined, { ...node.attrs, indent: currentIndent - 1 });
             }
+            return false;
           }
         });
         if (dispatch) dispatch(tr);
         return true;
       },
+    };
+  },
+
+  addKeyboardShortcuts() {
+    return {
+      Tab: () => this.editor.commands.indent(),
+      'Shift-Tab': () => this.editor.commands.outdent(),
     };
   },
 });
