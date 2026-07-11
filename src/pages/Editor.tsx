@@ -11,6 +11,7 @@ import { ContextMenu } from '../ui/menus/ContextMenu';
 import { PluginModals } from '../ui/modals/PluginModals';
 import { FontManagerPanel } from '../ui/panels/FontManagerPanel';
 import { initPostMessageBridge } from '../api/postMessageApi';
+import { EditorShortcutManager } from '../core/shortcuts/EditorShortcutManager';
 import './Editor.css';
 
 export default function Editor() {
@@ -32,6 +33,13 @@ export default function Editor() {
     (window as any).__canvasEngine = engine;
     initPostMessageBridge(engine);
   };
+
+  React.useEffect(() => {
+    EditorShortcutManager.init();
+    return () => {
+      EditorShortcutManager.dispose();
+    };
+  }, []);
 
   React.useEffect(() => {
     (window as any).__setIsCanvasMode = setIsCanvasMode;
@@ -74,6 +82,7 @@ export default function Editor() {
         {/* Left Sidebar */}
         <LeftSidebar
           engine={engineRef.current || (window as any).__canvasEngine}
+          editor={editorInstance || (window as any).__activeEditor}
           onOpenModal={(type) => setActiveModal(type)}
         />
 

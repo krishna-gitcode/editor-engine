@@ -58,7 +58,19 @@ export const ShapeTools: React.FC<ShapeToolsProps> = ({ engine, onOpenModal }) =
             <span>Text Box</span>
           </button>
           <button
-            onClick={() => setIsDrawingPolygon(!isDrawingPolygon)}
+            onClick={() => {
+              if (isDrawingPolygon) {
+                if (engine && engine.polygonPoints && engine.polygonPoints.length >= 3) {
+                  engine.finishPolygon();
+                } else if (engine) {
+                  engine.cancelPolygon();
+                } else {
+                  setIsDrawingPolygon(false);
+                }
+              } else {
+                setIsDrawingPolygon(true);
+              }
+            }}
             className={`flex items-center gap-2.5 p-3 rounded-xl text-xs transition-all border ${
               isDrawingPolygon
                 ? 'bg-indigo-600 border-indigo-400 text-white'

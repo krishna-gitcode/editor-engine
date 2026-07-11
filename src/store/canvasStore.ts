@@ -18,6 +18,7 @@ export interface SelectedObjectProps {
   strokeWidth?: number;
   rx?: number;
   ry?: number;
+  text?: string;
   pluginType?: 'mathjax' | 'abcjs';
   templateVar?: string;
 }

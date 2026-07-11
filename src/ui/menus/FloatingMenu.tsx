@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { BubbleMenu } from '@tiptap/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { OpenRouterService } from '../../services/OpenRouterService';
+import { parseMarkdownToTipTap } from '../../services/markdownToHtml';
 import {
   Bold, Italic, Underline, Trash2, Copy, Layers, Sparkles, Wand2,
   Loader2, Check, X as XIcon, SpellCheck, Pencil,
@@ -50,11 +51,12 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor, engine, onOp
     setAiStatusMsg('Generating with AI...');
     try {
       const result = await OpenRouterService.generateText(DEFAULT_API_KEY, DEFAULT_MODEL, aiPrompt);
-      const formattedHtml = result
-        .split('\n\n')
-        .map((p) => `<p>${p.replace(/\n/g, '<br/>')}</p>`)
-        .join('');
-      editor.chain().focus().insertContent(formattedHtml).run();
+      const nodes = parseMarkdownToTipTap(result);
+      if (nodes.length > 0) {
+        editor.chain().focus().insertContent(nodes).run();
+      } else {
+        editor.chain().focus().insertContent(result).run();
+      }
       setAiPrompt('');
       closeAiPanel();
     } catch (err: any) {
@@ -83,12 +85,9 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor, engine, onOp
     setAiStatusMsg('Enhancing selected text...');
     try {
       const enhanced = await OpenRouterService.enhanceText(DEFAULT_API_KEY, DEFAULT_MODEL, selectedText);
-      // Replace selection with enhanced text
-      const formattedHtml = enhanced
-        .split('\n\n')
-        .map((p) => `<p>${p.replace(/\n/g, '<br/>')}</p>`)
-        .join('');
-      editor.chain().focus().deleteRange({ from, to }).insertContentAt(from, formattedHtml).run();
+      // Replace selection with enhanced text nodes
+      const nodes = parseMarkdownToTipTap(enhanced);
+      editor.chain().focus().deleteRange({ from, to }).insertContentAt(from, nodes.length > 0 ? nodes : enhanced).run();
       closeAiPanel();
     } catch (err: any) {
       setAiError(err.message || 'Enhancement failed.');
@@ -124,15 +123,16 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor, engine, onOp
     setAiStatusMsg(isSelectionMode ? 'Checking selected text...' : 'Checking full document...');
     try {
       const corrected = await OpenRouterService.checkSpellingGrammar(DEFAULT_API_KEY, DEFAULT_MODEL, textToCheck);
-      const formattedHtml = corrected
-        .split('\n\n')
-        .map((p) => `<p>${p.replace(/\n/g, '<br/>')}</p>`)
-        .join('');
+      const nodes = parseMarkdownToTipTap(corrected);
 
       if (isSelectionMode) {
-        editor.chain().focus().deleteRange({ from, to }).insertContentAt(from, formattedHtml).run();
+        editor.chain().focus().deleteRange({ from, to }).insertContentAt(from, nodes.length > 0 ? nodes : corrected).run();
       } else {
-        editor.chain().focus().setContent(formattedHtml).run();
+        if (nodes.length > 0) {
+          editor.chain().focus().setContent(nodes).run();
+        } else {
+          editor.chain().focus().setContent(corrected).run();
+        }
       }
       closeAiPanel();
     } catch (err: any) {
@@ -348,8 +348,8 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor, engine, onOp
                           if (empty) { setAiError('Select text first.'); setIsProcessing(false); return; }
                           const selectedText = editor.state.doc.textBetween(from, to, '\n');
                           const enhanced = await OpenRouterService.enhanceText(DEFAULT_API_KEY, DEFAULT_MODEL, selectedText, aiPrompt);
-                          const html = enhanced.split('\n\n').map(p => `<p>${p.replace(/\n/g, '<br/>')}</p>`).join('');
-                          editor.chain().focus().deleteRange({ from, to }).insertContentAt(from, html).run();
+                          const nodes = parseMarkdownToTipTap(enhanced);
+                          editor.chain().focus().deleteRange({ from, to }).insertContentAt(from, nodes.length > 0 ? nodes : enhanced).run();
                           closeAiPanel();
                         } catch (err: any) {
                           setAiError(err.message || 'Enhancement failed.');

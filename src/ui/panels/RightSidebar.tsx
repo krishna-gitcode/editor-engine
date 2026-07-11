@@ -144,25 +144,67 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ engine, editor }) =>
           <div>
             <div className="font-semibold text-slate-300 mb-2.5">Fill & Border Styling</div>
             <div className="grid grid-cols-2 gap-2">
-              <div className="flex items-center justify-between p-2 rounded bg-slate-800 border border-slate-700">
-                <span className="text-[11px] text-slate-400">Fill</span>
-                <input
-                  type="color"
-                  value={typeof selectedObject.fill === 'string' ? selectedObject.fill : '#6366f1'}
-                  onChange={(e) => handlePropChange('fill', e.target.value)}
-                  className="w-6 h-6 p-0 border-0 bg-transparent cursor-pointer rounded"
-                />
+              <div className="flex flex-col gap-1 p-2 rounded bg-slate-800 border border-slate-700">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-slate-400">Fill</span>
+                  <input
+                    type="color"
+                    value={typeof selectedObject.fill === 'string' && selectedObject.fill !== 'transparent' ? selectedObject.fill : '#6366f1'}
+                    onChange={(e) => handlePropChange('fill', e.target.value)}
+                    disabled={selectedObject.fill === 'transparent'}
+                    className="w-6 h-6 p-0 border-0 bg-transparent cursor-pointer rounded disabled:opacity-40"
+                  />
+                </div>
+                <button
+                  onClick={() => handlePropChange('fill', selectedObject.fill === 'transparent' ? '#6366f1' : 'transparent')}
+                  className={`w-full py-1 px-1.5 rounded text-[10px] font-medium transition-all flex items-center justify-center gap-1 ${
+                    selectedObject.fill === 'transparent'
+                      ? 'bg-indigo-600 text-white shadow'
+                      : 'bg-slate-900 hover:bg-slate-700 text-slate-300'
+                  }`}
+                >
+                  <span>{selectedObject.fill === 'transparent' ? '🚫 Transparent' : '✨ Make Transparent'}</span>
+                </button>
               </div>
-              <div className="flex items-center justify-between p-2 rounded bg-slate-800 border border-slate-700">
-                <span className="text-[11px] text-slate-400">Stroke</span>
-                <input
-                  type="color"
-                  value={typeof selectedObject.stroke === 'string' ? selectedObject.stroke : '#334155'}
-                  onChange={(e) => handlePropChange('stroke', e.target.value)}
-                  className="w-6 h-6 p-0 border-0 bg-transparent cursor-pointer rounded"
-                />
+              <div className="flex flex-col justify-between p-2 rounded bg-slate-800 border border-slate-700">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-slate-400">Stroke</span>
+                  <input
+                    type="color"
+                    value={typeof selectedObject.stroke === 'string' ? selectedObject.stroke : '#334155'}
+                    onChange={(e) => handlePropChange('stroke', e.target.value)}
+                    className="w-6 h-6 p-0 border-0 bg-transparent cursor-pointer rounded"
+                  />
+                </div>
+                <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-700">
+                  Color for outline border
+                </div>
               </div>
             </div>
+
+            {/* Insertion of text into shapes */}
+            {['rect', 'circle', 'triangle', 'polygon', 'path', 'group'].includes(selectedObject.type || '') && (
+              <div className="mt-3 p-2.5 rounded bg-slate-800/80 border border-slate-700 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-amber-400">📝 Text Inside Shape</span>
+                  <span className="text-[10px] text-slate-400">Overlay Center</span>
+                </div>
+                <input
+                  type="text"
+                  value={selectedObject.text || ''}
+                  onChange={(e) => {
+                    if (engine?.addOrUpdateShapeText) {
+                      engine.addOrUpdateShapeText(e.target.value);
+                    } else {
+                      handlePropChange('text', e.target.value);
+                    }
+                  }}
+                  placeholder="Type text inside shape..."
+                  className="w-full bg-slate-900 border border-slate-700 rounded p-1.5 text-xs text-slate-100 focus:outline-none focus:border-amber-500 font-sans"
+                />
+              </div>
+            )}
+
             <div className="mt-2 flex flex-col">
               <div className="flex justify-between text-[11px] text-slate-400 mb-1">
                 <span>Stroke Width</span>

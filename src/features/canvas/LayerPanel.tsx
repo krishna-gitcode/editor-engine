@@ -176,35 +176,35 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({ engine }) => {
                 <span className="truncate font-medium text-slate-200 max-w-[110px]">{layer.name}</span>
                 <div className="flex items-center gap-0.5">
                   <button
-                    onClick={() => engine?.toggleVisibilitySelected()}
+                    onClick={() => engine?.toggleVisibilitySelected(layer.id)}
                     className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-white"
                     title="Toggle Visibility"
                   >
                     {layer.visible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5 text-slate-500" />}
                   </button>
                   <button
-                    onClick={() => engine?.toggleLockSelected()}
+                    onClick={() => engine?.toggleLockSelected(layer.id)}
                     className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-white"
                     title="Toggle Lock"
                   >
                     {layer.locked ? <Lock className="w-3.5 h-3.5 text-amber-400" /> : <Unlock className="w-3.5 h-3.5" />}
                   </button>
                   <button
-                    onClick={() => engine?.bringForward()}
+                    onClick={() => engine?.bringForward(layer.id)}
                     className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-white"
                     title="Bring Forward"
                   >
                     <ArrowUp className="w-3.5 h-3.5" />
                   </button>
                   <button
-                    onClick={() => engine?.sendBackward()}
+                    onClick={() => engine?.sendBackward(layer.id)}
                     className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-white"
                     title="Send Backward"
                   >
                     <ArrowDown className="w-3.5 h-3.5" />
                   </button>
                   <button
-                    onClick={() => engine?.deleteSelected()}
+                    onClick={() => engine?.deleteSelected(layer.id)}
                     className="p-1 hover:bg-slate-700 rounded text-red-400 hover:bg-red-500/20"
                     title="Delete Object"
                   >

@@ -322,13 +322,13 @@ To ensure rapid delivery, architectural stability, and minimal regression, the 2
 | [ ] Implement `ColorPickerDropdown.tsx` with Recommended & Recent palette memory | `src/ui/components/ColorPickerDropdown.tsx` | Phase 3 |
 | [ ] Enable `@tiptap/extension-table` resize handles & rotation container | `src/features/document/DocumentPage.tsx` | Phase 4 |
 | [ ] Build custom `IframeNodeView.tsx` with 4-corner drag resize & float toolbar | `src/features/document/nodeviews/IframeNodeView.tsx` | Phase 4 |
-| [ ] Integrate Markdown-to-HTML parser (`marked` / regex) into AI insertion flow | `src/ui/modals/PluginModals.tsx` | Phase 5 |
-| [ ] Expand MathJax symbol buttons (Algebra, Calculus, Greek, Matrices) & Live preview | `src/ui/modals/PluginModals.tsx` | Phase 5 |
-| [ ] Integrate `abcjs.synth` MIDI audio player with instrument dropdown inside modal | `src/ui/modals/PluginModals.tsx` | Phase 5 |
-| [ ] Add `<mathjax>` & `<abcjs>` tag extraction into OCR prompt & post-parser | `src/services/ocrProcessor.ts` | Phase 5 |
-| [ ] Implement AI Enhance button on active selection with Diff/Preview confirmation | `src/features/workspace/WorkspaceCanvas.tsx` | Phase 5 |
-| [ ] Add Google Fonts live search injection & Web Stock Photo query endpoints | `src/ui/panels/FontManagerPanel.tsx` | Phase 5 |
-| [ ] Populate `CanvaStudioPanel.tsx` with scalable vector SVG badges & icons | `src/ui/panels/CanvaStudioPanel.tsx` | Phase 5 |
+| [x] Integrate Markdown-to-HTML parser (`marked` / regex) into AI insertion flow | `src/services/markdownToHtml.ts` + `src/ui/modals/PluginModals.tsx` | Phase 5 (Completed) |
+| [x] Expand MathJax symbol buttons (Algebra, Calculus, Greek, Matrices) & Live preview | `src/ui/modals/PluginModals.tsx` | Phase 5 (Completed) |
+| [x] Integrate `abcjs.synth` MIDI audio player with instrument dropdown inside modal | `src/ui/modals/PluginModals.tsx` | Phase 5 (Completed) |
+| [x] Add `<mathjax>` & `<abcjs>` tag extraction into OCR prompt & post-parser | `src/services/markdownToHtml.ts` (parseOcrOutput) | Phase 5 (Completed) |
+| [x] AI Chart Builder via OpenRouter (bar/line/pie JSON → chart node) | `src/ui/modals/PluginModals.tsx` (chart modal) | Phase 5 (Completed) |
+| [x] Add Google Fonts live search injection & Web Stock Photo query endpoints | `src/ui/panels/FontManagerPanel.tsx` + `WebImageSearch.tsx` | Phase 5 (Completed) |
+| [x] Populate `CanvaStudioPanel.tsx` with scalable vector SVG badges & icons | `src/ui/panels/CanvaStudioPanel.tsx` | Phase 5 (Completed) |
 | [ ] Build `PreviewModal.tsx` with Document, PDF, and Infinite Web Page tabs | `src/ui/modals/PreviewModal.tsx` | Phase 6 |
 | [ ] Inject `@media print` CSS isolating `.document-page-card` and hiding UI | `src/index.css` | Phase 6 |
 | [ ] Create `PdfExportDialog.tsx` supporting Original, High, Standard, and Compressed tiers | `src/ui/modals/PdfExportDialog.tsx` | Phase 6 |

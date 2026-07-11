@@ -6,12 +6,12 @@ export const CustomTableHeader = TableHeader.extend({
     return {
       ...this.parent?.(),
       width: {
-        default: null,
-        parseHTML: (element) => element.style.width || element.getAttribute('width') || null,
+        default: '100%',
+        parseHTML: (element) => element.style.width || element.getAttribute('width') || '100%',
       },
       height: {
-        default: null,
-        parseHTML: (element) => element.style.height || element.getAttribute('height') || null,
+        default: '100%',
+        parseHTML: (element) => element.style.height || element.getAttribute('height') || '100%',
       },
       backgroundColor: {
         default: null,
@@ -33,21 +33,16 @@ export const CustomTableHeader = TableHeader.extend({
   },
 
   renderHTML({ HTMLAttributes, node }) {
-    const { width, height, backgroundColor, borderColor, borderWidth, borderStyle = 'solid' } = node.attrs;
+    const { width = '100%', height = '100%', backgroundColor, borderColor, borderWidth, borderStyle = 'solid' } = node.attrs;
 
     const styles: string[] = [];
     const colW = node.attrs.colwidth?.[0];
-    const cellWidth = width ? (typeof width === 'number' ? `${width}px` : width)
-      : colW ? `${colW}px`
-      : null;
-    if (cellWidth) {
-      styles.push(`width: ${cellWidth}`);
-      styles.push(`min-width: ${cellWidth}`);
-    }
-    if (height) {
-      const h = typeof height === 'number' ? `${height}px` : height;
-      styles.push(`height: ${h}`);
-    }
+    const cellWidth = colW ? `${colW}px` : (width ? (typeof width === 'number' ? `${width}px` : width) : '100%');
+    styles.push(`width: ${cellWidth}`);
+    styles.push(`min-width: ${cellWidth}`);
+
+    const cellHeight = height ? (typeof height === 'number' ? `${height}px` : height) : '100%';
+    styles.push(`height: ${cellHeight}`);
     if (backgroundColor) styles.push(`background-color: ${backgroundColor}`);
     if (borderColor) styles.push(`border-color: ${borderColor}`);
     if (borderWidth) styles.push(`border-width: ${borderWidth}`);

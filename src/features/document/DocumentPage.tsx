@@ -22,6 +22,7 @@ import { LineHeightExtension } from './LineHeightExtension';
 import { IframeExtension } from './IframeExtension';
 import { MathJaxExtension } from './MathJaxExtension';
 import { AbcJsExtension } from './AbcJsExtension';
+import { ChartExtension } from './ChartExtension';
 import { useDocumentStore } from '../../store/documentStore';
 import { PluginService } from '../../services/PluginService';
 import { PlusMenu } from './PlusMenu';
@@ -65,6 +66,7 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({ onEditorReady, onOpe
       IframeExtension,
       MathJaxExtension,
       AbcJsExtension,
+      ChartExtension,
     ],
     content: activePage.content,
     editorProps: {

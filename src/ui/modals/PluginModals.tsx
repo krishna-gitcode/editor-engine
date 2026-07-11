@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { PluginService } from '../../services/PluginService';
 import { OpenRouterService } from '../../services/OpenRouterService';
 import { PdfService, PdfPageImage } from '../../services/PdfService';
-import { X, Sigma, Music, Check, Sparkles, Wand2, Image as ImageIcon, FileText, Copy, Loader2, UploadCloud, FileType2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { parseMarkdownToTipTap, parseOcrOutput } from '../../services/markdownToHtml';
+import { X, Sigma, Music, Check, Sparkles, Wand2, Image as ImageIcon, FileText, Copy, Loader2, UploadCloud, FileType2, ChevronLeft, ChevronRight, BarChart2, Play, Square, ChevronDown } from 'lucide-react';
 import './PluginModals.css';
 
 interface PluginModalsProps {
-  activeModal: 'mathjax' | 'abcjs' | 'openrouter' | null;
+  activeModal: 'mathjax' | 'abcjs' | 'openrouter' | 'chart' | null;
   onClose: () => void;
   engine: any;
   editor?: any;
@@ -36,7 +37,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
 
   // OCR state — image mode
   const [ocrImage, setOcrImage] = useState<string | null>(null);
-  const [ocrPrompt, setOcrPrompt] = useState<string>('Extract all text, tables, equations, and structural headings from this document image accurately into clean Markdown format.');
+  const [ocrPrompt, setOcrPrompt] = useState<string>('Extract all text, tables, equations, and structural headings from this document image accurately into clean Markdown format. If you detect mathematical equations, wrap them inside <mathjax>LATEX_HERE</mathjax> tags. If you detect musical ABC notation, wrap it inside <abcjs>ABC_HERE</abcjs> tags. Do not output raw unparsed formulas outside these tags.');
   const [ocrOutput, setOcrOutput] = useState<string>('');
   const [isExtracting, setIsExtracting] = useState<boolean>(false);
   const [ocrError, setOcrError] = useState<string | null>(null);
@@ -52,6 +53,24 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
   const abcPreviewRef = useRef<HTMLDivElement>(null);
   const abcAudioRef = useRef<HTMLDivElement>(null);
   const ocrFileInputRef = useRef<HTMLInputElement>(null);
+
+  // ABCjs instrument & playback state
+  const [abcInstrument, setAbcInstrument] = useState<number>(0); // MIDI program 0 = Grand Piano
+  const [isAbcPlaying, setIsAbcPlaying] = useState<boolean>(false);
+
+  // AI & Manual Chart state
+  const [chartMode, setChartMode] = useState<'manual' | 'ai'>('manual');
+  const [chartType, setChartType] = useState<'bar' | 'line' | 'pie' | 'doughnut'>('bar');
+  const [chartTitle, setChartTitle] = useState<string>('Quarterly Performance 2025');
+  const [chartLabels, setChartLabels] = useState<string>('Jan, Feb, Mar, Apr');
+  const [chartDataValues, setChartDataValues] = useState<string>('45, 78, 62, 90');
+  const [chartPrompt, setChartPrompt] = useState<string>('Bar chart comparing monthly sales for Jan-Jun 2025 vs 2024');
+  const [chartOutput, setChartOutput] = useState<string>('');
+  const [isChartGenerating, setIsChartGenerating] = useState<boolean>(false);
+  const [chartError, setChartError] = useState<string | null>(null);
+
+  // Math symbol palette tab (must be before early return guard)
+  const [activeSymbolTab, setActiveSymbolTab] = useState(0);
 
   // Debounced live preview rendering for Math & Music
   useEffect(() => {
@@ -92,9 +111,10 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
       if (activeEditor.commands.insertMathJax) {
         activeEditor.commands.insertMathJax({ latex });
       } else {
-        activeEditor.commands.insertContent(
-          `<div class="mathjax-render p-4 my-3 bg-slate-50 border border-slate-200 rounded-lg text-center font-mono text-base text-indigo-950 font-semibold shadow-sm" contenteditable="false" data-latex="${latex.replace(/"/g, '&quot;')}">$$ ${latex} $$</div><p></p>`
-        );
+        activeEditor.chain().focus().insertContent({
+          type: 'mathJax',
+          attrs: { latex },
+        }).run();
       }
     } else if (engine) {
       engine.addTextbox({
@@ -200,24 +220,142 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
     }
   };
 
+  /**
+   * Core insertion helper — ALWAYS inserts into TipTap as native editable nodes.
+   * Canvas mode does NOT affect where AI text/table content lands.
+   * The TipTap document editor is always the target for AI-generated content.
+   */
+  const insertIntoEditor = (markdown: string) => {
+    const activeEditor = editor || (window as any).__activeEditor;
+
+    if (!activeEditor) {
+      console.warn('[GridLeaf Editor] No active TipTap editor found. Cannot insert AI content.');
+      return false;
+    }
+
+    const nodes = parseMarkdownToTipTap(markdown);
+    if (nodes.length === 0) return false;
+
+    // insertContent accepts an array of TipTap JSON nodes directly
+    activeEditor.chain().focus().insertContent(nodes).run();
+    return true;
+  };
+
+  /** Insert AI-generated markdown as 100% editable native TipTap nodes (#3) */
   const handleInsertAIOutput = (text: string) => {
     if (!text.trim()) return;
-    if (engine) {
-      engine.addTextbox({
-        text: text,
-        fontSize: 16,
-        fill: '#0f172a',
-      });
-    } else if (editor) {
-      // Split paragraphs and insert cleanly into TipTap
-      const formattedHtml = text
-        .split('\n\n')
-        .map((p) => `<p>${p.replace(/\n/g, '<br/>')}</p>`)
-        .join('');
-      editor.commands.insertContent(formattedHtml);
+    insertIntoEditor(text);
+    onClose();
+  };
+
+  /** Insert OCR output — math/abcjs segments go to their node views, rest to TipTap (#17) */
+  const handleInsertOcrOutput = (text: string) => {
+    if (!text.trim()) return;
+    const activeEditor = editor || (window as any).__activeEditor;
+    const segments = parseOcrOutput(text);
+
+    if (activeEditor) {
+      for (const seg of segments) {
+        if (seg.type === 'mathjax') {
+          if (activeEditor.commands.insertMathJax) {
+            activeEditor.commands.insertMathJax({ latex: seg.content });
+          } else {
+            activeEditor.chain().focus().insertContent({
+              type: 'mathJax',
+              attrs: { latex: seg.content },
+            }).run();
+          }
+        } else if (seg.type === 'abcjs') {
+          if (activeEditor.commands.insertAbcJs) {
+            activeEditor.commands.insertAbcJs({ abc: seg.content });
+          } else {
+            activeEditor.chain().focus().insertContent({
+              type: 'abcJs',
+              attrs: { abc: seg.content },
+            }).run();
+          }
+        } else if (seg.nodes && seg.nodes.length > 0) {
+          activeEditor.chain().focus().insertContent(seg.nodes).run();
+        }
+      }
     }
     onClose();
   };
+
+
+  /** Generate AI chart data via OpenRouter (#19) */
+  const handleGenerateChart = async () => {
+    setIsChartGenerating(true);
+    setChartError(null);
+    try {
+      const systemPrompt = 'You are a data visualization expert. When given a chart description, respond ONLY with a JSON object in this exact format: {"type":"bar"|"line"|"pie"|"doughnut","title":"...","labels":[...],"datasets":[{"label":"...","data":[...],"color":"..."}]}. No markdown, no explanation, only valid JSON.';
+      const res = await OpenRouterService.generateText(apiKey, selectedModel, chartPrompt, systemPrompt);
+      const cleaned = res.trim();
+      setChartOutput(cleaned);
+      try {
+        const parsed = JSON.parse(cleaned);
+        if (parsed.type) setChartType(parsed.type);
+        if (parsed.title) setChartTitle(parsed.title);
+        if (parsed.labels) setChartLabels(parsed.labels.join(', '));
+        if (parsed.datasets?.[0]?.data) setChartDataValues(parsed.datasets[0].data.join(', '));
+      } catch {
+        // ignore JSON parse error for manual fields
+      }
+    } catch (err: any) {
+      setChartError(err.message || 'Chart generation failed.');
+    } finally {
+      setIsChartGenerating(false);
+    }
+  };
+
+  /** Insert chart JSON or manual chart data as a native chartBlock node into the document (#19) */
+  const handleInsertChart = () => {
+    let chartData: any;
+    if (chartMode === 'manual') {
+      const labels = chartLabels.split(',').map((s) => s.trim()).filter(Boolean);
+      const data = chartDataValues.split(',').map((v) => parseFloat(v.trim()) || 0);
+      chartData = {
+        type: chartType,
+        title: chartTitle || 'Data Chart',
+        labels: labels.length > 0 ? labels : ['Item A', 'Item B', 'Item C'],
+        datasets: [{ label: 'Series 1', data: data.length > 0 ? data : [10, 20, 30], color: '#6366f1' }],
+      };
+    } else {
+      if (!chartOutput.trim()) return;
+      try {
+        chartData = JSON.parse(chartOutput);
+      } catch {
+        chartData = {
+          type: 'bar',
+          title: 'AI Chart',
+          labels: ['Data 1', 'Data 2', 'Data 3'],
+          datasets: [{ label: 'AI Series', data: [50, 75, 60], color: '#6366f1' }],
+        };
+      }
+    }
+
+    const activeEditor = editor || (window as any).__activeEditor;
+    if (activeEditor) {
+      if (activeEditor.commands.insertChart) {
+        activeEditor.commands.insertChart({ chartData });
+      } else {
+        activeEditor.chain().focus().insertContent({
+          type: 'chartBlock',
+          attrs: { chartData },
+        }).run();
+      }
+    } else if (engine) {
+      const labelsStr = (chartData.labels || []).join(', ');
+      engine.addTextbox({
+        text: `Chart: ${chartData.title}\nType: ${chartData.type}\nLabels: ${labelsStr}`,
+        fontSize: 16,
+        fill: '#1e293b',
+      });
+    }
+    onClose();
+  };
+
+
 
   const handleOcrFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -277,17 +415,56 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
     }
   };
 
-  const SYMBOLS = [
-    { label: '√', code: '\\sqrt{x}' },
-    { label: 'a/b', code: '\\frac{a}{b}' },
-    { label: '∫', code: '\\int_{0}^{\\infty} x dx' },
-    { label: '∑', code: '\\sum_{i=1}^{n} i' },
-    { label: 'α', code: '\\alpha' },
-    { label: 'β', code: '\\beta' },
-    { label: 'π', code: '\\pi' },
-    { label: '±', code: '\\pm' },
-    { label: '≤', code: '\\leq' },
-    { label: '≥', code: '\\geq' },
+  const SYMBOL_CATEGORIES: { label: string; symbols: { label: string; code: string }[] }[] = [
+    {
+      label: 'Basic',
+      symbols: [
+        { label: '√x', code: '\\sqrt{x}' }, { label: 'a/b', code: '\\frac{a}{b}' },
+        { label: 'x²', code: 'x^{2}' }, { label: 'xₙ', code: 'x_{n}' },
+        { label: '±', code: '\\pm' }, { label: '÷', code: '\\div' },
+        { label: '×', code: '\\times' }, { label: '≈', code: '\\approx' },
+        { label: '≠', code: '\\neq' }, { label: '≤', code: '\\leq' },
+        { label: '≥', code: '\\geq' }, { label: '∞', code: '\\infty' },
+      ],
+    },
+    {
+      label: 'Calculus',
+      symbols: [
+        { label: '∫', code: '\\int_{0}^{\\infty}' }, { label: '∬', code: '\\iint' },
+        { label: '∮', code: '\\oint' }, { label: '∑', code: '\\sum_{i=1}^{n}' },
+        { label: '∏', code: '\\prod_{i=1}^{n}' }, { label: 'lim', code: '\\lim_{x \\to \\infty}' },
+        { label: 'd/dx', code: '\\frac{d}{dx}' }, { label: '∂', code: '\\partial' },
+        { label: '∇', code: '\\nabla' }, { label: 'Δ', code: '\\Delta' },
+      ],
+    },
+    {
+      label: 'Trig',
+      symbols: [
+        { label: 'sin θ', code: '\\sin(\\theta)' }, { label: 'cos θ', code: '\\cos(\\theta)' },
+        { label: 'tan θ', code: '\\tan(\\theta)' }, { label: 'log', code: '\\log_{b}(x)' },
+        { label: 'ln x', code: '\\ln(x)' }, { label: 'e^x', code: 'e^{x}' },
+      ],
+    },
+    {
+      label: 'Greek',
+      symbols: [
+        { label: 'α', code: '\\alpha' }, { label: 'β', code: '\\beta' },
+        { label: 'γ', code: '\\gamma' }, { label: 'δ', code: '\\delta' },
+        { label: 'θ', code: '\\theta' }, { label: 'λ', code: '\\lambda' },
+        { label: 'μ', code: '\\mu' }, { label: 'π', code: '\\pi' },
+        { label: 'σ', code: '\\sigma' }, { label: 'φ', code: '\\phi' },
+        { label: 'ω', code: '\\omega' }, { label: 'Ω', code: '\\Omega' },
+      ],
+    },
+    {
+      label: 'Matrix',
+      symbols: [
+        { label: '2×2', code: '\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}' },
+        { label: '3×3', code: '\\begin{pmatrix} a & b & c \\\\ d & e & f \\\\ g & h & i \\end{pmatrix}' },
+        { label: 'cases', code: '\\begin{cases} x & \\text{if } x > 0 \\\\ -x & \\text{if } x < 0 \\end{cases}' },
+        { label: '[ ]', code: '\\begin{bmatrix} a & b \\\\ c & d \\end{bmatrix}' },
+      ],
+    },
   ];
 
   return (
@@ -306,6 +483,12 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
               <>
                 <Music className="w-5 h-5 text-pink-400" />
                 <span>ABCjs Sheet Music & MIDI Studio</span>
+              </>
+            )}
+            {activeModal === 'chart' && (
+              <>
+                <BarChart2 className="w-5 h-5 text-amber-400" />
+                <span>AI Chart Builder Studio</span>
               </>
             )}
             {activeModal === 'openrouter' && (
@@ -360,7 +543,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
         {/* Content Body */}
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto text-xs text-slate-200">
           {/* ================= MATHJAX / ABCJS ================= */}
-          {activeModal !== 'openrouter' && (
+          {activeModal !== 'openrouter' && activeModal !== 'chart' && (
             <>
               <div className="flex flex-col gap-4">
                 <div>
@@ -378,13 +561,26 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
 
                 {activeModal === 'mathjax' && (
                   <div>
-                    <span className="text-[11px] font-medium text-slate-400 block mb-2">Visual Symbol Keypad</span>
-                    <div className="grid grid-cols-5 gap-1.5">
-                      {SYMBOLS.map((s, idx) => (
+                    <span className="text-[11px] font-medium text-slate-400 block mb-2">Symbol Palette</span>
+                    {/* Category tabs */}
+                    <div className="flex gap-1 mb-2 flex-wrap">
+                      {SYMBOL_CATEGORIES.map((cat, idx) => (
+                        <button
+                          key={cat.label}
+                          onClick={() => setActiveSymbolTab(idx)}
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all ${activeSymbolTab === idx ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-200'}`}
+                        >
+                          {cat.label}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-6 gap-1.5 max-h-24 overflow-y-auto">
+                      {SYMBOL_CATEGORIES[activeSymbolTab].symbols.map((s, idx) => (
                         <button
                           key={idx}
                           onClick={() => setLatex((l) => l + ' ' + s.code)}
-                          className="p-2 rounded bg-slate-800 hover:bg-slate-700 text-center font-mono text-xs font-semibold text-indigo-300 transition-colors"
+                          title={s.code}
+                          className="p-1.5 rounded bg-slate-800 hover:bg-indigo-600 text-center font-mono text-[10px] font-semibold text-indigo-300 hover:text-white transition-colors leading-tight"
                         >
                           {s.label}
                         </button>
@@ -394,25 +590,75 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                 )}
 
                 {activeModal === 'abcjs' && (
-                  <div>
-                    <span className="text-[11px] font-medium text-slate-400 block mb-2">Preset Tune Templates</span>
+                  <div className="flex flex-col gap-3">
+                    {/* Instrument selector */}
+                    <div>
+                      <span className="text-[11px] font-medium text-slate-400 block mb-1.5">Instrument (MIDI Program)</span>
+                      <div className="relative">
+                        <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-2.5 pointer-events-none" />
+                        <select
+                          value={abcInstrument}
+                          onChange={(e) => { setAbcInstrument(Number(e.target.value)); setIsAbcPlaying(false); }}
+                          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-pink-500 appearance-none pr-8"
+                        >
+                          <option value={0}>🎹 Acoustic Grand Piano</option>
+                          <option value={25}>🎸 Acoustic Guitar (Steel)</option>
+                          <option value={40}>🎻 Violin</option>
+                          <option value={73}>🪈 Flute</option>
+                          <option value={56}>🎺 Trumpet</option>
+                          <option value={104}>🪗 Sitar</option>
+                          <option value={11}>🎹 Vibraphone</option>
+                          <option value={19}>🪘 Church Organ</option>
+                        </select>
+                      </div>
+                    </div>
+                    {/* Play / Stop control */}
                     <div className="flex gap-2">
                       <button
-                        onClick={() =>
-                          setAbcNotation('X:1\nT:C Major Scale\nM:4/4\nL:1/4\nK:C\nC D E F | G A B c |]')
-                        }
-                        className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300"
+                        onClick={() => {
+                          const abcjs = (window as any).ABCJS;
+                          if (!abcjs || !abcAudioRef.current) return;
+                          if (isAbcPlaying) {
+                            abcjs.stopPlaying?.();
+                            setIsAbcPlaying(false);
+                          } else {
+                            setIsAbcPlaying(true);
+                            try {
+                              abcjs.renderAbc(abcPreviewRef.current, abcNotation, { responsive: 'resize' });
+                              const audioCtx = abcjs.synth.activeAudioContext?.() ?? new AudioContext();
+                              const synthControl = new abcjs.synth.SynthController();
+                              synthControl.load(abcAudioRef.current, null, { displayPlay: false, displayProgress: false });
+                              const midiBuffer = new abcjs.synth.CreateSynth();
+                              const visualObj = abcjs.renderAbc('*', abcNotation, {})[0];
+                              midiBuffer.init({ visualObj, audioContext: audioCtx, millisecondsPerMeasure: 1000, options: { program: abcInstrument } })
+                                .then(() => midiBuffer.prime())
+                                .then(() => { synthControl.setTune(visualObj, false, { chordsOff: false }); synthControl.play(); })
+                                .catch(() => setIsAbcPlaying(false));
+                            } catch { setIsAbcPlaying(false); }
+                          }
+                        }}
+                        className={`flex-1 py-2 rounded-xl flex items-center justify-center gap-2 font-medium text-xs transition-all ${isAbcPlaying ? 'bg-red-600 hover:bg-red-500 text-white' : 'bg-pink-600 hover:bg-pink-500 text-white'}`}
                       >
-                        C Major Scale
+                        {isAbcPlaying ? <><Square className="w-3.5 h-3.5" /> Stop Playback</> : <><Play className="w-3.5 h-3.5" /> Play MIDI</>}
                       </button>
-                      <button
-                        onClick={() =>
-                          setAbcNotation('X:2\nT:Twinkle Twinkle\nM:4/4\nL:1/4\nK:C\nC C G G | A A G2 | F F E E | D D C2 |]')
-                        }
-                        className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300"
-                      >
-                        Twinkle Melody
-                      </button>
+                    </div>
+                    {/* Preset tunes */}
+                    <div>
+                      <span className="text-[11px] font-medium text-slate-400 block mb-1.5">Preset Tune Templates</span>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => setAbcNotation('X:1\nT:C Major Scale\nM:4/4\nL:1/4\nK:C\nC D E F | G A B c |]')}
+                          className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"
+                        >C Major Scale</button>
+                        <button
+                          onClick={() => setAbcNotation('X:2\nT:Twinkle Twinkle\nM:4/4\nL:1/4\nK:C\nC C G G | A A G2 | F F E E | D D C2 |]')}
+                          className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"
+                        >Twinkle Melody</button>
+                        <button
+                          onClick={() => setAbcNotation('X:3\nT:Raga Yaman\nM:4/4\nL:1/4\nK:G\nN G A B ^C | D E F G |]')}
+                          className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"
+                        >Raga Yaman</button>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -726,12 +972,157 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                     Close
                   </button>
                   <button
-                    onClick={() => handleInsertAIOutput(ocrOutput)}
+                    onClick={() => handleInsertOcrOutput(ocrOutput)}
                     disabled={!ocrOutput}
                     className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 font-medium text-white shadow-lg flex items-center justify-center gap-2 transition-all"
                   >
                     <Check className="w-4 h-4" />
                     <span>Insert OCR Result onto Canvas</span>
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ================= AI & MANUAL CHART BUILDER ================= */}
+          {activeModal === 'chart' && (
+            <>
+              <div className="flex flex-col gap-4">
+                {/* Tabs */}
+                <div className="flex p-1 bg-slate-950 border border-slate-800 rounded-xl gap-1">
+                  <button
+                    onClick={() => setChartMode('manual')}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      chartMode === 'manual' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    🛠️ Manual Chart Builder
+                  </button>
+                  <button
+                    onClick={() => setChartMode('ai')}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      chartMode === 'ai' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    ⚡ AI Chart Generator
+                  </button>
+                </div>
+
+                {chartMode === 'manual' ? (
+                  <div className="space-y-3.5 animate-in fade-in duration-150">
+                    <div>
+                      <label className="block text-[11px] font-medium text-slate-400 mb-1">Chart Type</label>
+                      <div className="grid grid-cols-4 gap-1.5 bg-slate-950 p-1.5 border border-slate-800 rounded-xl">
+                        {(['bar', 'line', 'pie', 'doughnut'] as const).map((t) => (
+                          <button
+                            key={t}
+                            onClick={() => setChartType(t)}
+                            className={`py-1.5 rounded-lg text-[11px] font-medium capitalize transition-all flex items-center justify-center gap-1.5 ${
+                              chartType === t ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                            }`}
+                          >
+                            <span>{t}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-medium text-slate-400 mb-1">Chart Title</label>
+                      <input
+                        type="text"
+                        value={chartTitle}
+                        onChange={(e) => setChartTitle(e.target.value)}
+                        placeholder="e.g. Quarterly Performance 2025"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100 focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-medium text-slate-400 mb-1">Data Labels (comma-separated)</label>
+                      <input
+                        type="text"
+                        value={chartLabels}
+                        onChange={(e) => setChartLabels(e.target.value)}
+                        placeholder="e.g. Jan, Feb, Mar, Apr"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100 focus:outline-none focus:border-amber-500 font-mono"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-medium text-slate-400 mb-1">Data Values (comma-separated numbers)</label>
+                      <input
+                        type="text"
+                        value={chartDataValues}
+                        onChange={(e) => setChartDataValues(e.target.value)}
+                        placeholder="e.g. 45, 78, 62, 90"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100 focus:outline-none focus:border-amber-500 font-mono"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3.5 animate-in fade-in duration-150">
+                    <div>
+                      <label className="block text-[11px] font-medium text-slate-400 mb-1.5">Describe Your Chart</label>
+                      <textarea
+                        value={chartPrompt}
+                        onChange={(e) => setChartPrompt(e.target.value)}
+                        placeholder="e.g. Bar chart comparing quarterly revenue 2024 vs 2025..."
+                        className="w-full h-36 bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-amber-500 resize-none"
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {['Bar chart for student scores', 'Line chart showing monthly growth', 'Pie chart for budget distribution', 'Compare 2024 vs 2025 revenue'].map((p) => (
+                        <button key={p} onClick={() => setChartPrompt(p)} className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-amber-700 text-[10px] text-amber-300 transition-all">{p}</button>
+                      ))}
+                    </div>
+                    {chartError && <div className="p-3 rounded-lg bg-red-950/50 border border-red-800 text-red-300 text-xs">{chartError}</div>}
+                    <button
+                      onClick={handleGenerateChart}
+                      disabled={isChartGenerating}
+                      className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-600 to-orange-500 hover:from-amber-500 hover:to-orange-400 font-medium text-white shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 transition-all"
+                    >
+                      {isChartGenerating ? <><Loader2 className="w-4 h-4 animate-spin" /><span>Generating Chart Data...</span></> : <><BarChart2 className="w-4 h-4" /><span>Generate Chart via AI</span></>}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <div className="flex-1 flex flex-col">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[11px] font-medium text-slate-400">Chart Preview & Configuration</span>
+                    {chartOutput && chartMode === 'ai' && <button onClick={() => navigator.clipboard.writeText(chartOutput)} className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-white"><Copy className="w-3 h-3" /><span>Copy JSON</span></button>}
+                  </div>
+                  <div className="flex-1 min-h-[180px] p-4 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 overflow-y-auto font-mono text-xs leading-relaxed flex flex-col justify-center items-center gap-2">
+                    {chartMode === 'manual' ? (
+                      <div className="text-center space-y-1">
+                        <div className="text-base font-sans font-bold text-amber-400">📊 {chartTitle || 'Untitled Chart'}</div>
+                        <div className="text-[11px] font-sans text-slate-400 uppercase tracking-wide">Type: {chartType} Chart</div>
+                        <div className="text-xs font-mono text-slate-300 pt-2 border-t border-slate-800">
+                          <div><span className="text-slate-500">Labels:</span> [{chartLabels}]</div>
+                          <div><span className="text-slate-500">Values:</span> [{chartDataValues}]</div>
+                        </div>
+                        <div className="text-[11px] font-sans text-emerald-400 pt-2">✨ Ready to insert as interactive TipTap chart node</div>
+                      </div>
+                    ) : (
+                      chartOutput ? (
+                        <div className="whitespace-pre-wrap text-left w-full">{chartOutput}</div>
+                      ) : (
+                        <span className="text-slate-500 italic text-center">AI chart JSON will appear here. Or switch to Manual Chart Builder tab to create customized charts directly!</span>
+                      )
+                    )}
+                  </div>
+                </div>
+                <div className="pt-2 flex gap-3">
+                  <button onClick={onClose} className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 font-medium text-slate-300">Close</button>
+                  <button
+                    onClick={handleInsertChart}
+                    disabled={chartMode === 'ai' && !chartOutput}
+                    className="flex-1 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-40 font-medium text-white shadow-lg flex items-center justify-center gap-2 transition-all"
+                  >
+                    <Check className="w-4 h-4" />
+                    <span>Insert Interactive Chart onto Document</span>
                   </button>
                 </div>
               </div>

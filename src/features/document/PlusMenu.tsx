@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Table, Image, Globe, Code, Quote, Sparkles, Loader2, Check, X } from 'lucide-react';
 import { OpenRouterService } from '../../services/OpenRouterService';
+import { parseMarkdownToTipTap } from '../../services/markdownToHtml';
 
 interface PlusMenuProps {
   editor: any;
@@ -48,11 +49,12 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
     setAiError(null);
     try {
       const result = await OpenRouterService.generateText(DEFAULT_API_KEY, DEFAULT_MODEL, aiPrompt);
-      const formattedHtml = result
-        .split('\n\n')
-        .map((p) => `<p>${p.replace(/\n/g, '<br/>')}</p>`)
-        .join('');
-      editor.chain().focus().insertContent(formattedHtml).run();
+      const nodes = parseMarkdownToTipTap(result);
+      if (nodes.length > 0) {
+        editor.chain().focus().insertContent(nodes).run();
+      } else {
+        editor.chain().focus().insertContent(result).run();
+      }
       setAiPrompt('');
       setShowAiInput(false);
       setIsOpen(false);
@@ -99,7 +101,7 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
               className="flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-slate-800 transition-colors text-left"
             >
               <Image className="w-3.5 h-3.5 text-pink-400" />
-              <span>Image URL</span>
+              <span>Web Image URL</span>
             </button>
             <button
               onClick={insertBlockquote}

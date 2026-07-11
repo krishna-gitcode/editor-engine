@@ -48,7 +48,7 @@ export class OpenRouterService {
     apiKey: string,
     model: string,
     prompt: string,
-    systemPrompt = 'You are a helpful, professional AI authoring assistant for Sarkari Musician App and Editor Engine. Output clean, well-formatted text or markdown directly usable inside a document.'
+    systemPrompt = 'You are a helpful, professional AI authoring assistant for GridLeaf Editor. Output clean, well-formatted text or markdown directly usable inside a document.'
   ): Promise<string> {
     const activeKey = (apiKey || import.meta.env.VITE_OPENROUTER_API_KEY || '').trim();
     if (!activeKey) {
@@ -64,7 +64,7 @@ export class OpenRouterService {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${activeKey}`,
           'HTTP-Referer': window.location.origin,
-          'X-Title': 'Editor Engine Studio',
+          'X-Title': 'GridLeaf Editor Studio',
         },
         body: JSON.stringify({
           model: activeModel,
@@ -158,7 +158,7 @@ export class OpenRouterService {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${activeKey}`,
           'HTTP-Referer': window.location.origin,
-          'X-Title': 'Editor Engine Studio - Vision OCR',
+          'X-Title': 'GridLeaf Editor Studio - Vision OCR',
         },
         body: JSON.stringify({
           model: activeModel,

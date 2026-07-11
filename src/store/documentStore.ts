@@ -36,7 +36,7 @@ interface DocumentStoreState {
 
 const DEFAULT_PAGE: DocumentPageData = {
   id: 'page-1',
-  content: '<p>Welcome to <strong>Editor Engine</strong>. Start typing or formatting using the Ribbon above...</p>',
+  content: '<p>Welcome to <strong>GridLeaf Editor</strong>. Start typing or formatting using the Ribbon above...</p>',
   pageSize: 'A4',
   customWidth: 800,
   customHeight: 1000,

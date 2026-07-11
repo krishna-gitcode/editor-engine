@@ -47,10 +47,10 @@ export const MainMenuBar: React.FC<MainMenuBarProps> = ({
       {/* Brand & Title */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2 font-bold text-sm text-white tracking-wide">
-          <div className="w-6 h-6 rounded bg-gradient-to-tr from-indigo-600 to-pink-500 flex items-center justify-center text-xs shadow-md">
-            E
+          <div className="w-6 h-6 rounded bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-xs shadow-md font-extrabold">
+            GL
           </div>
-          <span>Editor Engine</span>
+          <span>GridLeaf Editor</span>
         </div>
 
         {/* File Dropdown */}

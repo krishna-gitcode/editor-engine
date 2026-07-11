@@ -12,10 +12,11 @@ import './LeftSidebar.css';
 
 interface LeftSidebarProps {
   engine: any;
+  editor?: any;
   onOpenModal?: (type: 'mathjax' | 'abcjs') => void;
 }
 
-export const LeftSidebar: React.FC<LeftSidebarProps> = ({ engine, onOpenModal }) => {
+export const LeftSidebar: React.FC<LeftSidebarProps> = ({ engine, editor, onOpenModal }) => {
   const activeTab = useEditorStore((s) => s.activeTab);
   const setActiveTab = useEditorStore((s) => s.setActiveTab);
 
@@ -29,7 +30,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ engine, onOpenModal })
     { id: 'shapes' as SidebarTab, label: 'Shapes & Math', icon: Shapes },
     { id: 'text' as SidebarTab, label: 'Text Presets', icon: Type },
     { id: 'layers' as SidebarTab, label: 'Layers', icon: Layers },
-    { id: 'search' as SidebarTab, label: 'Stock Photos', icon: Search },
+    { id: 'search' as SidebarTab, label: 'Web Images', icon: Search },
     { id: 'templates' as SidebarTab, label: 'Templates', icon: LayoutTemplate },
   ];
 
@@ -67,12 +68,12 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ engine, onOpenModal })
       {/* Expanded Panel Drawer */}
       {activeTab !== null && (
         <div className="w-72 bg-slate-900 flex flex-col h-full overflow-hidden border-r border-slate-800">
-          {activeTab === 'canva_studio' && <CanvaStudioPanel engine={engine} />}
+          {activeTab === 'canva_studio' && <CanvaStudioPanel engine={engine} editor={editor} />}
           {activeTab === 'image_studio' && <ImageStudioTab engine={engine} />}
           {activeTab === 'shapes' && <ShapeTools engine={engine} onOpenModal={onOpenModal} />}
           {activeTab === 'text' && <TextPanel engine={engine} />}
           {activeTab === 'layers' && <LayerPanel engine={engine} />}
-          {activeTab === 'search' && <WebImageSearch engine={engine} />}
+          {activeTab === 'search' && <WebImageSearch engine={engine} editor={editor} />}
 
           {activeTab === 'templates' && (
             <div className="p-4 flex flex-col gap-3 text-slate-200 overflow-y-auto">
