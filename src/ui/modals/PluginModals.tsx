@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { PluginService } from '../../services/PluginService';
-import { OpenRouterService } from '../../services/OpenRouterService';
+import { OpenRouterService, FREE_OPENROUTER_MODELS } from '../../services/OpenRouterService';
 import { PdfService, PdfPageImage } from '../../services/PdfService';
 import { parseMarkdownToTipTap, parseOcrOutput } from '../../services/markdownToHtml';
 import { X, Sigma, Music, Check, Sparkles, Wand2, Image as ImageIcon, FileText, Copy, Loader2, UploadCloud, FileType2, ChevronLeft, ChevronRight, BarChart2, Play, Square, ChevronDown } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import './PluginModals.css';
 
 interface PluginModalsProps {
@@ -27,8 +28,8 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
   // OpenRouter State
   const [openrouterTab, setOpenrouterTab] = useState<'generator' | 'ocr'>('generator');
   const [apiKey, setApiKey] = useState<string>(() => localStorage.getItem('editor_openrouter_api_key') || import.meta.env.VITE_OPENROUTER_API_KEY || '');
-  const [selectedModel] = useState<string>(() => import.meta.env.VITE_OPENROUTER_DEFAULT_MODEL || 'openrouter/free');
-  
+  const [selectedModel, setSelectedModel] = useState<string>(() => import.meta.env.VITE_OPENROUTER_DEFAULT_MODEL || 'openrouter/free');
+
   // Generator state
   const [aiPrompt, setAiPrompt] = useState<string>('Write a comprehensive 3-paragraph executive summary outlining our new e-learning course features.');
   const [aiOutput, setAiOutput] = useState<string>('');
@@ -37,7 +38,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
 
   // OCR state — image mode
   const [ocrImage, setOcrImage] = useState<string | null>(null);
-  const [ocrPrompt, setOcrPrompt] = useState<string>('Extract all text, tables, equations, and structural headings from this document image accurately into clean Markdown format. If you detect mathematical equations, wrap them inside <mathjax>LATEX_HERE</mathjax> tags. If you detect musical ABC notation, wrap it inside <abcjs>ABC_HERE</abcjs> tags. Do not output raw unparsed formulas outside these tags.');
+  const [ocrPrompt, setOcrPrompt] = useState<string>('Extract all text, tables, equations, and structural elements from this image accurately into clean Markdown format. Preserve exact text wording, headings, and lists. IMPORTANT: Do not interpret or solve formulas or music. Extract their exact syntactical representation. Enclose any mathematical equations in <mathjax>...</mathjax> tags and sheet music/ABC notation in <abcjs>...</abcjs> tags. Output tables as markdown tables.');
   const [ocrOutput, setOcrOutput] = useState<string>('');
   const [isExtracting, setIsExtracting] = useState<boolean>(false);
   const [ocrError, setOcrError] = useState<string | null>(null);
@@ -97,16 +98,21 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
     }
   };
 
-  const handleInsertMath = () => {
+  const handleInsertMath = async () => {
     const activeEditor = editor || (window as any).__activeEditor;
     const isCanvasActive = (window as any).__isCanvasMode;
-    if (isCanvasActive && engine) {
-      engine.addTextbox({
-        text: `$$ ${latex} $$`,
-        fontSize: 24,
-        fill: '#1e293b',
-        pluginType: 'mathjax',
-      });
+    if ((isCanvasActive || !activeEditor) && engine) {
+      if (mathPreviewRef.current) {
+        try {
+          const canvas = await html2canvas(mathPreviewRef.current, { backgroundColor: null, scale: 2 });
+          const dataUrl = canvas.toDataURL('image/png');
+          engine.addImageFromUrl(dataUrl);
+        } catch (e) {
+          engine.addTextbox({ text: `$$ ${latex} $$`, fontSize: 24, fill: '#1e293b', pluginType: 'mathjax' });
+        }
+      } else {
+        engine.addTextbox({ text: `$$ ${latex} $$`, fontSize: 24, fill: '#1e293b', pluginType: 'mathjax' });
+      }
     } else if (activeEditor) {
       if (activeEditor.commands.insertMathJax) {
         activeEditor.commands.insertMathJax({ latex });
@@ -116,27 +122,25 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
           attrs: { latex },
         }).run();
       }
-    } else if (engine) {
-      engine.addTextbox({
-        text: `$$ ${latex} $$`,
-        fontSize: 24,
-        fill: '#1e293b',
-        pluginType: 'mathjax',
-      });
     }
     onClose();
   };
 
-  const handleInsertAbc = () => {
+  const handleInsertAbc = async () => {
     const activeEditor = editor || (window as any).__activeEditor;
     const isCanvasActive = (window as any).__isCanvasMode;
-    if (isCanvasActive && engine) {
-      engine.addTextbox({
-        text: `[Sheet Music: ${abcNotation.split('\n')[1] || 'Tune'}]\n${abcNotation}`,
-        fontSize: 16,
-        fill: '#0f172a',
-        pluginType: 'abcjs',
-      });
+    if ((isCanvasActive || !activeEditor) && engine) {
+      if (abcPreviewRef.current) {
+        try {
+          const canvas = await html2canvas(abcPreviewRef.current, { backgroundColor: null, scale: 2 });
+          const dataUrl = canvas.toDataURL('image/png');
+          engine.addImageFromUrl(dataUrl);
+        } catch (e) {
+          engine.addTextbox({ text: `[Sheet Music]\n${abcNotation}`, fontSize: 16, fill: '#0f172a', pluginType: 'abcjs' });
+        }
+      } else {
+        engine.addTextbox({ text: `[Sheet Music]\n${abcNotation}`, fontSize: 16, fill: '#0f172a', pluginType: 'abcjs' });
+      }
     } else if (activeEditor) {
       if (activeEditor.commands.insertAbcJs) {
         activeEditor.commands.insertAbcJs({ abc: abcNotation });
@@ -145,13 +149,6 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
           `<div class="abcjs-render p-4 my-3 bg-white border border-slate-200 rounded-lg overflow-x-auto text-xs font-mono text-slate-800 shadow-sm" contenteditable="false" data-abc="${abcNotation.replace(/"/g, '&quot;')}"></div><p></p>`
         );
       }
-    } else if (engine) {
-      engine.addTextbox({
-        text: `[Sheet Music: ${abcNotation.split('\n')[1] || 'Tune'}]\n${abcNotation}`,
-        fontSize: 16,
-        fill: '#0f172a',
-        pluginType: 'abcjs',
-      });
     }
     onClose();
   };
@@ -173,7 +170,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
     // Prefer a vision-capable model
     return selectedModel.includes('vl') || selectedModel.includes('gemini')
       ? selectedModel
-      : 'qwen/qwen-2-vl-72b-instruct:free';
+      : 'nvidia/nemotron-nano-12b-v2-vl:free';
   };
 
   const handlePerformOCR = async () => {
@@ -511,31 +508,41 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
             <div className="flex gap-4">
               <button
                 onClick={() => setOpenrouterTab('generator')}
-                className={`flex items-center gap-1.5 pb-2.5 border-b-2 font-medium transition-all ${
-                  openrouterTab === 'generator'
+                className={`flex items-center gap-1.5 pb-2.5 border-b-2 font-medium transition-all ${openrouterTab === 'generator'
                     ? 'border-emerald-500 text-emerald-400'
                     : 'border-transparent text-slate-400 hover:text-slate-200'
-                }`}
+                  }`}
               >
                 <Wand2 className="w-4 h-4" />
                 <span>AI Text & Content Generator</span>
               </button>
               <button
                 onClick={() => setOpenrouterTab('ocr')}
-                className={`flex items-center gap-1.5 pb-2.5 border-b-2 font-medium transition-all ${
-                  openrouterTab === 'ocr'
+                className={`flex items-center gap-1.5 pb-2.5 border-b-2 font-medium transition-all ${openrouterTab === 'ocr'
                     ? 'border-emerald-500 text-emerald-400'
                     : 'border-transparent text-slate-400 hover:text-slate-200'
-                }`}
+                  }`}
               >
                 <ImageIcon className="w-4 h-4" />
                 <span>Vision OCR & Document Extractor</span>
               </button>
             </div>
-            {/* Active Model Badge */}
-            <div className="mb-1.5 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-[11px] text-emerald-300">
-              <Sparkles className="w-3 h-3 text-emerald-400" />
-              <span className="font-mono truncate max-w-[220px]" title={selectedModel}>{selectedModel}</span>
+            {/* Active Model Selector */}
+            <div className="mb-1.5 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-[11px] text-emerald-300 relative">
+              <Sparkles className="w-3 h-3 text-emerald-400 shrink-0" />
+              <select
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+                className="bg-transparent border-none outline-none text-emerald-300 font-mono text-[11px] appearance-none pr-4 w-[160px] cursor-pointer truncate"
+              >
+                <option value="openrouter/free" className="bg-slate-900 text-slate-200">Default (openrouter/free)</option>
+                {FREE_OPENROUTER_MODELS.map(model => (
+                  <option key={model.id} value={model.id} className="bg-slate-900 text-slate-200">
+                    {model.id}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="w-3 h-3 text-emerald-400 absolute right-2 pointer-events-none" />
             </div>
           </div>
         )}
@@ -992,17 +999,15 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                 <div className="flex p-1 bg-slate-950 border border-slate-800 rounded-xl gap-1">
                   <button
                     onClick={() => setChartMode('manual')}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                      chartMode === 'manual' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white'
-                    }`}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${chartMode === 'manual' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                      }`}
                   >
                     🛠️ Manual Chart Builder
                   </button>
                   <button
                     onClick={() => setChartMode('ai')}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                      chartMode === 'ai' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white'
-                    }`}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${chartMode === 'ai' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                      }`}
                   >
                     ⚡ AI Chart Generator
                   </button>
@@ -1017,9 +1022,8 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                           <button
                             key={t}
                             onClick={() => setChartType(t)}
-                            className={`py-1.5 rounded-lg text-[11px] font-medium capitalize transition-all flex items-center justify-center gap-1.5 ${
-                              chartType === t ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white hover:bg-slate-900'
-                            }`}
+                            className={`py-1.5 rounded-lg text-[11px] font-medium capitalize transition-all flex items-center justify-center gap-1.5 ${chartType === t ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                              }`}
                           >
                             <span>{t}</span>
                           </button>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Copy, Clipboard, ArrowUp, ArrowDown, Lock, Trash2 } from 'lucide-react';
 import './ContextMenu.css';
 
@@ -11,15 +12,19 @@ interface ContextMenuProps {
 }
 
 export const ContextMenu: React.FC<ContextMenuProps> = ({ engine, visible, x, y, onClose }) => {
-  if (!visible) return null;
-
   return (
-    <>
-      <div className="fixed inset-0 z-50 pointer-events-auto" onClick={onClose} onContextMenu={(e) => { e.preventDefault(); onClose(); }} />
-      <div
-        className="fixed z-50 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-1.5 w-48 flex flex-col gap-1 text-xs text-slate-200 pointer-events-auto select-none"
-        style={{ left: `${x}px`, top: `${y}px` }}
-      >
+    <AnimatePresence>
+      {visible && (
+        <>
+          <div className="fixed inset-0 z-50 pointer-events-auto" onClick={onClose} onContextMenu={(e) => { e.preventDefault(); onClose(); }} />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ type: 'spring', bounce: 0, duration: 0.2 }}
+            style={{ left: `${x}px`, top: `${y}px`, transformOrigin: 'top left' }}
+            className="fixed z-50 glass-menu rounded-xl shadow-2xl p-1 w-48 flex flex-col gap-0.5 text-xs text-slate-200 pointer-events-auto select-none"
+          >
         <button
           onClick={() => { engine?.copySelected(); onClose(); }}
           className="flex items-center gap-2.5 px-3 py-2 rounded hover:bg-slate-800 transition-colors text-left"
@@ -64,7 +69,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ engine, visible, x, y,
           <Trash2 className="w-4 h-4" />
           <span>Delete Object</span>
         </button>
-      </div>
-    </>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 };

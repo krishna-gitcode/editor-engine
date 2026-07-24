@@ -89,9 +89,9 @@ export const WorkspaceCanvas: React.FC<WorkspaceCanvasProps> = ({
   };
 
   return (
-    <div className={`relative flex-1 w-full h-full bg-[#0f172a] overflow-auto flex p-12 transition-all ${alignmentClass}`}>
+    <div className={`relative flex-1 w-full h-full workspace-viewport overflow-auto flex p-12 transition-all ${alignmentClass}`}>
       <div
-        className={`relative transition-transform duration-150 bg-white shadow-2xl rounded-sm overflow-visible ${
+        className={`document-page-card relative transition-transform duration-150 bg-white overflow-visible ${
           showGrid ? 'workspace-grid-bg' : ''
         }`}
         style={{

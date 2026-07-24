@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BubbleMenu } from '@tiptap/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useCanvasStore } from '../../store/canvasStore';
 import { OpenRouterService } from '../../services/OpenRouterService';
 import { parseMarkdownToTipTap } from '../../services/markdownToHtml';
@@ -20,8 +21,18 @@ type AiMode = 'generate' | 'enhance' | 'grammar' | null;
 const DEFAULT_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '';
 const DEFAULT_MODEL = import.meta.env.VITE_OPENROUTER_DEFAULT_MODEL || 'openrouter/free';
 
-export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor, engine, onOpenModal }) => {
+export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor: defaultEditor, engine, onOpenModal }) => {
   const selectedObject = useCanvasStore((s) => s.selectedObjectProps);
+
+  const [editor, setActiveEditor] = useState<any>(defaultEditor || (window as any).__activeEditor);
+
+  useEffect(() => {
+    const handleActiveEditorChanged = () => {
+      setActiveEditor((window as any).__activeEditor || defaultEditor);
+    };
+    window.addEventListener('activeEditorChanged', handleActiveEditorChanged);
+    return () => window.removeEventListener('activeEditorChanged', handleActiveEditorChanged);
+  }, [defaultEditor]);
 
   // Inline AI state
   const [aiMode, setAiMode] = useState<AiMode>(null);
@@ -193,10 +204,10 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor, engine, onOp
             placement: 'top',
           }}
         >
-          <div className="flex flex-col bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden"
+          <div className="flex flex-col glass-menu rounded-xl overflow-hidden"
                style={{ zIndex: 9999 }}>
             {/* Formatting Row */}
-            <div className="flex items-center gap-1 p-1.5 text-xs text-slate-200 flex-wrap">
+            <div className="flex items-center gap-1 p-1 text-xs text-slate-200 flex-wrap">
               <button
                 onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleBold().run(); }}
                 className={`p-1.5 rounded ${editor.isActive('bold') ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800'}`}
@@ -283,151 +294,168 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor, engine, onOp
             </div>
 
             {/* ── AI Generate Panel ── */}
-            {aiMode === 'generate' && (
-              <div className="px-2 pb-2 flex flex-col gap-1.5 border-t border-slate-800 pt-2">
-                <p className="text-[10px] text-emerald-400 font-medium px-0.5">
-                  ✨ Generate new content at cursor position
-                </p>
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="text"
-                    value={aiPrompt}
-                    onChange={(e) => setAiPrompt(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleGenerateInline(); } }}
-                    placeholder="Describe what to write and press Enter..."
-                    className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 w-72"
-                    autoFocus
-                  />
-                  <button
-                    onMouseDown={(e) => { e.preventDefault(); handleGenerateInline(); }}
-                    disabled={isProcessing || !aiPrompt.trim()}
-                    className="p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white transition-colors"
-                    title="Generate"
-                  >
-                    {isProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                  </button>
-                  <button
-                    onMouseDown={(e) => { e.preventDefault(); closeAiPanel(); }}
-                    className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white"
-                    title="Close"
-                  >
-                    <XIcon className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                {aiStatusMsg && <p className="text-[10px] text-emerald-400 px-1 animate-pulse">{aiStatusMsg}</p>}
-                {aiError && <p className="text-[10px] text-red-400 px-1">{aiError}</p>}
-              </div>
-            )}
+            <AnimatePresence>
+              {aiMode === 'generate' && (
+                <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
+                  <div className="px-2 pb-2 flex flex-col gap-1.5 border-t border-slate-700/50 pt-2">
+                    <p className="text-[10px] text-emerald-400 font-medium px-0.5">
+                      ✨ Generate new content at cursor position
+                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="text"
+                        value={aiPrompt}
+                        onChange={(e) => setAiPrompt(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleGenerateInline(); } }}
+                        placeholder="Describe what to write and press Enter..."
+                        className="flex-1 bg-slate-950/50 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 w-72"
+                        autoFocus
+                      />
+                      <button
+                        onMouseDown={(e) => { e.preventDefault(); handleGenerateInline(); }}
+                        disabled={isProcessing || !aiPrompt.trim()}
+                        className="p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white transition-colors"
+                        title="Generate"
+                      >
+                        {isProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                      </button>
+                      <button
+                        onMouseDown={(e) => { e.preventDefault(); closeAiPanel(); }}
+                        className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white"
+                        title="Close"
+                      >
+                        <XIcon className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    {aiStatusMsg && <p className="text-[10px] text-emerald-400 px-1 animate-pulse">{aiStatusMsg}</p>}
+                    {aiError && <p className="text-[10px] text-red-400 px-1">{aiError}</p>}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* ── Enhance Panel ── */}
-            {aiMode === 'enhance' && (
-              <div className="px-2 pb-2 flex flex-col gap-1.5 border-t border-slate-800 pt-2">
-                <p className="text-[10px] text-violet-400 font-medium px-0.5">
-                  ✏️ Enhance selected text — AI will <strong>replace</strong> the selection with improved writing
-                </p>
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="text"
-                    value={aiPrompt}
-                    onChange={(e) => setAiPrompt(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleEnhanceSelected(); } }}
-                    placeholder="Optional: custom instruction (e.g. 'make it more formal')"
-                    className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-violet-500 w-72"
-                    autoFocus
-                  />
-                  <button
-                    onMouseDown={async (e) => {
-                      e.preventDefault();
-                      // If custom instruction given, override default
-                      if (aiPrompt.trim()) {
-                        setIsProcessing(true);
-                        setAiError(null);
-                        setAiStatusMsg('Enhancing...');
-                        try {
-                          const { from, to, empty } = editor.state.selection;
-                          if (empty) { setAiError('Select text first.'); setIsProcessing(false); return; }
-                          const selectedText = editor.state.doc.textBetween(from, to, '\n');
-                          const enhanced = await OpenRouterService.enhanceText(DEFAULT_API_KEY, DEFAULT_MODEL, selectedText, aiPrompt);
-                          const nodes = parseMarkdownToTipTap(enhanced);
-                          editor.chain().focus().deleteRange({ from, to }).insertContentAt(from, nodes.length > 0 ? nodes : enhanced).run();
-                          closeAiPanel();
-                        } catch (err: any) {
-                          setAiError(err.message || 'Enhancement failed.');
-                          setAiStatusMsg('');
-                        } finally {
-                          setIsProcessing(false);
-                        }
-                      } else {
-                        handleEnhanceSelected();
-                      }
-                    }}
-                    disabled={isProcessing}
-                    className="p-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white transition-colors"
-                    title="Enhance Selection"
-                  >
-                    {isProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                  </button>
-                  <button
-                    onMouseDown={(e) => { e.preventDefault(); closeAiPanel(); }}
-                    className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white"
-                  >
-                    <XIcon className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                {aiStatusMsg && <p className="text-[10px] text-violet-400 px-1 animate-pulse">{aiStatusMsg}</p>}
-                {aiError && <p className="text-[10px] text-red-400 px-1">{aiError}</p>}
-              </div>
-            )}
+            <AnimatePresence>
+              {aiMode === 'enhance' && (
+                <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
+                  <div className="px-2 pb-2 flex flex-col gap-1.5 border-t border-slate-700/50 pt-2">
+                    <p className="text-[10px] text-violet-400 font-medium px-0.5">
+                      ✏️ Enhance selected text — AI will <strong>replace</strong> the selection with improved writing
+                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="text"
+                        value={aiPrompt}
+                        onChange={(e) => setAiPrompt(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleEnhanceSelected(); } }}
+                        placeholder="Optional: custom instruction (e.g. 'make it more formal')"
+                        className="flex-1 bg-slate-950/50 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-violet-500 w-72"
+                        autoFocus
+                      />
+                      <button
+                        onMouseDown={async (e) => {
+                          e.preventDefault();
+                          // If custom instruction given, override default
+                          if (aiPrompt.trim()) {
+                            setIsProcessing(true);
+                            setAiError(null);
+                            setAiStatusMsg('Enhancing...');
+                            try {
+                              const { from, to, empty } = editor.state.selection;
+                              if (empty) { setAiError('Select text first.'); setIsProcessing(false); return; }
+                              const selectedText = editor.state.doc.textBetween(from, to, '\n');
+                              const enhanced = await OpenRouterService.enhanceText(DEFAULT_API_KEY, DEFAULT_MODEL, selectedText, aiPrompt);
+                              const nodes = parseMarkdownToTipTap(enhanced);
+                              editor.chain().focus().deleteRange({ from, to }).insertContentAt(from, nodes.length > 0 ? nodes : enhanced).run();
+                              closeAiPanel();
+                            } catch (err: any) {
+                              setAiError(err.message || 'Enhancement failed.');
+                              setAiStatusMsg('');
+                            } finally {
+                              setIsProcessing(false);
+                            }
+                          } else {
+                            handleEnhanceSelected();
+                          }
+                        }}
+                        disabled={isProcessing}
+                        className="p-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white transition-colors"
+                        title="Enhance Selection"
+                      >
+                        {isProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                      </button>
+                      <button
+                        onMouseDown={(e) => { e.preventDefault(); closeAiPanel(); }}
+                        className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white"
+                      >
+                        <XIcon className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    {aiStatusMsg && <p className="text-[10px] text-violet-400 px-1 animate-pulse">{aiStatusMsg}</p>}
+                    {aiError && <p className="text-[10px] text-red-400 px-1">{aiError}</p>}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* ── Spelling & Grammar Panel ── */}
-            {aiMode === 'grammar' && (
-              <div className="px-2 pb-2 flex flex-col gap-2 border-t border-slate-800 pt-2">
-                <p className="text-[10px] text-sky-400 font-medium px-0.5">
-                  🔤 Spelling & Grammar — select text to check selection, or check full document
-                </p>
-                <div className="flex items-center gap-2">
-                  <button
-                    onMouseDown={(e) => { e.preventDefault(); handleGrammarCheck(); }}
-                    disabled={isProcessing}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 disabled:opacity-40 text-white text-xs font-medium transition-colors"
-                  >
-                    {isProcessing
-                      ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /><span>Checking...</span></>
-                      : <><SpellCheck className="w-3.5 h-3.5" /><span>Check & Fix</span></>
-                    }
-                  </button>
-                  <button
-                    onMouseDown={(e) => { e.preventDefault(); closeAiPanel(); }}
-                    className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white"
-                  >
-                    <XIcon className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                {aiStatusMsg && <p className="text-[10px] text-sky-400 px-1 animate-pulse">{aiStatusMsg}</p>}
-                {aiError && <p className="text-[10px] text-red-400 px-1">{aiError}</p>}
-              </div>
-            )}
+            <AnimatePresence>
+              {aiMode === 'grammar' && (
+                <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
+                  <div className="px-2 pb-2 flex flex-col gap-2 border-t border-slate-700/50 pt-2">
+                    <p className="text-[10px] text-sky-400 font-medium px-0.5">
+                      🔤 Spelling & Grammar — select text to check selection, or check full document
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onMouseDown={(e) => { e.preventDefault(); handleGrammarCheck(); }}
+                        disabled={isProcessing}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 disabled:opacity-40 text-white text-xs font-medium transition-colors"
+                      >
+                        {isProcessing
+                          ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /><span>Checking...</span></>
+                          : <><SpellCheck className="w-3.5 h-3.5" /><span>Check & Fix</span></>
+                        }
+                      </button>
+                      <button
+                        onMouseDown={(e) => { e.preventDefault(); closeAiPanel(); }}
+                        className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white"
+                      >
+                        <XIcon className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    {aiStatusMsg && <p className="text-[10px] text-sky-400 px-1 animate-pulse">{aiStatusMsg}</p>}
+                    {aiError && <p className="text-[10px] text-red-400 px-1">{aiError}</p>}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </BubbleMenu>
       )}
 
       {/* Fabric Canvas Object Floating Toolbar */}
-      {selectedObject && selectedObject.left !== undefined && selectedObject.top !== undefined && (
-        <div
-          className="absolute flex flex-col gap-1 pointer-events-auto"
-          style={{
-            left: `${selectedObject.left}px`,
-            top: `${Math.max(10, selectedObject.top - 52)}px`,
-            zIndex: 9999,
-          }}
-        >
-          {/* Main toolbar row */}
-          <div className="flex items-center gap-1.5 p-1.5 bg-slate-900/95 backdrop-blur-md border border-slate-700 rounded-xl shadow-2xl text-xs text-slate-200">
-            <input
-              type="color"
-              value={typeof selectedObject.fill === 'string' ? selectedObject.fill : '#6366f1'}
-              onChange={(e) => engine?.updateSelected({ fill: e.target.value })}
-              className="w-5 h-5 p-0 border-0 bg-transparent cursor-pointer rounded"
+      <AnimatePresence>
+        {selectedObject && selectedObject.left !== undefined && selectedObject.top !== undefined && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
+            className="absolute flex flex-col gap-1 pointer-events-auto"
+            style={{
+              left: `${selectedObject.left}px`,
+              top: `${Math.max(10, selectedObject.top - 52)}px`,
+              zIndex: 9999,
+            }}
+          >
+            {/* Main toolbar row */}
+            <div className="flex items-center gap-1.5 p-1 glass-menu rounded-xl text-xs text-slate-200">
+              <input
+                type="color"
+                value={typeof selectedObject.fill === 'string' ? selectedObject.fill : '#6366f1'}
+                onChange={(e) => engine?.updateSelected({ fill: e.target.value })}
+                className="w-5 h-5 p-0 border-0 bg-transparent cursor-pointer rounded"
               title="Object Fill"
             />
             <button onClick={() => engine?.bringForward()} className="p-1 hover:bg-slate-800 rounded text-slate-300" title="Bring Forward">
@@ -487,8 +515,9 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor, engine, onOp
               {canvasEnhanceError && <p className="text-[10px] text-red-400">{canvasEnhanceError}</p>}
             </div>
           )}
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };

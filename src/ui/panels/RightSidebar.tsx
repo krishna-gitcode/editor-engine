@@ -10,14 +10,23 @@ interface RightSidebarProps {
   editor?: any;
 }
 
-export const RightSidebar: React.FC<RightSidebarProps> = ({ engine, editor }) => {
+export const RightSidebar: React.FC<RightSidebarProps> = ({ engine, editor: defaultEditor }) => {
   const selectedObject = useCanvasStore((s) => s.selectedObjectProps);
   const pages = useDocumentStore((s) => s.pages);
   const activePageId = useDocumentStore((s) => s.activePageId);
   const updatePageSettings = useDocumentStore((s) => s.updatePageSettings);
   const activePage = pages.find((p) => p.id === activePageId) || pages[0];
 
-  const activeEditor = editor || (window as any).__activeEditor;
+  const [activeEditor, setActiveEditor] = useState<any>(defaultEditor || (window as any).__activeEditor);
+
+  useEffect(() => {
+    const handleActiveEditorChanged = () => {
+      setActiveEditor((window as any).__activeEditor || defaultEditor);
+    };
+    window.addEventListener('activeEditorChanged', handleActiveEditorChanged);
+    return () => window.removeEventListener('activeEditorChanged', handleActiveEditorChanged);
+  }, [defaultEditor]);
+
   const [, setEditorTick] = useState(0);
 
   useEffect(() => {
@@ -42,7 +51,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ engine, editor }) =>
   const tableAttrs = isTableActive ? activeEditor.getAttributes('table') : {};
 
   return (
-    <div className="w-72 h-full bg-slate-900 border-l border-slate-800 flex flex-col overflow-y-auto p-4 select-none z-20 text-slate-200">
+    <div className="w-72 h-full bg-slate-900 border-l border-slate-800 flex flex-col overflow-y-auto p-4 select-none z-20 text-slate-200 print:hidden">
       {/* If Canvas Object is Selected */}
       {selectedObject ? (
         <div className="space-y-5 text-xs">
@@ -697,7 +706,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ engine, editor }) =>
               <label className="block text-slate-400 mb-1">Watermark Overlay</label>
               <input
                 type="text"
-                placeholder="e.g. CONFIDENTIAL / DRAFT"
+                placeholder="Text or Image URL (http...)"
                 value={activePage.watermark || ''}
                 onChange={(e) => updatePageSettings(activePage.id, { watermark: e.target.value })}
                 className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-indigo-500"

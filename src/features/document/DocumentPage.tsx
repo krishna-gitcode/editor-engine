@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import { Selection } from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
@@ -23,10 +23,20 @@ import { IframeExtension } from './IframeExtension';
 import { MathJaxExtension } from './MathJaxExtension';
 import { AbcJsExtension } from './AbcJsExtension';
 import { ChartExtension } from './ChartExtension';
+import { PageNumberExtension } from './PageNumberExtension';
+import ImageExtension from '@tiptap/extension-image';
 import { useDocumentStore } from '../../store/documentStore';
 import { PluginService } from '../../services/PluginService';
 import { PlusMenu } from './PlusMenu';
 import './DocumentPage.css';
+
+/**
+ * Tracks which zone the user is currently editing.
+ * - 'body'   = the main document content area
+ * - 'header' = the header zone at the top
+ * - 'footer' = the footer zone at the bottom
+ */
+type ActiveZone = 'body' | 'header' | 'footer';
 
 interface DocumentPageProps {
   onEditorReady?: (editor: any) => void;
@@ -37,102 +47,192 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({ onEditorReady, onOpe
   const pages = useDocumentStore((s) => s.pages);
   const activePageId = useDocumentStore((s) => s.activePageId);
   const updatePageContent = useDocumentStore((s) => s.updatePageContent);
+  const updatePageSettings = useDocumentStore((s) => s.updatePageSettings);
 
   const activePage = pages.find((p) => p.id === activePageId) || pages[0];
   const { top, right, bottom, left } = activePage.margins;
 
-  const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        // Disable built-in link or other duplicates if present
-      }),
-      TextStyle,
-      Color,
-      Highlight.configure({ multicolor: true }),
-      Subscript,
-      Superscript,
-      Underline,
-      Link.configure({ openOnClick: false }),
-      TextAlign.configure({ types: ['heading', 'paragraph'] }),
-      CustomTable.configure({ resizable: true }),
-      TableRow,
-      CustomTableHeader,
-      CustomTableCell,
-      IndentExtension,
-      ListStyleExtension,
-      TextEffectExtension,
-      FontSizeExtension,
-      LineHeightExtension,
-      IframeExtension,
-      MathJaxExtension,
-      AbcJsExtension,
-      ChartExtension,
-    ],
-    content: activePage.content,
-    editorProps: {
-      handleKeyDown: (view, event) => {
-        // Delete / Backspace on selected node views (e.g. table, image, iframe)
-        if (event.key === 'Delete' || event.key === 'Backspace') {
-          const { selection, tr } = view.state;
-          if (selection && (selection as any).node) {
-            view.dispatch(tr.deleteSelection());
+  // ─── Active Zone State ────────────────────────────────────────
+  const [activeZone, setActiveZone] = useState<ActiveZone>('body');
+
+  const sharedExtensions = [
+    StarterKit.configure({}),
+    TextStyle,
+    Color,
+    Highlight.configure({ multicolor: true }),
+    Subscript,
+    Superscript,
+    Underline,
+    Link.configure({ openOnClick: false }),
+    TextAlign.configure({ types: ['heading', 'paragraph'] }),
+    CustomTable.configure({ resizable: true }),
+    TableRow,
+    CustomTableHeader,
+    CustomTableCell,
+    IndentExtension,
+    ListStyleExtension,
+    TextEffectExtension,
+    FontSizeExtension,
+    LineHeightExtension,
+    IframeExtension,
+    MathJaxExtension,
+    AbcJsExtension,
+    ChartExtension,
+    PageNumberExtension,
+    ImageExtension.configure({ allowBase64: true, inline: true }),
+  ];
+
+  const sharedEditorProps = {
+    handleKeyDown: (view: any, event: KeyboardEvent) => {
+      if (event.key === 'Delete' || event.key === 'Backspace') {
+        const { selection, tr } = view.state;
+        if (selection && (selection as any).node) {
+          view.dispatch(tr.deleteSelection());
+          event.preventDefault();
+          return true;
+        }
+      }
+      if ((event.ctrlKey || event.metaKey) && event.key === 'a') return false;
+      return false;
+    },
+    handleDrop: (view: any, event: any) => {
+      const dragData = event.dataTransfer?.getData('application/x-tiptap-node-drag');
+      if (dragData) {
+        try {
+          const { pos, type } = JSON.parse(dragData);
+          const coords = view.posAtCoords({ left: event.clientX, top: event.clientY });
+          if (coords && typeof pos === 'number' && pos >= 0) {
             event.preventDefault();
-            return true;
-          }
-        }
-        // Ctrl/Cmd + A — Select all
-        if ((event.ctrlKey || event.metaKey) && event.key === 'a') {
-          return false; // let prosemirror handle
-        }
-        return false;
-      },
-      handleDrop: (view, event, _slice, _moved) => {
-        const dragData = event.dataTransfer?.getData('application/x-tiptap-node-drag');
-        if (dragData) {
-          try {
-            const { pos, type } = JSON.parse(dragData);
-            const coords = view.posAtCoords({ left: event.clientX, top: event.clientY });
-            if (coords && typeof pos === 'number' && pos >= 0) {
-              event.preventDefault();
-              const tr = view.state.tr;
-              const nodeToMove = view.state.doc.nodeAt(pos);
-              if (nodeToMove && nodeToMove.type.name === type) {
-                const targetPos = coords.pos;
-                if (targetPos !== pos) {
-                  if (targetPos > pos) {
-                    tr.delete(pos, pos + nodeToMove.nodeSize);
-                    tr.insert(Math.max(0, targetPos - nodeToMove.nodeSize), nodeToMove);
-                  } else {
-                    tr.delete(pos, pos + nodeToMove.nodeSize);
-                    tr.insert(targetPos, nodeToMove);
-                  }
-                  tr.setSelection(Selection.near(tr.doc.resolve(targetPos)));
-                  view.dispatch(tr);
-                  return true;
+            const tr = view.state.tr;
+            const nodeToMove = view.state.doc.nodeAt(pos);
+            if (nodeToMove && nodeToMove.type.name === type) {
+              const targetPos = coords.pos;
+              if (targetPos !== pos) {
+                if (targetPos > pos) {
+                  tr.delete(pos, pos + nodeToMove.nodeSize);
+                  tr.insert(Math.max(0, targetPos - nodeToMove.nodeSize), nodeToMove);
+                } else {
+                  tr.delete(pos, pos + nodeToMove.nodeSize);
+                  tr.insert(targetPos, nodeToMove);
                 }
+                tr.setSelection(Selection.near(tr.doc.resolve(targetPos)));
+                view.dispatch(tr);
+                return true;
               }
             }
-          } catch (err) {
-            console.error('Failed to drag-and-drop node:', err);
           }
-        }
-        return false;
-      },
+        } catch (err) {}
+      }
+      return false;
     },
-    onUpdate: ({ editor }) => {
-      updatePageContent(activePage.id, editor.getHTML());
+  };
+
+  // ─── Header Editor ─────────────────────────────────────────────
+  const headerEditor = useEditor({
+    extensions: sharedExtensions,
+    content: activePage.header || '<p></p>',
+    editorProps: sharedEditorProps,
+    editable: true,
+    onUpdate: ({ editor }) => updatePageSettings(activePage.id, { header: editor.getHTML() }),
+    onFocus: ({ editor }) => {
+      setActiveZone('header');
+      setActiveEditorGlobally(editor);
     },
   });
 
+  // ─── Footer Editor ─────────────────────────────────────────────
+  const footerEditor = useEditor({
+    extensions: sharedExtensions,
+    content: activePage.footer || '<p></p>',
+    editorProps: sharedEditorProps,
+    editable: true,
+    onUpdate: ({ editor }) => updatePageSettings(activePage.id, { footer: editor.getHTML() }),
+    onFocus: ({ editor }) => {
+      setActiveZone('footer');
+      setActiveEditorGlobally(editor);
+    },
+  });
+
+  // ─── Body Editor ───────────────────────────────────────────────
+  const editor = useEditor({
+    extensions: sharedExtensions,
+    content: activePage.content,
+    editorProps: sharedEditorProps,
+    editable: true,
+    onUpdate: ({ editor }) => updatePageContent(activePage.id, editor.getHTML()),
+    onFocus: ({ editor }) => {
+      setActiveZone('body');
+      setActiveEditorGlobally(editor);
+    },
+  });
+
+  const setActiveEditorGlobally = (activeEd: any) => {
+    (window as any).__activeEditor = activeEd;
+    window.dispatchEvent(new Event('activeEditorChanged'));
+  };
+
+  // ─── Zone Click Handlers ───────────────────────────────────────
+  const handleHeaderZoneClick = useCallback(() => {
+    if (activeZone !== 'header' && headerEditor) {
+      setActiveZone('header');
+      headerEditor.commands.focus('end');
+    }
+  }, [activeZone, headerEditor]);
+
+  const handleFooterZoneClick = useCallback(() => {
+    if (activeZone !== 'footer' && footerEditor) {
+      setActiveZone('footer');
+      footerEditor.commands.focus('end');
+    }
+  }, [activeZone, footerEditor]);
+
+  const handleBodyZoneClick = useCallback(() => {
+    if (activeZone !== 'body' && editor) {
+      setActiveZone('body');
+      editor.commands.focus();
+    }
+  }, [activeZone, editor]);
+
+  // Double-click on body always brings focus back (MS Word pattern)
+  const handleBodyDoubleClick = useCallback(() => {
+    if (activeZone !== 'body' && editor) {
+      setActiveZone('body');
+      editor.commands.focus();
+    }
+  }, [activeZone, editor]);
+
+  // Double-click header/footer to activate (MS Word behavior)
+  const handleHeaderDoubleClick = useCallback(() => {
+    if (headerEditor) {
+      setActiveZone('header');
+      headerEditor.commands.focus('end');
+    }
+  }, [headerEditor]);
+
+  const handleFooterDoubleClick = useCallback(() => {
+    if (footerEditor) {
+      setActiveZone('footer');
+      footerEditor.commands.focus('end');
+    }
+  }, [footerEditor]);
+
+  // ESC key to return to body from header/footer
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && activeZone !== 'body' && editor) {
+        setActiveZone('body');
+        editor.commands.focus();
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [activeZone, editor]);
+
   useEffect(() => {
     if (editor) {
-      (window as any).__activeEditor = editor;
-      window.dispatchEvent(new Event('activeEditorChanged'));
-      if (onEditorReady) {
-        onEditorReady(editor);
-      }
+      setActiveEditorGlobally(editor);
+      if (onEditorReady) onEditorReady(editor);
     }
-    // Clean up window.__activeEditor on unmount
     return () => {
       if ((window as any).__activeEditor === editor) {
         delete (window as any).__activeEditor;
@@ -141,22 +241,20 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({ onEditorReady, onOpe
     };
   }, [editor, onEditorReady]);
 
-  // Keep window.__activeEditor updated for non-polling clean access where needed
-  useEffect(() => {
-    if (editor) {
-      (window as any).__activeEditor = editor;
-      window.dispatchEvent(new Event('activeEditorChanged'));
-    }
-  }, [editor]);
-
   // Sync state when active page changes externally
   useEffect(() => {
     if (editor && editor.getHTML() !== activePage.content) {
       editor.commands.setContent(activePage.content, false);
     }
+    if (headerEditor && headerEditor.getHTML() !== (activePage.header || '<p></p>')) {
+      headerEditor.commands.setContent(activePage.header || '<p></p>', false);
+    }
+    if (footerEditor && footerEditor.getHTML() !== (activePage.footer || '<p></p>')) {
+      footerEditor.commands.setContent(activePage.footer || '<p></p>', false);
+    }
   }, [activePageId]);
 
-  // Render Math and ABC Notation inside the Editor
+  // Render Math and ABC Notation inside the Editor(s)
   useEffect(() => {
     const processPlugins = () => {
       const mathNodes = document.querySelectorAll('.mathjax-render:not([data-rendered="true"])');
@@ -177,45 +275,154 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({ onEditorReady, onOpe
     processPlugins();
     const timer = setTimeout(processPlugins, 200);
     return () => clearTimeout(timer);
-  }, [activePageId, activePage.content]);
+  }, [activePageId, activePage.content, activePage.header, activePage.footer]);
+
+  // ─── Computed values ───────────────────────────────────────────
+  const isHeaderActive = activeZone === 'header';
+  const isFooterActive = activeZone === 'footer';
+  const isBodyActive = activeZone === 'body';
+  const isHfEditing = isHeaderActive || isFooterActive;
+
+  // Header/footer zone heights — define the clickable/editable area
+  const headerZoneHeight = Math.max(top, 48); // at least 48px for usability
+  const footerZoneHeight = Math.max(bottom, 48);
 
   return (
     <div
-      className="relative w-full h-full bg-white text-slate-900 overflow-y-auto flex flex-col justify-between select-text"
+      id="document-page-container"
+      className={`document-page-surface relative w-full h-full select-text group ${isHfEditing ? 'hf-editing' : ''}`}
       style={{
-        paddingTop: `${top}px`,
+        paddingTop: `${headerZoneHeight}px`,
         paddingRight: `${right}px`,
-        paddingBottom: `${bottom}px`,
+        paddingBottom: `${footerZoneHeight}px`,
         paddingLeft: `${left}px`,
       }}
     >
-      {/* Watermark overlay */}
+      {/* ═══ Watermark Overlay ═══ */}
       {activePage.watermark && (
-        <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden z-0 opacity-15">
-          <span className="text-7xl font-bold uppercase tracking-widest text-slate-400 rotate-[-45deg]">
-            {activePage.watermark}
-          </span>
+        <div className="watermark-overlay">
+          {activePage.watermark.match(/^(https?:\/\/|data:image\/)/i) ? (
+            <img src={activePage.watermark} alt="watermark" className="max-w-[80%] max-h-[80%] object-contain" />
+          ) : (
+            <span className="watermark-text">{activePage.watermark}</span>
+          )}
         </div>
       )}
 
-      {/* Header */}
-      {activePage.header && (
-        <div className="absolute top-4 left-12 right-12 text-center text-xs text-slate-400 border-b border-slate-200 pb-1 pointer-events-none">
-          {activePage.header}
+      {/* ═══════════════════════════════════════════════════════════════
+          HEADER ZONE — Microsoft Word Style
+          ═══════════════════════════════════════════════════════════════ */}
+      <div
+        className={`doc-header-zone ${isHeaderActive ? 'zone-active' : ''}`}
+        style={{
+          height: `${headerZoneHeight}px`,
+          paddingLeft: `${left}px`,
+          paddingRight: `${right}px`,
+        }}
+        onClick={handleHeaderZoneClick}
+        onDoubleClick={handleHeaderDoubleClick}
+      >
+        {/* Zone Label */}
+        <div className="doc-zone-label" style={{ top: 4, left: `${left}px` }} data-html2canvas-ignore="true">
+          <span className="label-dot" />
+          <span>Header</span>
         </div>
-      )}
 
-      {/* Editor Main Content Area */}
-      <div className="relative z-10 flex-1 min-h-[500px]">
-        {editor && <PlusMenu editor={editor} onOpenModal={onOpenModal} />}
-        <EditorContent editor={editor} className="prose max-w-none focus:outline-none min-h-full" />
+        {/* Editor Content */}
+        <div
+          className="doc-zone-content"
+          style={{
+            display: 'flex',
+            alignItems: 'flex-end',
+            height: '100%',
+            paddingBottom: '6px',
+          }}
+        >
+          <div className="w-full">
+            {headerEditor && <PlusMenu editor={headerEditor} onOpenModal={onOpenModal} />}
+            <EditorContent
+              editor={headerEditor}
+              className="prose prose-sm max-w-none focus:outline-none"
+            />
+          </div>
+        </div>
+
+        {/* Separator Line (bottom of header) */}
+        <div className="doc-zone-separator" data-html2canvas-ignore="true" />
       </div>
 
-      {/* Footer & Page Number */}
-      <div className="relative z-10 mt-6 pt-2 border-t border-slate-100 flex justify-between items-center text-xs text-slate-400 pointer-events-none">
-        <div>{activePage.footer || ''}</div>
+      {/* ═══════════════════════════════════════════════════════════════
+          BODY ZONE — Main Content
+          ═══════════════════════════════════════════════════════════════ */}
+      <div
+        className={`doc-body-zone ${isHfEditing ? 'body-dimmed' : ''}`}
+        onClickCapture={handleBodyZoneClick}
+        onDoubleClickCapture={handleBodyDoubleClick}
+      >
+        {editor && <PlusMenu editor={editor} onOpenModal={onOpenModal} />}
+        <EditorContent
+          editor={editor}
+          className="prose max-w-none focus:outline-none min-h-full print:text-black"
+        />
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          FOOTER ZONE — Microsoft Word Style
+          ═══════════════════════════════════════════════════════════════ */}
+      <div
+        className={`doc-footer-zone ${isFooterActive ? 'zone-active' : ''}`}
+        style={{
+          height: `${footerZoneHeight}px`,
+          paddingLeft: `${left}px`,
+          paddingRight: `${right}px`,
+        }}
+        onClick={handleFooterZoneClick}
+        onDoubleClick={handleFooterDoubleClick}
+      >
+        {/* Separator Line (top of footer) */}
+        <div className="doc-zone-separator" data-html2canvas-ignore="true" />
+
+        {/* Zone Label */}
+        <div
+          className="doc-zone-label doc-zone-label-footer"
+          style={{ bottom: 4, left: `${left}px` }}
+          data-html2canvas-ignore="true"
+        >
+          <span className="label-dot" />
+          <span>Footer</span>
+        </div>
+
+        {/* Editor Content */}
+        <div
+          className="doc-zone-content"
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            height: '100%',
+            paddingTop: '6px',
+          }}
+        >
+          <div className="w-full">
+            {footerEditor && <PlusMenu editor={footerEditor} onOpenModal={onOpenModal} />}
+            <EditorContent
+              editor={footerEditor}
+              className="prose prose-sm max-w-none focus:outline-none"
+            />
+          </div>
+        </div>
+
+        {/* Page Number Badge */}
         {activePage.showPageNumber && (
-          <div>Page {pages.findIndex((p) => p.id === activePage.id) + 1} of {pages.length}</div>
+          <div
+            className="page-number-badge"
+            style={{
+              position: 'absolute',
+              right: `${right}px`,
+              bottom: '6px',
+            }}
+          >
+            Page {pages.findIndex((p) => p.id === activePage.id) + 1} of {pages.length}
+          </div>
         )}
       </div>
     </div>

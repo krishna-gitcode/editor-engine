@@ -84,7 +84,7 @@ export const MarginHandles: React.FC<MarginHandlesProps> = ({ pageWidth, pageHei
   }, [draggingSide, zoom, pageWidth, pageHeight, activePage, updatePageSettings]);
 
   return (
-    <div ref={containerRef} className="absolute inset-0 pointer-events-none z-20 overflow-hidden select-none">
+    <div ref={containerRef} className="absolute inset-0 pointer-events-none z-20 overflow-hidden select-none print:hidden">
       {/* Top Margin Guide */}
       <div
         onMouseDown={(e) => handleMouseDown('top', e)}

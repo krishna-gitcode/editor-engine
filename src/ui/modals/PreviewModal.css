@@ -1,0 +1,394 @@
+/* ═══════════════════════════════════════════════════════════════════
+   PreviewModal.css — Premium Glassmorphism & Motion UI
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Backdrop ─────────────────────────────────────────────────── */
+@keyframes backdropFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.preview-modal-backdrop {
+  background: rgba(2, 6, 23, 0.75);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  animation: backdropFadeIn 0.35s ease-out;
+}
+
+/* ─── Container ────────────────────────────────────────────────── */
+@keyframes modalSlideUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px) scale(0.97);
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0) scale(1);
+  }
+}
+
+.preview-modal-container {
+  /* Glassmorphism container */
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 20px 60px -10px rgba(0, 0, 0, 0.6),
+    0 0 80px -20px rgba(99, 102, 241, 0.15),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+  animation: modalSlideUp 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ─── Header Bar ───────────────────────────────────────────────── */
+.preview-modal-header {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+  position: relative;
+}
+
+.preview-modal-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(99, 102, 241, 0.3),
+    rgba(129, 140, 248, 0.4),
+    rgba(99, 102, 241, 0.3),
+    transparent
+  );
+}
+
+/* ─── Mode Switcher ────────────────────────────────────────────── */
+.preview-mode-switcher {
+  background: rgba(30, 41, 59, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.preview-mode-btn.active {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.8), rgba(129, 140, 248, 0.7));
+  color: #ffffff;
+  box-shadow:
+    0 4px 12px rgba(99, 102, 241, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.preview-mode-btn:not(.active):hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* ─── Print Button ─────────────────────────────────────────────── */
+.preview-print-btn {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.75), rgba(79, 70, 229, 0.85));
+  color: #ffffff;
+  border: 1px solid rgba(129, 140, 248, 0.3);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.preview-print-btn:hover {
+  background: linear-gradient(135deg, rgba(129, 140, 248, 0.85), rgba(99, 102, 241, 0.95));
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
+  transform: translateY(-1px);
+}
+
+.preview-print-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* ─── Zoom Controls ────────────────────────────────────────────── */
+.preview-zoom-control {
+  background: rgba(30, 41, 59, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ─── Close Button ─────────────────────────────────────────────── */
+.preview-close-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid transparent;
+}
+
+.preview-close-btn:hover {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+/* ─── Content Area ─────────────────────────────────────────────── */
+.preview-content-area {
+  background: 
+    radial-gradient(ellipse at 30% 20%, rgba(99, 102, 241, 0.04) 0%, transparent 60%),
+    radial-gradient(ellipse at 70% 80%, rgba(168, 85, 247, 0.03) 0%, transparent 60%),
+    rgba(2, 6, 23, 0.5);
+}
+
+/* ─── Page Preview Surface ─────────────────────────────────────── */
+.preview-container {
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 20px 60px -12px rgba(0, 0, 0, 0.4),
+    0 0 40px -10px rgba(99, 102, 241, 0.08);
+  margin-bottom: 40px;
+  border-radius: 2px;
+  transition: box-shadow 0.4s ease;
+}
+
+.preview-container:hover {
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 25px 70px -12px rgba(0, 0, 0, 0.5),
+    0 0 50px -10px rgba(99, 102, 241, 0.12);
+}
+
+.preview-container.mode-document {
+  padding: 40px;
+}
+
+.preview-container.mode-pdf {
+  padding: 40px;
+  background: white;
+  position: relative;
+}
+
+.preview-container.mode-pdf::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border: 1px dashed rgba(99, 102, 241, 0.2);
+  pointer-events: none;
+  border-radius: 2px;
+}
+
+.preview-container.mode-web {
+  box-shadow: none;
+  width: 100%;
+  max-width: 900px;
+  height: auto;
+  min-height: 100%;
+  padding: 40px 20px;
+  border-radius: 0;
+}
+
+/* ─── Preview Header/Footer Zones ──────────────────────────────── */
+.preview-header-zone {
+  position: relative;
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+}
+
+.preview-footer-zone {
+  position: relative;
+  padding-top: 8px;
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.preview-zone-separator {
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(148, 163, 184, 0.3),
+    rgba(148, 163, 184, 0.4),
+    rgba(148, 163, 184, 0.3),
+    transparent
+  );
+}
+
+.preview-page-number {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  font-size: 10px;
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PREVIEW CONTENT RENDERING STYLES
+   Hide editor-only UI and ensure plugin blocks render cleanly
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Hide Editor-Only Interactive Elements ─────────────────────── */
+.preview-container .ProseMirror {
+  outline: none !important;
+  min-height: auto !important;
+  caret-color: transparent !important;
+  cursor: default !important;
+}
+
+/* Hide PlusMenu buttons, drag handles, and all editor chrome */
+.preview-container [class*="print:hidden"],
+.preview-container .plus-menu-trigger,
+.preview-container .ProseMirror-gapcursor,
+.preview-container [data-drag-handle],
+.preview-container .iframe-node-wrapper .absolute.-top-11,
+.preview-container .iframe-node-wrapper [onmousedown],
+.preview-container .mathjax-node-wrapper input,
+.preview-container .mathjax-node-wrapper .text-slate-500.font-bold,
+.preview-container .abcjs-node-wrapper input,
+.preview-container .abcjs-node-wrapper .text-slate-500.font-bold,
+.preview-container button[title="Delete Chart"],
+.preview-container button:has(.lucide-edit-3),
+.preview-container .ai-chart-block .flex.flex-wrap.items-center.justify-between,
+.preview-container .ai-chart-block .animate-in {
+  display: none !important;
+}
+
+/* ─── MathJax Blocks — Clean Preview Style ─────────────────────── */
+.preview-container .mathjax-node-wrapper,
+.preview-container .mathjax-render {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 12px 0 !important;
+  color: #1e293b !important;
+}
+
+.preview-container .mathjax-node-wrapper > div {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* MathJax rendered preview container (the actual formula) */
+.preview-container .mathjax-node-wrapper [data-latex],
+.preview-container .mathjax-render[data-latex] {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  padding: 12px 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #0f172a !important;
+}
+
+/* Hide the editable input row but show the rendered output */
+.preview-container .mathjax-node-wrapper .flex.items-center.gap-2.px-2 {
+  display: none !important;
+}
+
+/* ─── ABC.js Music Notation — Clean Preview Style ──────────────── */
+.preview-container .abcjs-node-wrapper {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 8px 0 !important;
+}
+
+.preview-container .abcjs-node-wrapper > div {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* The rendered sheet music area */
+.preview-container .abcjs-node-wrapper [data-abc] {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  padding: 12px !important;
+}
+
+/* Hide the ABC input row */
+.preview-container .abcjs-node-wrapper .flex.items-center.gap-2.px-2 {
+  display: none !important;
+}
+
+/* ─── Chart Blocks — Clean Preview Style ───────────────────────── */
+.preview-container .ai-chart-block {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+  color: #1e293b !important;
+  box-shadow: none !important;
+}
+
+/* Chart SVG should render on white background */
+.preview-container .ai-chart-block svg {
+  background: transparent !important;
+}
+
+.preview-container .ai-chart-block svg text {
+  fill: #475569 !important;
+}
+
+.preview-container .ai-chart-block svg line {
+  stroke: #cbd5e1 !important;
+}
+
+/* ─── Iframe Embeds — Preview Style ────────────────────────────── */
+.preview-container .iframe-wrapper,
+.preview-container .iframe-node-wrapper {
+  margin: 16px auto !important;
+  overflow: hidden !important;
+  border-radius: 8px !important;
+}
+
+.preview-container .iframe-node-wrapper .rounded-xl {
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Hide resize handles */
+.preview-container .iframe-node-wrapper .w-3\\.5.h-3\\.5 {
+  display: none !important;
+}
+
+/* Hide selection overlay */
+.preview-container .iframe-node-wrapper .bg-indigo-500\\/10 {
+  display: none !important;
+}
+
+/* ─── Inline Images — Preview Style ────────────────────────────── */
+.preview-container img:not([alt="watermark"]) {
+  max-width: 100% !important;
+  height: auto !important;
+  border-radius: 4px;
+}
+
+/* ─── TipTap NodeView Wrappers — Flatten ───────────────────────── */
+.preview-container [data-node-view-wrapper] {
+  display: block !important;
+}
+
+/* ─── Page Number Inline Tokens ────────────────────────────────── */
+.preview-container [data-type="page-number"] {
+  background: transparent !important;
+  color: #475569 !important;
+  padding: 0 !important;
+}
+
+/* ─── Preview Body Content Styles ──────────────────────────────── */
+.preview-body-content {
+  color: #1e293b !important;
+}
+
+.preview-body-content p {
+  margin-bottom: 0.75em;
+  line-height: 1.6;
+}
+
+.preview-zone-content {
+  color: #475569;
+}

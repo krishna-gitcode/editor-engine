@@ -8,18 +8,163 @@
   }
 }
 
-/* Custom UI styling helpers */
-.glass-panel {
-  @apply bg-slate-900/90 backdrop-blur-md border border-slate-800 shadow-xl;
+/* ═══════════════════════════════════════════════════════════════════
+   GLASSMORPHISM DESIGN SYSTEM
+   ═══════════════════════════════════════════════════════════════════ */
+@layer components {
+  /* ─── Glass Panels ───────────────────────────────────────────── */
+  .glass-panel {
+    @apply bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 shadow-2xl;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.04),
+      0 8px 32px -4px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.04);
+  }
+  
+  .glass-menu {
+    @apply bg-slate-800/70 backdrop-blur-md border border-slate-700/60 shadow-xl;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.03),
+      0 12px 40px -6px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .glass-surface {
+    @apply bg-slate-950/40 backdrop-blur-2xl border border-white/[0.06];
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.03),
+      0 16px 48px -8px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+  
+  .glass-button {
+    @apply bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/10 transition-all duration-300;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  .glass-button:hover {
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .glass-button:active {
+    transform: scale(0.97);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+  }
+
+  /* ─── Glow Effects ───────────────────────────────────────────── */
+  .glow-indigo {
+    box-shadow: 0 0 20px -4px rgba(99, 102, 241, 0.2);
+  }
+
+  .glow-indigo-strong {
+    box-shadow: 
+      0 0 30px -4px rgba(99, 102, 241, 0.25),
+      0 0 60px -10px rgba(99, 102, 241, 0.15);
+  }
+
+  /* ─── Animated Gradient Border ───────────────────────────────── */
+  .gradient-border {
+    position: relative;
+  }
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      135deg,
+      rgba(99, 102, 241, 0.3),
+      rgba(168, 85, 247, 0.2),
+      rgba(236, 72, 153, 0.1),
+      transparent 60%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
 }
+
+/* ─── Ribbon Buttons ────────────────────────────────────────────── */
 .ribbon-btn {
-  @apply flex flex-col items-center justify-center gap-1 p-2 rounded-lg text-xs transition-all hover:bg-slate-800 active:scale-95 text-slate-300 hover:text-white;
+  @apply flex flex-col items-center justify-center gap-1 p-2 rounded-lg text-xs transition-all duration-200 active:scale-95 hover:bg-slate-800/50 text-slate-300 hover:text-white;
+}
+.ribbon-btn:hover {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 .ribbon-tab-active {
   @apply border-b-2 border-indigo-500 text-indigo-400 font-medium;
 }
 
-/* Light Theme Mode Overrides */
+
+/* ═══════════════════════════════════════════════════════════════════
+   MOTION UI — Global Animations
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Micro-Interaction Keyframes ──────────────────────────────── */
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes fadeInSlideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInSlideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInSlideRight {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+  50% { box-shadow: 0 0 16px 2px rgba(99, 102, 241, 0.12); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes borderRotate {
+  0% { --angle: 0deg; }
+  100% { --angle: 360deg; }
+}
+
+/* ─── Utility Animation Classes ──────────────────────────────── */
+.animate-fade-in {
+  animation: fadeInScale 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.animate-slide-down {
+  animation: fadeInSlideDown 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.animate-slide-up {
+  animation: fadeInSlideUp 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.animate-slide-right {
+  animation: fadeInSlideRight 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   LIGHT THEME OVERRIDES
+   ═══════════════════════════════════════════════════════════════════ */
 html.light body, body.light-theme {
   background-color: #f1f5f9 !important;
   color: #0f172a !important;
@@ -61,4 +206,92 @@ html.light .bg-slate-800 {
 html.light [class*="hover:bg-slate-800"]:hover {
   background-color: #e2e8f0 !important;
   color: #0f172a !important;
+}
+
+/* ─── Light Theme Glassmorphism ────────────────────────────────── */
+html.light .glass-panel {
+  background: rgba(255, 255, 255, 0.7) !important;
+  border-color: rgba(226, 232, 240, 0.6) !important;
+  box-shadow: 
+    0 0 0 1px rgba(0, 0, 0, 0.04),
+    0 8px 32px -4px rgba(0, 0, 0, 0.1) !important;
+}
+
+html.light .glass-menu {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border-color: rgba(226, 232, 240, 0.7) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   PRINT STYLES
+   ═══════════════════════════════════════════════════════════════════ */
+@media print {
+  @page {
+    margin: 0;
+  }
+  
+  /* Hide all UI Chrome, sidebars, rulers, and modals */
+  header, nav, aside, .left-sidebar, .right-sidebar, .main-menu-bar, .ruler, .floating-menu, .context-menu {
+    display: none !important;
+  }
+  
+  /* Reset body and container styles for clean white sheet printing */
+  body, html, #root, .editor-container, .workspace-canvas {
+    background: #ffffff !important;
+    color: #000000 !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Ensure each DocumentPage takes exactly 1 physical page */
+  .document-page-card {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    width: 100% !important;
+  }
+  
+  /* If Preview Modal is open, hide the main workspace and print the preview */
+  body:has(.print-modal-wrapper) .flex-1.flex.overflow-hidden {
+    display: none !important;
+  }
+
+  .print-modal-wrapper {
+    position: static !important;
+    background: transparent !important;
+    display: block !important;
+    height: auto !important;
+    width: 100% !important;
+  }
+  
+  .print-modal-wrapper > div {
+    box-shadow: none !important;
+    border: none !important;
+    width: 100% !important;
+    height: auto !important;
+    display: block !important;
+    background: transparent !important;
+  }
+
+  /* Hide header and scrollbars */
+  .print-modal-wrapper .h-14, .print-modal-wrapper button {
+    display: none !important;
+  }
+
+  /* Reset the container scaling and padding */
+  .preview-container {
+    transform: none !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 2cm !important;
+    box-shadow: none !important;
+  }
 }

@@ -1,19 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useEditorStore } from '../../store/editorStore';
 import { ExportEngine } from '../../core/engine/ExportEngine';
-import { FileCode, Download, Printer, Share2, Layers, FileText, Moon, Sun } from 'lucide-react';
+import { FileCode, Download, Printer, Share2, Layers, FileText, Moon, Sun, Eye } from 'lucide-react';
 import './MainMenuBar.css';
 
 interface MainMenuBarProps {
   engine: any;
   isCanvasMode: boolean;
   setIsCanvasMode: (mode: boolean | ((m: boolean) => boolean)) => void;
+  onOpenPreview?: () => void;
+  onOpenPdfExport?: () => void;
 }
 
 export const MainMenuBar: React.FC<MainMenuBarProps> = ({
   engine,
   isCanvasMode,
   setIsCanvasMode,
+  onOpenPreview,
+  onOpenPdfExport,
 }) => {
   const theme = useEditorStore((s) => s.theme);
   const setTheme = useEditorStore((s) => s.setTheme);
@@ -32,8 +36,12 @@ export const MainMenuBar: React.FC<MainMenuBarProps> = ({
   };
 
   const handleExportPDF = () => {
-    const el = document.querySelector('.prose')?.parentElement || document.body;
-    ExportEngine.exportToPDF(el as HTMLElement, `editor-document-${Date.now()}.pdf`);
+    if (onOpenPdfExport) {
+      onOpenPdfExport();
+    } else {
+      const el = document.querySelector('.prose')?.parentElement || document.body;
+      ExportEngine.exportToPDF(el as HTMLElement, `editor-document-${Date.now()}.pdf`);
+    }
     setShowFileMenu(false);
   };
 
@@ -43,7 +51,7 @@ export const MainMenuBar: React.FC<MainMenuBarProps> = ({
   };
 
   return (
-    <div className="w-full h-12 bg-slate-950 border-b border-slate-800 flex items-center justify-between px-4 select-none z-30">
+    <div className="w-full h-12 bg-slate-950 border-b border-slate-800 flex items-center justify-between px-4 select-none z-50 relative print:hidden">
       {/* Brand & Title */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2 font-bold text-sm text-white tracking-wide">
@@ -88,6 +96,14 @@ export const MainMenuBar: React.FC<MainMenuBarProps> = ({
 
       {/* Mode Switcher & Zoom */}
       <div className="flex items-center gap-4">
+        {/* Preview Toggle */}
+        <button
+          onClick={onOpenPreview}
+          className="p-1.5 mr-1 rounded-lg bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 transition-colors"
+          title="Preview Document"
+        >
+          <Eye className="w-4 h-4 text-emerald-400" />
+        </button>
         {/* Mode switcher */}
         <div className="flex items-center bg-slate-900 border border-slate-800 rounded-lg p-0.5 text-xs">
           <button

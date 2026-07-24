@@ -12,6 +12,8 @@ import { PluginModals } from '../ui/modals/PluginModals';
 import { FontManagerPanel } from '../ui/panels/FontManagerPanel';
 import { initPostMessageBridge } from '../api/postMessageApi';
 import { EditorShortcutManager } from '../core/shortcuts/EditorShortcutManager';
+import { PreviewModal } from '../ui/modals/PreviewModal';
+import { PdfExportDialog } from '../ui/modals/PdfExportDialog';
 import './Editor.css';
 
 export default function Editor() {
@@ -19,6 +21,8 @@ export default function Editor() {
   const [isCanvasMode, setIsCanvasMode] = useState<boolean>(true);
   const [activeModal, setActiveModal] = useState<'mathjax' | 'abcjs' | 'openrouter' | null>(null);
   const [showFontManager, setShowFontManager] = useState<boolean>(false);
+  const [showPreviewModal, setShowPreviewModal] = useState<boolean>(false);
+  const [showPdfExportDialog, setShowPdfExportDialog] = useState<boolean>(false);
   const [contextMenu, setContextMenu] = useState<{ visible: boolean; x: number; y: number }>({
     visible: false,
     x: 0,
@@ -49,6 +53,16 @@ export default function Editor() {
     }
   }, [isCanvasMode]);
 
+  React.useEffect(() => {
+    const handleActiveEditorChange = () => {
+      setEditorInstance((window as any).__activeEditor);
+    };
+    window.addEventListener('activeEditorChanged', handleActiveEditorChange);
+    return () => {
+      window.removeEventListener('activeEditorChanged', handleActiveEditorChange);
+    };
+  }, []);
+
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     setContextMenu({
@@ -65,6 +79,8 @@ export default function Editor() {
         engine={engineRef.current || (window as any).__canvasEngine}
         isCanvasMode={isCanvasMode}
         setIsCanvasMode={setIsCanvasMode}
+        onOpenPreview={() => setShowPreviewModal(true)}
+        onOpenPdfExport={() => setShowPdfExportDialog(true)}
       />
 
       {/* Ribbon Formatting Toolbar */}
@@ -131,6 +147,18 @@ export default function Editor() {
 
       {showFontManager && (
         <FontManagerPanel onClose={() => setShowFontManager(false)} />
+      )}
+
+      {showPreviewModal && (
+        <PreviewModal 
+          onClose={() => setShowPreviewModal(false)}
+          editor={editorInstance || (window as any).__activeEditor}
+          engine={engineRef.current || (window as any).__canvasEngine}
+        />
+      )}
+
+      {showPdfExportDialog && (
+        <PdfExportDialog onClose={() => setShowPdfExportDialog(false)} />
       )}
     </div>
   );

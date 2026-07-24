@@ -191,7 +191,7 @@ export const BottomPageStrip: React.FC = () => {
       )}
 
       {/* Bottom Sticky Page Strip */}
-      <div className="w-full h-16 bg-slate-950/95 border-t border-slate-800/80 flex items-center justify-between px-4 gap-4 select-none z-20 flex-shrink-0 backdrop-blur-sm">
+      <div className="w-full h-16 bg-slate-950/95 border-t border-slate-800/80 flex items-center justify-between px-4 gap-4 select-none z-20 flex-shrink-0 backdrop-blur-sm print:hidden">
         {/* Left: Plus icon button replacing 'Document Pages' (Point #2) */}
         <div className="flex items-center gap-2 flex-shrink-0">
           <button

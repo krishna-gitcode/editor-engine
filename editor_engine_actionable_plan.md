@@ -329,9 +329,49 @@ To ensure rapid delivery, architectural stability, and minimal regression, the 2
 | [x] AI Chart Builder via OpenRouter (bar/line/pie JSON → chart node) | `src/ui/modals/PluginModals.tsx` (chart modal) | Phase 5 (Completed) |
 | [x] Add Google Fonts live search injection & Web Stock Photo query endpoints | `src/ui/panels/FontManagerPanel.tsx` + `WebImageSearch.tsx` | Phase 5 (Completed) |
 | [x] Populate `CanvaStudioPanel.tsx` with scalable vector SVG badges & icons | `src/ui/panels/CanvaStudioPanel.tsx` | Phase 5 (Completed) |
-| [ ] Build `PreviewModal.tsx` with Document, PDF, and Infinite Web Page tabs | `src/ui/modals/PreviewModal.tsx` | Phase 6 |
-| [ ] Inject `@media print` CSS isolating `.document-page-card` and hiding UI | `src/index.css` | Phase 6 |
-| [ ] Create `PdfExportDialog.tsx` supporting Original, High, Standard, and Compressed tiers | `src/ui/modals/PdfExportDialog.tsx` | Phase 6 |
+| [x] Build `PreviewModal.tsx` with Document, PDF, and Infinite Web Page tabs | `src/ui/modals/PreviewModal.tsx` | Phase 6 (Completed) |
+| [x] Inject `@media print` CSS isolating `.document-page-card` and hiding UI | `src/index.css` | Phase 6 (Completed) |
+| [x] Create `PdfExportDialog.tsx` supporting Original, High, Standard, and Compressed tiers | `src/ui/modals/PdfExportDialog.tsx` | Phase 6 (Completed) |
+
+---
+
+## AI Content Intelligence & Formatting Preservation Guide
+
+Integrating an AI model that intelligently parses, formats, and preserves rich content across a dual-layer architecture (TipTap + Fabric.js) requires a structured processing pipeline. The AI must behave not just as a text generator, but as a structural parser that understands the semantic boundaries of mathematical notation, sheet music, tabular data, and vector structures.
+
+### 1. Intelligent Table Detection & Rendering
+* **Detection Trigger:** When the AI output contains tabular Markdown (e.g., `| Header 1 | Header 2 |` followed by `|---|---|`).
+* **Processing Pipeline:** The `markdownToHtml` parser intercepts this Markdown block and strictly translates it into `<table>`, `<thead>`, `<tbody>`, `<tr>`, `<th>`, and `<td>` HTML elements.
+* **Canvas/Document Insertion:** 
+  * In Document Mode, these elements trigger TipTap's `@tiptap/extension-table` NodeViews, injecting fully interactive tables.
+  * The system bypasses raw string insertion to ensure the table maintains resize handles, rotation anchors, and editable cells.
+
+### 2. Deep Text Formatting & Style Preservation
+* **Detection Trigger:** Any standard Markdown formatting (bold, italic, strikethrough, lists, links).
+* **Processing Pipeline:** Rather than inserting raw markdown (`**bold text**`), the pipeline parses it into standard HTML (`<strong>`, `<em>`, `<s>`, `<ul>`). 
+* **Preservation during Edits/OCR:** When enhancing existing text, the system must read the TipTap JSON/HTML structure rather than plain text. The AI prompt instructs the model to preserve exact inline HTML tags (or Markdown equivalents) so that when the output is re-parsed and injected, the original highlights, colors, and font weights remain intact.
+
+### 3. Code Snippet Recognition & Syntax Highlighting
+* **Detection Trigger:** The presence of triple backticks (```) indicating a fenced code block, optionally with a language identifier (e.g., ```javascript).
+* **Processing Pipeline:** The parser maps this to `<pre><code>` blocks. 
+* **Editor Integration:** TipTap's `CodeBlock` extension intercepts these blocks, applying accurate, language-specific syntax highlighting and block-level styling, ensuring it is separated from standard text paragraphs.
+
+### 4. Semantic ABC.js Music Notation Parsing
+* **Detection Trigger:** AI output or OCR explicitly wrapped in `<abcjs>...</abcjs>` tags, or standard ABC notation strings identified by the `X:1\nT:` preamble.
+* **Processing Pipeline:** The parser strips the tags and wraps the content in a custom `<div class="abcjs-render" data-abc="..."></div>` element.
+* **Editor Integration:** The `AbcJsExtension` NodeView mounts this element. The editor immediately intercepts it, handing the raw string to the `abcjs.renderAbc` engine, converting it instantly into interactive sheet music with inline MIDI playback.
+
+### 5. MathJax & LaTeX Formula Translation
+* **Detection Trigger:** Inline math wrapped in `$` or `$$`, or explicitly tagged `<mathjax>...</mathjax>` blocks.
+* **Processing Pipeline:** Similar to music notation, the raw LaTeX string is safely extracted and wrapped in a `<div class="mathjax-render" data-latex="..."></div>`.
+* **Editor Integration:** The `MathJaxExtension` intercepts these nodes and passes the LaTeX string to the MathJax rendering engine, outputting beautiful, pixel-perfect mathematical SVGs inline with the text.
+
+### 6. High-Fidelity OCR Context & Structure Preservation
+* **Detection Trigger:** Passing an image to the AI Vision model for OCR.
+* **Processing Pipeline:** 
+  * The System Prompt strictly mandates that the AI must not attempt to interpret or solve formulas/music, but rather extract their exact syntactical representation (LaTeX or ABC).
+  * The AI is instructed to enclose identified special formats in their respective semantic tags (`<mathjax>`, `<abcjs>`, fenced code blocks, and markdown tables).
+  * The resulting text passes through the `markdownToHtml` unified parser, which reconstructs the document's original visual layout—matching formatting, formulas, and sheet music precisely as they appeared in the scanned image.
 
 ---
 *Generated by Antigravity AI for Sarkari Musician Core Editor Engine.*

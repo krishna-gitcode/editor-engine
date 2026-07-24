@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Table, Image, Globe, Code, Quote, Sparkles, Loader2, Check, X } from 'lucide-react';
 import { OpenRouterService } from '../../services/OpenRouterService';
 import { parseMarkdownToTipTap } from '../../services/markdownToHtml';
@@ -17,8 +18,20 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
   const [aiPrompt, setAiPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  
+  const [isActive, setIsActive] = useState((window as any).__activeEditor === editor);
 
-  if (!editor || !editor.isEditable) return null;
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handleActiveEditorChanged = () => {
+      setIsActive((window as any).__activeEditor === editor);
+    };
+    window.addEventListener('activeEditorChanged', handleActiveEditorChanged);
+    return () => window.removeEventListener('activeEditorChanged', handleActiveEditorChanged);
+  }, [editor]);
+
+  if (!editor || !editor.isEditable || !isActive) return null;
 
   const insertTable = () => {
     editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
@@ -36,11 +49,19 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
   };
 
   const insertImage = () => {
-    const url = prompt('Enter Image URL:');
-    if (url) {
-      editor.chain().focus().setImage({ src: url }).run();
-    }
+    fileInputRef.current?.click();
     setIsOpen(false);
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && editor) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        editor.chain().focus().setImage({ src: event.target?.result as string }).run();
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleGenerateAI = async () => {
@@ -66,7 +87,7 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
   };
 
   return (
-    <div className="absolute left-[-40px] top-2" style={{ zIndex: 9999 }}>
+    <div className="absolute left-[-40px] top-2 print:hidden" style={{ zIndex: 9999 }} data-html2canvas-ignore="true">
       <div className="relative">
         <button
           onClick={() => { setIsOpen(!isOpen); setShowAiInput(false); setAiError(null); }}
@@ -77,47 +98,66 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
         </button>
 
         {isOpen && !showAiInput && (
-          <div className="absolute left-9 top-0 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-1.5 flex flex-col gap-1 w-48 text-xs text-slate-200" style={{ zIndex: 9999 }}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.15, type: 'spring', bounce: 0 }}
+            className="absolute left-9 top-0 glass-menu border border-slate-700 rounded-xl shadow-2xl p-1.5 flex flex-col gap-1 w-48 text-xs text-slate-200"
+            style={{ zIndex: 9999 }}
+          >
             {/* AI Generate – highlighted as premium option */}
-            <button
+            <motion.button
+              initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 }}
               onClick={() => { setShowAiInput(true); }}
               className="flex items-center gap-2 px-2.5 py-1.5 rounded bg-gradient-to-r from-emerald-900/50 to-teal-900/40 hover:from-emerald-800/70 hover:to-teal-800/60 text-emerald-300 hover:text-emerald-200 border border-emerald-800/40 transition-all text-left"
             >
               <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
               <span className="font-medium">Generate with AI</span>
-            </button>
+            </motion.button>
 
-            <div className="h-px bg-slate-800 my-0.5" />
+            <div className="h-px bg-slate-700/50 my-0.5" />
 
-            <button
+            <motion.button
+              initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}
               onClick={insertTable}
               className="flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-slate-800 transition-colors text-left"
             >
               <Table className="w-3.5 h-3.5 text-indigo-400" />
               <span>Table (3×3)</span>
-            </button>
-            <button
+            </motion.button>
+            <motion.button
+              initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 }}
               onClick={insertImage}
               className="flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-slate-800 transition-colors text-left"
             >
               <Image className="w-3.5 h-3.5 text-pink-400" />
-              <span>Web Image URL</span>
-            </button>
-            <button
+              <span>Image</span>
+            </motion.button>
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+            <motion.button
+              initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}
               onClick={insertBlockquote}
               className="flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-slate-800 transition-colors text-left"
             >
               <Quote className="w-3.5 h-3.5 text-amber-400" />
               <span>Blockquote</span>
-            </button>
-            <button
+            </motion.button>
+            <motion.button
+              initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25 }}
               onClick={insertCodeBlock}
               className="flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-slate-800 transition-colors text-left"
             >
               <Code className="w-3.5 h-3.5 text-emerald-400" />
               <span>Code Block</span>
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
         )}
 
         {/* AI Input sub-panel */}

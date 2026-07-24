@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { useEditorStore, type SidebarTab } from '../../store/editorStore';
 import { useDocumentStore } from '../../store/documentStore';
 import { FileText, Sparkles, Image as ImageIcon, Shapes, Type, Layers, Search, LayoutTemplate, Plus, Trash2, Sliders } from 'lucide-react';
@@ -16,7 +17,16 @@ interface LeftSidebarProps {
   onOpenModal?: (type: 'mathjax' | 'abcjs') => void;
 }
 
-export const LeftSidebar: React.FC<LeftSidebarProps> = ({ engine, editor, onOpenModal }) => {
+export const LeftSidebar: React.FC<LeftSidebarProps> = ({ engine, editor: defaultEditor, onOpenModal }) => {
+  const [editor, setActiveEditor] = useState<any>(defaultEditor || (window as any).__activeEditor);
+
+  useEffect(() => {
+    const handleActiveEditorChanged = () => {
+      setActiveEditor((window as any).__activeEditor || defaultEditor);
+    };
+    window.addEventListener('activeEditorChanged', handleActiveEditorChanged);
+    return () => window.removeEventListener('activeEditorChanged', handleActiveEditorChanged);
+  }, [defaultEditor]);
   const activeTab = useEditorStore((s) => s.activeTab);
   const setActiveTab = useEditorStore((s) => s.setActiveTab);
 
@@ -35,7 +45,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ engine, editor, onOpen
   ];
 
   return (
-    <div className="flex h-full border-r border-slate-800 bg-slate-950 select-none z-20">
+    <div className="flex h-full border-r border-slate-800 bg-slate-950 select-none z-20 print:hidden">
       {/* Icon Navigation Bar */}
       <div className="w-16 flex flex-col items-center py-4 gap-2 border-r border-slate-800/80 bg-slate-950 flex-shrink-0">
         {TABS.map((tab) => {
@@ -110,8 +120,11 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ engine, editor, onOpen
                     orientation: 'landscape' as const,
                   },
                 ].map((t, idx) => (
-                  <div
+                  <motion.div
                     key={idx}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.05, duration: 0.2, type: 'spring' }}
                     onClick={() => {
                       updatePageContent(activePageId, t.html);
                       updatePageSettings(activePageId, {
@@ -120,11 +133,11 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ engine, editor, onOpen
                         orientation: t.orientation || 'portrait',
                       });
                     }}
-                    className="p-3 rounded-xl bg-slate-800/80 border border-slate-700/60 hover:border-indigo-500 cursor-pointer transition-all active:scale-95"
+                    className="p-3 rounded-xl bg-slate-800/80 border border-slate-700/60 hover:border-indigo-500 cursor-pointer transition-all active:scale-95 hover:bg-slate-800"
                   >
                     <div className="text-xs font-semibold text-slate-100">{t.name}</div>
                     <div className="text-[11px] text-slate-400 mt-0.5">{t.desc}</div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </div>

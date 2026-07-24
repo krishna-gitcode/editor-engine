@@ -13,8 +13,8 @@ export const FREE_OPENROUTER_MODELS: OpenRouterModel[] = [
     isVision: true,
   },
   {
-    id: 'qwen/qwen-2-vl-72b-instruct:free',
-    name: 'Qwen 2 VL 72B Vision & OCR (Free)',
+    id: 'nvidia/nemotron-nano-12b-v2-vl:free',
+    name: 'NVIDIA Nemotron Nano 12B VL (Free)',
     description: 'Powerful vision model optimized for accurate document OCR, tables, and handwriting.',
     isVision: true,
   },
@@ -48,7 +48,7 @@ export class OpenRouterService {
     apiKey: string,
     model: string,
     prompt: string,
-    systemPrompt = 'You are a helpful, professional AI authoring assistant for GridLeaf Editor. Output clean, well-formatted text or markdown directly usable inside a document.'
+    systemPrompt = 'You are a helpful, professional AI authoring assistant for GridLeaf Editor. Output clean, well-formatted text or markdown directly usable inside a document. IMPORTANT: For tables, output markdown tables. For mathematical formulas, wrap them exactly in <mathjax>...</mathjax> tags. For ABC sheet music notation, wrap it exactly in <abcjs>...</abcjs> tags. For code snippets, use fenced code blocks (```).'
   ): Promise<string> {
     const activeKey = (apiKey || import.meta.env.VITE_OPENROUTER_API_KEY || '').trim();
     if (!activeKey) {
@@ -136,7 +136,7 @@ export class OpenRouterService {
     apiKey: string,
     model: string,
     base64Image: string,
-    ocrPrompt = 'Extract all text, tables, equations, and structural elements from this image accurately into clean Markdown format. Preserve exact text wording, headings, and lists.'
+    ocrPrompt = 'Extract all text, tables, equations, and structural elements from this image accurately into clean Markdown format. Preserve exact text wording, headings, and lists. IMPORTANT: Do not interpret or solve formulas or music. Extract their exact syntactical representation. Enclose any mathematical equations in <mathjax>...</mathjax> tags and sheet music/ABC notation in <abcjs>...</abcjs> tags. Output tables as markdown tables.'
   ): Promise<string> {
     const activeKey = (apiKey || import.meta.env.VITE_OPENROUTER_API_KEY || '').trim();
     if (!activeKey) {
@@ -149,7 +149,7 @@ export class OpenRouterService {
       imageUrl = `data:image/png;base64,${base64Image}`;
     }
 
-    const activeModel = model || import.meta.env.VITE_OPENROUTER_DEFAULT_VISION_MODEL || 'qwen/qwen-2-vl-72b-instruct:free';
+    const activeModel = model || import.meta.env.VITE_OPENROUTER_DEFAULT_VISION_MODEL || 'nvidia/nemotron-nano-12b-v2-vl:free';
 
     try {
       const response = await fetch(this.API_URL, {

@@ -1,5 +1,36 @@
-/* Workspace grid background */
+/* ═══════════════════════════════════════════════════════════════════
+   WorkspaceCanvas.css — Premium Document Surface
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Grid Background ──────────────────────────────────────────── */
 .workspace-grid-bg {
-  background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+  background-image: radial-gradient(rgba(148, 163, 184, 0.25) 1px, transparent 1px);
   background-size: 20px 20px;
+}
+
+/* ─── Page Card — Premium Shadow & Glow ──────────────────────── */
+.document-page-card {
+  border-radius: 2px;
+  transition: box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 4px 6px -1px rgba(0, 0, 0, 0.08),
+    0 20px 50px -12px rgba(0, 0, 0, 0.25),
+    0 0 60px -20px rgba(99, 102, 241, 0.08);
+}
+
+.document-page-card:hover {
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 8px 12px -2px rgba(0, 0, 0, 0.1),
+    0 25px 60px -12px rgba(0, 0, 0, 0.3),
+    0 0 80px -20px rgba(99, 102, 241, 0.12);
+}
+
+/* ─── Workspace Canvas Background ──────────────────────────────── */
+.workspace-viewport {
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(99, 102, 241, 0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 70%, rgba(168, 85, 247, 0.02) 0%, transparent 50%),
+    #0f172a;
 }

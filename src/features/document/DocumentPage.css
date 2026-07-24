@@ -1,7 +1,13 @@
-/* DocumentPage TipTap styling & table themes */
+/* ═══════════════════════════════════════════════════════════════════
+   DocumentPage.css — Microsoft Word-Style Header/Footer + Glassmorphism
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Core Editor Surface ──────────────────────────────────────── */
 .ProseMirror {
   outline: none !important;
   min-height: 450px;
+  caret-color: #6366f1;
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .ProseMirror p {
   margin-bottom: 0.75em;
@@ -31,10 +37,11 @@
   margin-bottom: 0.25rem !important;
   line-height: 1.5 !important;
 }
+
+/* ─── Table Styles ─────────────────────────────────────────────── */
 .ProseMirror table,
 .custom-prosemirror-table {
   border-collapse: collapse;
-  /* fixed layout means columns split equally when no explicit widths are set */
   table-layout: fixed;
   width: 100%;
   margin: 1.5em 0;
@@ -54,7 +61,6 @@
   box-sizing: border-box;
   position: relative;
   overflow: hidden;
-  /* Allow explicit width attrs to override */
   width: auto;
 }
 .ProseMirror table th {
@@ -119,4 +125,399 @@
   background-color: #fffbeb !important;
   color: #78350f !important;
   border-color: #fde68a !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   MICROSOFT WORD-STYLE HEADER & FOOTER ZONES
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Animation Keyframes ──────────────────────────────────────── */
+@keyframes headerFooterFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes headerFooterFadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes separatorShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+  50% { box-shadow: 0 0 12px 2px rgba(99, 102, 241, 0.15); }
+}
+
+@keyframes labelSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-12px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes dotPulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+@keyframes borderGlowExpand {
+  from { 
+    opacity: 0;
+    width: 0%;
+  }
+  to { 
+    opacity: 1;
+    width: 100%;
+  }
+}
+
+/* ─── Document Header Zone ─────────────────────────────────────── */
+.doc-header-zone {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  cursor: text;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Inactive state — dimmed, Word-style faded */
+.doc-header-zone:not(.zone-active) {
+  opacity: 0.35;
+}
+.doc-header-zone:not(.zone-active):hover {
+  opacity: 0.65;
+}
+.doc-header-zone:not(.zone-active) .doc-zone-label {
+  display: none;
+}
+.doc-header-zone:not(.zone-active) .doc-zone-separator {
+  opacity: 0;
+}
+
+/* Active state — full opacity with glassmorphic glow */
+.doc-header-zone.zone-active {
+  opacity: 1;
+  animation: headerFooterFadeIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.doc-header-zone.zone-active .doc-zone-label {
+  display: flex;
+  animation: labelSlideIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+
+/* ─── Document Footer Zone ─────────────────────────────────────── */
+.doc-footer-zone {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  cursor: text;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Inactive state */
+.doc-footer-zone:not(.zone-active) {
+  opacity: 0.35;
+}
+.doc-footer-zone:not(.zone-active):hover {
+  opacity: 0.65;
+}
+.doc-footer-zone:not(.zone-active) .doc-zone-label {
+  display: none;
+}
+.doc-footer-zone:not(.zone-active) .doc-zone-separator {
+  opacity: 0;
+}
+
+/* Active state */
+.doc-footer-zone.zone-active {
+  opacity: 1;
+  animation: headerFooterFadeInUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.doc-footer-zone.zone-active .doc-zone-label {
+  display: flex;
+  animation: labelSlideIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+
+/* ─── Zone Separator Line (MS Word blue dashed line) ────────── */
+.doc-zone-separator {
+  position: relative;
+  height: 1px;
+  width: 100%;
+  transition: opacity 0.35s ease;
+}
+
+.doc-zone-separator::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(99, 102, 241, 0.5) 0,
+    rgba(99, 102, 241, 0.5) 6px,
+    transparent 6px,
+    transparent 12px
+  );
+  transition: opacity 0.3s ease;
+}
+
+/* Animated shimmer glow on active separator */
+.zone-active .doc-zone-separator::after {
+  content: '';
+  position: absolute;
+  inset: -1px 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(129, 140, 248, 0.6) 25%,
+    rgba(99, 102, 241, 0.8) 50%,
+    rgba(129, 140, 248, 0.6) 75%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: separatorShimmer 3s linear infinite;
+  border-radius: 2px;
+  filter: blur(1px);
+}
+
+/* ─── Zone Label (e.g., "Header" / "Footer") ──────────────── */
+.doc-zone-label {
+  align-items: center;
+  gap: 6px;
+  position: absolute;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(99, 102, 241, 0.85);
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  padding: 2px 10px 2px 8px;
+  border-radius: 0 0 6px 0;
+
+  /* Glassmorphism label */
+  background: rgba(99, 102, 241, 0.06);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(99, 102, 241, 0.12);
+  border-top: none;
+  border-left: none;
+}
+
+.doc-zone-label-footer {
+  border-radius: 0 6px 0 0;
+  border-top: 1px solid rgba(99, 102, 241, 0.12);
+  border-bottom: none;
+  border-left: none;
+}
+
+.doc-zone-label .label-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #6366f1;
+  animation: dotPulse 2s ease-in-out infinite;
+}
+
+/* ─── Header/Footer Editor Content Area ────────────────────── */
+.doc-zone-content {
+  position: relative;
+  width: 100%;
+  min-height: 20px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.doc-zone-content .ProseMirror {
+  min-height: 20px !important;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #475569;
+}
+
+.zone-active .doc-zone-content .ProseMirror {
+  color: #1e293b;
+}
+
+/* ─── Body Zone Dimming When Header/Footer Active ─────────── */
+.doc-body-zone {
+  position: relative;
+  z-index: 10;
+  flex: 1;
+  min-height: 500px;
+  transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              filter 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.doc-body-zone.body-dimmed {
+  opacity: 0.4;
+  filter: grayscale(0.1) blur(0.3px);
+  cursor: pointer;
+}
+
+/* ─── Page Number Badge ──────────────────────────────────────── */
+.page-number-badge {
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: #94a3b8;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  user-select: none;
+  transition: all 0.3s ease;
+
+  /* Glassmorphism pill */
+  background: rgba(148, 163, 184, 0.06);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  padding: 2px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.zone-active .page-number-badge {
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.06);
+  border-color: rgba(99, 102, 241, 0.12);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   GLASSMORPHISM & MOTION UI ENHANCEMENTS
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Document Page Container Glassmorphic Shadow ────────────── */
+.document-page-surface {
+  position: relative;
+  background: #ffffff;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #0f172a;
+  user-select: text;
+}
+
+/* Subtle inner glow on active zone */
+.document-page-surface::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 30;
+  border-radius: inherit;
+  transition: box-shadow 0.5s ease;
+  box-shadow: inset 0 0 0 0 rgba(99, 102, 241, 0);
+}
+.document-page-surface.hf-editing::before {
+  box-shadow: inset 0 0 60px -20px rgba(99, 102, 241, 0.04);
+}
+
+/* ─── Watermark Animations ─────────────────────────────────── */
+@keyframes watermarkFloat {
+  0%, 100% { transform: rotate(-45deg) scale(1); }
+  50% { transform: rotate(-45deg) scale(1.02); }
+}
+
+.watermark-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  z-index: 0;
+  opacity: 0.12;
+}
+
+.watermark-text {
+  font-size: 5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #94a3b8;
+  transform: rotate(-45deg);
+  animation: watermarkFloat 8s ease-in-out infinite;
+}
+
+/* ─── Smooth cursor blink ────────────────────────────────────── */
+.ProseMirror .ProseMirror-cursor {
+  animation: none;
+}
+
+/* ─── Selection highlight glassmorphism ──────────────────────── */
+.ProseMirror ::selection {
+  background: rgba(99, 102, 241, 0.18);
+}
+
+/* ─── Plus Menu Entry Animation ──────────────────────────────── */
+@keyframes plusMenuFadeIn {
+  from { opacity: 0; transform: scale(0.85) translateX(-6px); }
+  to { opacity: 1; transform: scale(1) translateX(0); }
+}
+
+/* ─── Print Overrides ─────────────────────────────────────────── */
+@media print {
+  .doc-header-zone,
+  .doc-footer-zone {
+    opacity: 1 !important;
+  }
+  .doc-header-zone .doc-zone-label,
+  .doc-footer-zone .doc-zone-label {
+    display: none !important;
+  }
+  .doc-zone-separator {
+    opacity: 0 !important;
+  }
+  .doc-zone-separator::before,
+  .doc-zone-separator::after {
+    display: none !important;
+  }
+  .doc-body-zone {
+    opacity: 1 !important;
+    filter: none !important;
+    pointer-events: auto !important;
+  }
+  .page-number-badge {
+    background: transparent !important;
+    border: none !important;
+    backdrop-filter: none !important;
+    color: #000 !important;
+  }
+  .document-page-surface::before {
+    display: none !important;
+  }
+  .watermark-overlay {
+    opacity: 0.08 !important;
+  }
+  .doc-zone-content .ProseMirror {
+    color: #000 !important;
+  }
+  .print\:hidden {
+    display: none !important;
+  }
 }

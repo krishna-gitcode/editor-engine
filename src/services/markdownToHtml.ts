@@ -275,6 +275,17 @@ export function parseMarkdownToTipTap(markdown: string): object[] {
       }
     }
 
+    // ABC Notation blocks (standard string preamble X: ... T: ...)
+    if (/^X:\s*\d+/i.test(trimmed) && i + 1 < rawLines.length && /^T:/i.test(rawLines[i + 1].trim())) {
+      const abcLines: string[] = [];
+      while (i < rawLines.length && rawLines[i].trim() !== '') {
+        abcLines.push(rawLines[i]);
+        i++;
+      }
+      nodes.push({ type: 'abcJs', attrs: { abc: abcLines.join('\n') } });
+      continue;
+    }
+
     // Regular paragraph
     nodes.push(paragraph(trimmed));
     i++;

@@ -29,28 +29,46 @@ export const CanvasLayer: React.FC<CanvasLayerProps> = ({
 
     // Dynamic pointer pass-through for Hybrid Canvas mode (Point #5)
     const fabricCanvas = engine.canvas as any;
+    let rafId: number | null = null;
+
     const handlePointerPassThrough = (e: MouseEvent) => {
-      if (!fabricCanvas || !fabricCanvas.upperCanvasEl) return;
-      const upperCanvas = fabricCanvas.upperCanvasEl;
+      if (rafId) cancelAnimationFrame(rafId);
+      
+      rafId = requestAnimationFrame(() => {
+        if (!fabricCanvas || !fabricCanvas.upperCanvasEl) return;
+        const upperCanvas = fabricCanvas.upperCanvasEl;
 
-      const state = useCanvasStore.getState();
-      const activeObj = fabricCanvas.getActiveObject();
+        const state = useCanvasStore.getState();
+        const activeObj = fabricCanvas.getActiveObject();
 
-      if (state.isDrawingPolygon || activeObj || (fabricCanvas as any)._isCurrentlyDrawing) {
-        upperCanvas.style.pointerEvents = 'auto';
-        return;
-      }
+        if (state.isDrawingPolygon || activeObj || fabricCanvas._isCurrentlyDrawing || fabricCanvas.isDrawingMode) {
+          upperCanvas.style.setProperty('pointer-events', 'auto', 'important');
+          return;
+        }
 
-      // Check if mouse coordinate hits any vector object on canvas
-      const target = fabricCanvas.findTarget(e as any, false);
-      if (target) {
-        upperCanvas.style.pointerEvents = 'auto';
-      } else {
-        upperCanvas.style.pointerEvents = 'none';
-      }
+        // Fast bounds check
+        const rect = upperCanvas.getBoundingClientRect();
+        if (
+          e.clientX < rect.left ||
+          e.clientX > rect.right ||
+          e.clientY < rect.top ||
+          e.clientY > rect.bottom
+        ) {
+          upperCanvas.style.setProperty('pointer-events', 'none', 'important');
+          return;
+        }
+
+        // Check if mouse coordinate hits any vector object on canvas
+        const target = fabricCanvas.findTarget(e, false);
+        if (target && target.type !== 'canvas') {
+          upperCanvas.style.setProperty('pointer-events', 'auto', 'important');
+        } else {
+          upperCanvas.style.setProperty('pointer-events', 'none', 'important');
+        }
+      });
     };
 
-    window.addEventListener('mousemove', handlePointerPassThrough);
+    window.addEventListener('mousemove', handlePointerPassThrough, { passive: true });
 
     if (fabricCanvas) {
       fabricCanvas.on('mouse:down', (e: any) => {
@@ -58,6 +76,8 @@ export const CanvasLayer: React.FC<CanvasLayerProps> = ({
           const editor = (window as any).__activeEditor;
           if (editor) {
             editor.commands.focus();
+            fabricCanvas.discardActiveObject();
+            fabricCanvas.requestRenderAll();
           }
         }
       });

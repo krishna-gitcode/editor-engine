@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useEditorStore } from '../../store/editorStore';
 import { useDocumentStore } from '../../store/documentStore';
 import { useWorkspaceStore } from '../../store/workspaceStore';
@@ -18,7 +19,7 @@ interface ToolbarProps {
   onOpenFontManager?: () => void;
 }
 
-export const Toolbar: React.FC<ToolbarProps> = ({ editor, onOpenModal, onOpenFontManager }) => {
+export const Toolbar: React.FC<ToolbarProps> = ({ editor: defaultEditor, onOpenModal, onOpenFontManager }) => {
   const ribbonTab = useEditorStore((s) => s.ribbonTab);
   const setRibbonTab = useEditorStore((s) => s.setRibbonTab);
   const isRibbonMinimized = useEditorStore((s) => s.isRibbonMinimized);
@@ -42,6 +43,31 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onOpenModal, onOpenFon
   const [fontSize, setFontSizeState] = useState('16px');
   const [lineSpacing, setLineSpacing] = useState('1.5');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Dynamic active editor state
+  const [editor, setActiveEditor] = useState<any>(defaultEditor || (window as any).__activeEditor);
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    const handleActiveEditorChanged = () => {
+      setActiveEditor((window as any).__activeEditor || defaultEditor);
+    };
+    window.addEventListener('activeEditorChanged', handleActiveEditorChanged);
+    return () => {
+      window.removeEventListener('activeEditorChanged', handleActiveEditorChanged);
+    };
+  }, [defaultEditor]);
+
+  useEffect(() => {
+    if (!editor) return;
+    const forceUpdate = () => setTick((t) => t + 1);
+    editor.on('selectionUpdate', forceUpdate);
+    editor.on('update', forceUpdate);
+    return () => {
+      editor.off('selectionUpdate', forceUpdate);
+      editor.off('update', forceUpdate);
+    };
+  }, [editor]);
 
   if (!editor) {
     return (
@@ -114,7 +140,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onOpenModal, onOpenFon
 
   return (
     <div
-      className="w-full bg-slate-900 border-b border-slate-800 flex flex-col select-none z-[9999] relative shadow-lg"
+      className="w-full glass-panel flex flex-col select-none z-40 relative shadow-lg print:hidden"
+      style={{ transform: 'translateZ(0)' }}
       onMouseDown={(e) => {
         if (
           e.target instanceof HTMLInputElement ||
@@ -135,7 +162,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onOpenModal, onOpenFon
       />
 
       {/* Ribbon Tabs Header */}
-      <div className="flex items-center justify-between px-4 pt-2 border-b border-slate-800 bg-slate-950/60">
+      <div className="flex items-center justify-between px-4 pt-2 border-b border-slate-700/50 bg-slate-950/40">
         <div className="flex gap-1 text-xs">
           {(['home', 'insert', 'layout', 'table', 'plugins'] as const).map((tab) => (
             <button
@@ -143,7 +170,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onOpenModal, onOpenFon
               onClick={() => setRibbonTab(tab)}
               className={`px-4 py-2 rounded-t-lg capitalize font-medium transition-all ${
                 ribbonTab === tab
-                  ? 'bg-slate-900 text-indigo-400 border-t-2 border-indigo-500 shadow-sm'
+                  ? 'bg-slate-900/80 backdrop-blur-md text-indigo-400 border-t-2 border-indigo-500 shadow-sm'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
               }`}
             >
@@ -163,9 +190,17 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onOpenModal, onOpenFon
       </div>
 
       {/* Ribbon Panels */}
-      {!isRibbonMinimized && (
-        <div className="p-3 overflow-visible flex items-center gap-5 min-h-[68px] text-xs text-slate-200 flex-wrap">
-          {/* HOME TAB */}
+      <AnimatePresence initial={false}>
+        {!isRibbonMinimized && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
+            className="overflow-hidden bg-slate-900/40"
+          >
+            <div className="p-3 flex items-center gap-5 min-h-[68px] text-xs text-slate-200 flex-wrap">
+              {/* HOME TAB */}
           {ribbonTab === 'home' && (
             <>
               {/* History Group */}
@@ -501,6 +536,17 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onOpenModal, onOpenFon
               >
                 Page Break
               </button>
+
+              <div className="h-4 w-px bg-slate-800 mx-1" />
+
+              <button
+                onClick={() => (editor.commands as any).insertPageNumber?.({ type: 'current' })}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600/30 hover:bg-indigo-600/50 rounded-lg text-xs border border-indigo-500/50 text-indigo-300 transition-colors"
+                title="Insert Dynamic Page Number"
+              >
+                <Hash className="w-3.5 h-3.5" />
+                <span>Page #</span>
+              </button>
             </div>
           )}
 
@@ -655,22 +701,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onOpenModal, onOpenFon
                 />
               </div>
 
-              {/* Header & Footer Controls */}
+              {/* Page Number Toggle */}
               <div className="flex items-center gap-2 bg-slate-950/40 px-2.5 py-1.5 rounded border border-slate-800">
-                <input
-                  type="text"
-                  placeholder="Running Header"
-                  value={activePage.header || ''}
-                  onChange={(e) => updatePageSettings(activePage.id, { header: e.target.value })}
-                  className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs w-28 focus:outline-none text-white"
-                />
-                <input
-                  type="text"
-                  placeholder="Running Footer"
-                  value={activePage.footer || ''}
-                  onChange={(e) => updatePageSettings(activePage.id, { footer: e.target.value })}
-                  className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs w-28 focus:outline-none text-white"
-                />
                 <label className="flex items-center gap-1 text-xs text-slate-300 cursor-pointer select-none">
                   <input
                     type="checkbox"
@@ -678,7 +710,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onOpenModal, onOpenFon
                     onChange={(e) => updatePageSettings(activePage.id, { showPageNumber: e.target.checked })}
                     className="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0"
                   />
-                  <span>Page #</span>
+                  <span>Show Static Page # (Bottom Right)</span>
                 </label>
               </div>
 
@@ -851,8 +883,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onOpenModal, onOpenFon
               </button>
             </div>
           )}
-        </div>
-      )}
+          </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
