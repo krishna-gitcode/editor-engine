@@ -1,27 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Table, Image, Globe, Code, Quote, Sparkles, Loader2, Check, X } from 'lucide-react';
+import { Plus, Table, Image, Globe, Code, Quote, Sparkles, Loader2, Check, X, Wand2, AlignLeft, Music, BarChart2 } from 'lucide-react';
 import { OpenRouterService } from '../../services/OpenRouterService';
 import { parseMarkdownToTipTap } from '../../services/markdownToHtml';
+import { useAIStore } from '../../store/aiStore';
 
 interface PlusMenuProps {
   editor: any;
   onOpenModal?: (type: 'mathjax' | 'abcjs' | 'openrouter') => void;
 }
 
-const DEFAULT_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '';
-const DEFAULT_MODEL = import.meta.env.VITE_OPENROUTER_DEFAULT_MODEL || 'openrouter/free';
+type PromptMode = 'generate' | 'abc' | 'chart' | 'web' | null;
 
 export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [showAiInput, setShowAiInput] = useState(false);
+  const [promptMode, setPromptMode] = useState<PromptMode>(null);
   const [aiPrompt, setAiPrompt] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [showToneSelector, setShowToneSelector] = useState(false);
   
   const [isActive, setIsActive] = useState((window as any).__activeEditor === editor);
-
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const { isStreaming, setStreaming, clearStreamingText, selectedModel, apiKey } = useAIStore();
 
   useEffect(() => {
     const handleActiveEditorChanged = () => {
@@ -33,25 +34,10 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
 
   if (!editor || !editor.isEditable || !isActive) return null;
 
-  const insertTable = () => {
-    editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
-    setIsOpen(false);
-  };
-
-  const insertBlockquote = () => {
-    editor.chain().focus().toggleBlockquote().run();
-    setIsOpen(false);
-  };
-
-  const insertCodeBlock = () => {
-    editor.chain().focus().toggleCodeBlock().run();
-    setIsOpen(false);
-  };
-
-  const insertImage = () => {
-    fileInputRef.current?.click();
-    setIsOpen(false);
-  };
+  const insertTable = () => { editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(); setIsOpen(false); };
+  const insertBlockquote = () => { editor.chain().focus().toggleBlockquote().run(); setIsOpen(false); };
+  const insertCodeBlock = () => { editor.chain().focus().toggleCodeBlock().run(); setIsOpen(false); };
+  const insertImage = () => { fileInputRef.current?.click(); setIsOpen(false); };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -66,23 +52,122 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
 
   const handleGenerateAI = async () => {
     if (!aiPrompt.trim()) return;
-    setIsGenerating(true);
     setAiError(null);
+    setStreaming(true);
+    
+    // Insert empty paragraph
+    editor.chain().focus().insertContent('\n').run();
+    
     try {
-      const result = await OpenRouterService.generateText(DEFAULT_API_KEY, DEFAULT_MODEL, aiPrompt);
-      const nodes = parseMarkdownToTipTap(result);
-      if (nodes.length > 0) {
-        editor.chain().focus().insertContent(nodes).run();
-      } else {
-        editor.chain().focus().insertContent(result).run();
+      for await (const chunk of OpenRouterService.streamText(apiKey, selectedModel, aiPrompt)) {
+        editor.commands.insertContent(chunk);
       }
-      setAiPrompt('');
-      setShowAiInput(false);
-      setIsOpen(false);
     } catch (err: any) {
       setAiError(err.message || 'AI generation failed.');
     } finally {
-      setIsGenerating(false);
+      setStreaming(false);
+      clearStreamingText();
+      setAiPrompt('');
+      setPromptMode(null);
+      setIsOpen(false);
+    }
+  };
+
+  const handleAbcMusic = async () => {
+    if (!aiPrompt.trim()) return;
+    setAiError(null);
+    setStreaming(true); // Reusing as loading state for simple UI
+    try {
+      const systemPrompt = 'You are a music notation expert. Generate valid ABC notation only. Output ONLY the ABC notation starting with X:1, no explanation, no markdown.';
+      const result = await OpenRouterService.generateText(apiKey, selectedModel, aiPrompt, systemPrompt);
+      editor.chain().focus().insertContent(`<abcjs>${result}</abcjs>`).run();
+      setAiPrompt('');
+      setPromptMode(null);
+      setIsOpen(false);
+    } catch (err: any) {
+      setAiError(err.message || 'AI ABC generation failed.');
+    } finally {
+      setStreaming(false);
+    }
+  };
+
+  const handleChartData = async () => {
+    if (!aiPrompt.trim()) return;
+    setAiError(null);
+    setStreaming(true);
+    try {
+      const systemPrompt = 'Output ONLY a JSON object with: { "type": "bar"|"line"|"pie", "labels": [...], "datasets": [{"label": "...", "data": [...]}] }. No explanation, no markdown.';
+      const result = await OpenRouterService.generateText(apiKey, selectedModel, aiPrompt, systemPrompt);
+      editor.chain().focus().insertContent(`<chart data="${encodeURIComponent(result)}"></chart>`).run();
+      setAiPrompt('');
+      setPromptMode(null);
+      setIsOpen(false);
+    } catch (err: any) {
+      setAiError(err.message || 'AI Chart generation failed.');
+    } finally {
+      setStreaming(false);
+    }
+  };
+
+  const handleWebpageBlock = async () => {
+    if (!aiPrompt.trim()) return;
+    setAiError(null);
+    setStreaming(true);
+    try {
+      const systemPrompt = 'You are a web developer. Output ONLY a complete self-contained HTML block with inline CSS. Make it visually attractive with dark background, modern fonts, smooth hover effects. No explanation, no markdown, output only the HTML.';
+      const result = await OpenRouterService.generateText(apiKey, selectedModel, aiPrompt, systemPrompt);
+      editor.chain().focus().insertContent(`<iframe src="${encodeURIComponent(result)}"></iframe>`).run();
+      setAiPrompt('');
+      setPromptMode(null);
+      setIsOpen(false);
+    } catch (err: any) {
+      setAiError(err.message || 'AI Webpage generation failed.');
+    } finally {
+      setStreaming(false);
+    }
+  };
+
+  const executePrompt = () => {
+    if (promptMode === 'generate') handleGenerateAI();
+    else if (promptMode === 'abc') handleAbcMusic();
+    else if (promptMode === 'chart') handleChartData();
+    else if (promptMode === 'web') handleWebpageBlock();
+  };
+
+  const getSelection = () => {
+    const { from, to } = editor.state.selection;
+    if (from === to) return null;
+    return editor.state.doc.textBetween(from, to);
+  };
+
+  const handleRewriteTone = async (tone: string) => {
+    const text = getSelection();
+    if (!text) {
+      alert("Please select text first");
+      return;
+    }
+    setShowToneSelector(false);
+    try {
+      const result = await OpenRouterService.rewriteWithTone(apiKey, selectedModel, text, tone);
+      editor.chain().focus().deleteSelection().insertContent(result).run();
+      setIsOpen(false);
+    } catch (e) {
+      alert("Rewrite failed");
+    }
+  };
+
+  const handleSummarize = async () => {
+    const text = getSelection();
+    if (!text) {
+      alert("Please select text first");
+      return;
+    }
+    try {
+      const summary = await OpenRouterService.summarizeText(apiKey, selectedModel, text);
+      editor.chain().focus().insertContent({ type: 'blockquote', content: [{ type: 'paragraph', content: [{ type: 'text', text: summary }] }] }).run();
+      setIsOpen(false);
+    } catch (e) {
+      alert("Summarize failed");
     }
   };
 
@@ -90,36 +175,78 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
     <div className="absolute left-[-40px] top-2 print:hidden" style={{ zIndex: 9999 }} data-html2canvas-ignore="true">
       <div className="relative">
         <button
-          onClick={() => { setIsOpen(!isOpen); setShowAiInput(false); setAiError(null); }}
+          onClick={() => { setIsOpen(!isOpen); setPromptMode(null); setAiError(null); setShowToneSelector(false); }}
           className="w-7 h-7 rounded-full bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 flex items-center justify-center shadow transition-transform active:scale-90"
           title="Insert Block"
         >
-          <Plus className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-45 text-pink-400' : ''}`} />
+          {isStreaming ? (
+            <motion.div animate={{ opacity: [1, 0, 1] }} transition={{ repeat: Infinity, duration: 1 }}>
+              <Sparkles className="w-4 h-4 text-pink-400" />
+            </motion.div>
+          ) : (
+            <Plus className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-45 text-pink-400' : ''}`} />
+          )}
         </button>
 
-        {isOpen && !showAiInput && (
+        {isOpen && !promptMode && !showToneSelector && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.15, type: 'spring', bounce: 0 }}
-            className="absolute left-9 top-0 glass-menu border border-slate-700 rounded-xl shadow-2xl p-1.5 flex flex-col gap-1 w-48 text-xs text-slate-200"
+            className="absolute left-9 top-0 glass-menu border border-slate-700 rounded-xl shadow-2xl p-1.5 flex flex-col gap-1 w-52 text-xs text-slate-200"
             style={{ zIndex: 9999 }}
           >
-            {/* AI Generate – highlighted as premium option */}
             <motion.button
               initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 }}
-              onClick={() => { setShowAiInput(true); }}
+              onClick={() => { setPromptMode('generate'); }}
               className="flex items-center gap-2 px-2.5 py-1.5 rounded bg-gradient-to-r from-emerald-900/50 to-teal-900/40 hover:from-emerald-800/70 hover:to-teal-800/60 text-emerald-300 hover:text-emerald-200 border border-emerald-800/40 transition-all text-left"
             >
               <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
               <span className="font-medium">Generate with AI</span>
             </motion.button>
+            
+            <div className="px-2 py-1 mt-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">AI Smart Blocks</div>
+
+            <motion.button
+              onClick={() => setShowToneSelector(true)}
+              className="flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-slate-800 transition-colors text-left"
+            >
+              <Wand2 className="w-3.5 h-3.5 text-violet-400" />
+              <span>AI Rewrite Tone</span>
+            </motion.button>
+            <motion.button
+              onClick={handleSummarize}
+              className="flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-slate-800 transition-colors text-left"
+            >
+              <AlignLeft className="w-3.5 h-3.5 text-sky-400" />
+              <span>Summarize Selection</span>
+            </motion.button>
+            <motion.button
+              onClick={() => setPromptMode('abc')}
+              className="flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-slate-800 transition-colors text-left"
+            >
+              <Music className="w-3.5 h-3.5 text-amber-400" />
+              <span>AI ABC Music</span>
+            </motion.button>
+            <motion.button
+              onClick={() => setPromptMode('chart')}
+              className="flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-slate-800 transition-colors text-left"
+            >
+              <BarChart2 className="w-3.5 h-3.5 text-emerald-400" />
+              <span>AI Chart Data</span>
+            </motion.button>
+            <motion.button
+              onClick={() => setPromptMode('web')}
+              className="flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-slate-800 transition-colors text-left"
+            >
+              <Globe className="w-3.5 h-3.5 text-pink-400" />
+              <span>AI Webpage Block</span>
+            </motion.button>
 
             <div className="h-px bg-slate-700/50 my-0.5" />
 
             <motion.button
-              initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}
               onClick={insertTable}
               className="flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-slate-800 transition-colors text-left"
             >
@@ -127,7 +254,6 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
               <span>Table (3×3)</span>
             </motion.button>
             <motion.button
-              initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 }}
               onClick={insertImage}
               className="flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-slate-800 transition-colors text-left"
             >
@@ -142,7 +268,6 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
               className="hidden"
             />
             <motion.button
-              initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}
               onClick={insertBlockquote}
               className="flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-slate-800 transition-colors text-left"
             >
@@ -150,7 +275,6 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
               <span>Blockquote</span>
             </motion.button>
             <motion.button
-              initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25 }}
               onClick={insertCodeBlock}
               className="flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-slate-800 transition-colors text-left"
             >
@@ -160,16 +284,27 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
           </motion.div>
         )}
 
-        {/* AI Input sub-panel */}
-        {isOpen && showAiInput && (
+        {isOpen && showToneSelector && (
+           <div className="absolute left-9 top-0 bg-slate-900 border border-violet-700/60 rounded-xl shadow-2xl p-2 flex flex-col gap-1 w-40 text-xs text-slate-200" style={{ zIndex: 9999 }}>
+             <div className="px-2 py-1 font-semibold text-slate-400">Select Tone:</div>
+             {['formal', 'casual', 'military', 'poetic', 'technical', 'persuasive'].map(tone => (
+                <button key={tone} onClick={() => handleRewriteTone(tone)} className="px-2 py-1.5 text-left hover:bg-slate-800 rounded capitalize">{tone}</button>
+             ))}
+           </div>
+        )}
+
+        {isOpen && promptMode && (
           <div className="absolute left-9 top-0 bg-slate-900 border border-emerald-700/60 rounded-xl shadow-2xl p-3 flex flex-col gap-2 w-72" style={{ zIndex: 9999 }}>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-medium text-emerald-400 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5" />
-                Generate with AI
+              <span className="text-[11px] font-medium text-emerald-400 flex items-center gap-1.5 capitalize">
+                {promptMode === 'generate' && <Sparkles className="w-3.5 h-3.5" />}
+                {promptMode === 'abc' && <Music className="w-3.5 h-3.5" />}
+                {promptMode === 'chart' && <BarChart2 className="w-3.5 h-3.5" />}
+                {promptMode === 'web' && <Globe className="w-3.5 h-3.5" />}
+                {promptMode} with AI
               </span>
               <button
-                onClick={() => { setShowAiInput(false); setAiError(null); setAiPrompt(''); }}
+                onClick={() => { setPromptMode(null); setAiError(null); setAiPrompt(''); }}
                 className="p-0.5 hover:bg-slate-800 rounded text-slate-400"
               >
                 <X className="w-3.5 h-3.5" />
@@ -178,8 +313,13 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
             <textarea
               value={aiPrompt}
               onChange={(e) => setAiPrompt(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleGenerateAI(); } }}
-              placeholder="Describe what to write (e.g. 'Write an intro paragraph about music theory')..."
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); executePrompt(); } }}
+              placeholder={
+                promptMode === 'generate' ? "Describe what to write (e.g. 'Write an intro paragraph')..." :
+                promptMode === 'abc' ? "Describe music (e.g. 'simple C major scale')..." :
+                promptMode === 'chart' ? "Describe chart (e.g. 'monthly sales')..." :
+                "Describe a web component (e.g. 'pricing card')..."
+              }
               className="w-full h-20 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 resize-none"
               autoFocus
             />
@@ -187,11 +327,11 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
               <p className="text-[10px] text-red-400">{aiError}</p>
             )}
             <button
-              onClick={handleGenerateAI}
-              disabled={isGenerating || !aiPrompt.trim()}
+              onClick={executePrompt}
+              disabled={isStreaming || !aiPrompt.trim()}
               className="flex items-center justify-center gap-1.5 w-full py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs font-medium disabled:opacity-40 transition-all"
             >
-              {isGenerating
+              {isStreaming
                 ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /><span>Generating...</span></>
                 : <><Check className="w-3.5 h-3.5" /><span>Generate & Insert</span></>
               }

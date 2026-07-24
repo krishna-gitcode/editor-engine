@@ -43,6 +43,41 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
   const [isExtracting, setIsExtracting] = useState<boolean>(false);
   const [ocrError, setOcrError] = useState<string | null>(null);
 
+  // Dynamic Models State
+  const [availableModels, setAvailableModels] = useState<any[]>(FREE_OPENROUTER_MODELS);
+
+  // Fetch live free catalog
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const res = await fetch("https://openrouter.ai/api/v1/models");
+        const data = await res.json();
+        const liveFree = data.data.filter((model: any) => 
+          model.id === "openrouter/free" || model.id.endsWith(":free")
+        ).map((m: any) => ({
+          id: m.id,
+          name: m.name,
+          isVision: m.architecture?.input_modalities?.includes('image') || false
+        }));
+        
+        if (liveFree.length > 0) {
+          // Merge live models with our curated FREE_OPENROUTER_MODELS to preserve rich metadata
+          const merged = [...FREE_OPENROUTER_MODELS.filter(m => m.id !== 'openrouter/free')];
+          
+          liveFree.forEach((liveModel: any) => {
+            if (!merged.find(m => m.id === liveModel.id) && liveModel.id !== 'openrouter/free') {
+              merged.push(liveModel);
+            }
+          });
+          setAvailableModels(merged);
+        }
+      } catch (err) {
+        console.error("Failed to fetch live free OpenRouter catalog:", err);
+      }
+    };
+    fetchModels();
+  }, []);
+
   // OCR state — PDF mode
   const [isPdfMode, setIsPdfMode] = useState<boolean>(false);
   const [pdfPages, setPdfPages] = useState<PdfPageImage[]>([]);
@@ -536,9 +571,9 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                 className="bg-transparent border-none outline-none text-emerald-300 font-mono text-[11px] appearance-none pr-4 w-[160px] cursor-pointer truncate"
               >
                 <option value="openrouter/free" className="bg-slate-900 text-slate-200">Default (openrouter/free)</option>
-                {FREE_OPENROUTER_MODELS.map(model => (
+                {availableModels.map(model => (
                   <option key={model.id} value={model.id} className="bg-slate-900 text-slate-200">
-                    {model.id}
+                    {model.name || model.id} {model.isVision ? '👁️' : ''}
                   </option>
                 ))}
               </select>

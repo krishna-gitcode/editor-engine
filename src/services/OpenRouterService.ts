@@ -2,40 +2,148 @@ export interface OpenRouterModel {
   id: string;
   name: string;
   description: string;
+  type?: string;
+  capabilities?: string[];
   isVision?: boolean;
 }
 
 export const FREE_OPENROUTER_MODELS: OpenRouterModel[] = [
   {
-    id: 'google/gemini-2.0-flash-lite-preview-02-05:free',
-    name: 'Gemini 2.0 Flash Lite (Free)',
-    description: 'Fast, high-quality general text generation and reasoning.',
-    isVision: true,
+    id: "openrouter/free",
+    name: "Free Models Router",
+    type: "Router / Fallback",
+    capabilities: ["text", "vision", "tool-use", "structured-outputs"],
+    description: "Automatically routes payloads to active free models based on context requirements.",
+    isVision: true
   },
   {
-    id: 'nvidia/nemotron-nano-12b-v2-vl:free',
-    name: 'NVIDIA Nemotron Nano 12B VL (Free)',
-    description: 'Powerful vision model optimized for accurate document OCR, tables, and handwriting.',
-    isVision: true,
+    id: "meta-llama/llama-3.2-11b-vision-instruct:free",
+    name: "Llama 3.2 11B Vision Instruct (Free)",
+    type: "Vision / Multimodal",
+    capabilities: ["text", "vision", "ocr"],
+    description: "Optimized for visual reasoning, document parsing, and OCR tasks.",
+    isVision: true
   },
   {
-    id: 'meta-llama/llama-3.3-70b-instruct:free',
-    name: 'Llama 3.3 70B Instruct (Free)',
-    description: 'Meta state-of-the-art 70B parameter reasoning and creative writing model.',
-    isVision: false,
+    id: "google/gemma-3-4b-it:free",
+    name: "Gemma 3 4B IT (Free)",
+    type: "Vision / Multimodal",
+    capabilities: ["text", "vision"],
+    description: "Lightweight, highly efficient model optimized for fast visual checkpoints.",
+    isVision: true
   },
   {
-    id: 'mistralai/mistral-7b-instruct:free',
-    name: 'Mistral 7B Instruct (Free)',
-    description: 'Ultra-fast general drafting and grammar polishing.',
-    isVision: false,
+    id: "google/gemma-3-12b-it:free",
+    name: "Gemma 3 12B IT (Free)",
+    type: "Vision / Multimodal",
+    capabilities: ["text", "vision"],
+    description: "Balanced performance for complex layout and chart analysis.",
+    isVision: true
   },
   {
-    id: 'google/gemini-flash-1.5-8b:free',
-    name: 'Gemini 1.5 Flash 8B (Free)',
-    description: 'Low-latency multi-turn drafting assistant.',
-    isVision: true,
+    id: "google/gemma-3-27b-it:free",
+    name: "Gemma 3 27B IT (Free)",
+    type: "Vision / Multimodal",
+    capabilities: ["text", "vision", "reasoning"],
+    description: "High-accuracy multimodal variant built for complex structural diagrams.",
+    isVision: true
   },
+  {
+    id: "google/gemma-4-31b-it:free",
+    name: "Gemma 4 31B IT (Free)",
+    type: "Reasoning / Text",
+    capabilities: ["text", "deep-thinking", "math"],
+    description: "Google's high-intelligence reasoning model with advanced instruction following.",
+    isVision: false
+  },
+  {
+    id: "qwen/qwen2.5-vl-32b-instruct:free",
+    name: "Qwen 2.5 VL 32B Instruct (Free)",
+    type: "Vision / Multimodal",
+    capabilities: ["text", "vision", "object-detection"],
+    description: "Strong performance in document parsing, multi-image processing, and spatial grounding.",
+    isVision: true
+  },
+  {
+    id: "qwen/qwen2.5-vl-72b-instruct:free",
+    name: "Qwen 2.5 VL 72B Instruct (Free)",
+    type: "Vision / Multimodal",
+    capabilities: ["text", "vision", "object-detection"],
+    description: "Flagship visual model with stellar understanding of dense charts, graphs, and UI screenshots.",
+    isVision: true
+  },
+  {
+    id: "moonshotai/kimi-vl-a3b-thinking:free",
+    name: "Kimi VL A3B Thinking (Free)",
+    type: "Vision / Reasoning",
+    capabilities: ["text", "vision", "deep-thinking"],
+    description: "Fuses multimodal perception with extended internal chain-of-thought logic.",
+    isVision: true
+  },
+  {
+    id: "nvidia/nemotron-3-nano-omni-30b:free",
+    name: "Nemotron 3 Nano Omni 30B (Free)",
+    type: "Vision / Multimodal",
+    capabilities: ["text", "vision", "video"],
+    description: "Omni-modal architecture natively supporting video and sequential frame reasoning.",
+    isVision: true
+  },
+  {
+    id: "deepseek/deepseek-r1:free",
+    name: "DeepSeek R1 (Free)",
+    type: "Reasoning / Text",
+    capabilities: ["text", "deep-thinking", "math", "coding"],
+    description: "Advanced reasoning model deploying extensive chain-of-thought processing for complex logic.",
+    isVision: false
+  },
+  {
+    id: "nvidia/nemotron-3-ultra:free",
+    name: "Nemotron 3 Ultra (Free)",
+    type: "Text / Orchestration",
+    capabilities: ["text", "orchestration", "legal", "finance"],
+    description: "High-capacity 1M context window model tailored for specialized multi-agent coordination.",
+    isVision: false
+  },
+  {
+    id: "nvidia/nemotron-3-super:free",
+    name: "Nemotron 3 Super (Free)",
+    type: "Text / General Purpose",
+    capabilities: ["text", "analytics", "marketing"],
+    description: "NVIDIA's versatile, broad-domain model tuned for low latency text extraction and writing.",
+    isVision: false
+  },
+  {
+    id: "cohere/north-mini-code:free",
+    name: "North Mini Code (Free)",
+    type: "Coding / Agentic",
+    capabilities: ["text", "coding", "tool-use"],
+    description: "Agentic mixture-of-experts model specifically engineered for software tasks and terminal loops.",
+    isVision: false
+  },
+  {
+    id: "poolside/laguna-m1:free",
+    name: "Laguna M.1 (Free)",
+    type: "Coding / Tech",
+    capabilities: ["text", "coding", "agentic-workflows"],
+    description: "Developer-centric software engineering agent model trained heavily on complex codebases.",
+    isVision: false
+  },
+  {
+    id: "poolside/laguna-xs-2.1:free",
+    name: "Laguna XS 2.1 (Free)",
+    type: "Coding / Fast",
+    capabilities: ["text", "coding"],
+    description: "Stripped-down, high-throughput code autocomplete and generation variant.",
+    isVision: false
+  },
+  {
+    id: "mistralai/mistral-small-3.1-24b-instruct:free",
+    name: "Mistral Small 3.1 24B Instruct (Free)",
+    type: "Text / General Purpose",
+    capabilities: ["text", "multilingual", "function-calling"],
+    description: "Highly efficient, instruction-tuned multilingual text engine backing structured tool calls.",
+    isVision: false
+  }
 ];
 
 export class OpenRouterService {
@@ -126,6 +234,140 @@ export class OpenRouterService {
       model,
       prompt,
       'You are a professional proofreader. Fix spelling and grammar errors only. Return ONLY the corrected text without any explanations.'
+    );
+  }
+
+  /**
+   * Stream text generation
+   */
+  public static async *streamText(
+    apiKey: string,
+    model: string,
+    prompt: string,
+    systemPrompt?: string
+  ): AsyncGenerator<string, void, unknown> {
+    const activeKey = (apiKey || import.meta.env.VITE_OPENROUTER_API_KEY || '').trim();
+    if (!activeKey) {
+      throw new Error('Please enter a valid OpenRouter API Key above or configure VITE_OPENROUTER_API_KEY in your .env file (Get a free key at openrouter.ai).');
+    }
+
+    const activeModel = model || import.meta.env.VITE_OPENROUTER_DEFAULT_MODEL || 'google/gemini-2.0-flash-lite-preview-02-05:free';
+    const activeSystemPrompt = systemPrompt || 'You are a helpful, professional AI authoring assistant for GridLeaf Editor. Output clean, well-formatted text or markdown directly usable inside a document.';
+
+    try {
+      const response = await fetch(this.API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${activeKey}`,
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'GridLeaf Editor Studio',
+        },
+        body: JSON.stringify({
+          model: activeModel,
+          messages: [
+            { role: 'system', content: activeSystemPrompt },
+            { role: 'user', content: prompt },
+          ],
+          temperature: 0.7,
+          stream: true,
+        }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        const errMsg = errData.error?.message || response.statusText;
+        throw new Error(`OpenRouter API Error (${response.status}): ${errMsg}`);
+      }
+
+      if (!response.body) {
+        throw new Error('ReadableStream not supported or no body in response.');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim();
+            if (data === '[DONE]') continue;
+            if (!data) continue;
+
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) {
+                yield content;
+              }
+            } catch (e) {
+              console.warn('Failed to parse stream JSON chunk:', data);
+            }
+          }
+        }
+      }
+    } catch (error: any) {
+      console.error('OpenRouter streamText error:', error);
+      throw new Error(error.message || 'Failed to stream text from OpenRouter API.');
+    }
+  }
+
+  /**
+   * Summarize text
+   */
+  public static async summarizeText(
+    apiKey: string,
+    model: string,
+    text: string
+  ): Promise<string> {
+    return this.generateText(
+      apiKey,
+      model,
+      `Summarize the following text:\n\n${text}`,
+      'You are a concise summarizer. Return ONLY a 2-3 sentence summary. No preamble.'
+    );
+  }
+
+  /**
+   * Expand text
+   */
+  public static async expandText(
+    apiKey: string,
+    model: string,
+    text: string,
+    targetLength?: string
+  ): Promise<string> {
+    return this.generateText(
+      apiKey,
+      model,
+      `Expand this text to approximately ${targetLength || '2x'} its length:\n\n${text}`,
+      'You are a professional writer. Expand the text while preserving meaning and tone. Return ONLY the expanded version.'
+    );
+  }
+
+  /**
+   * Rewrite text with a specific tone
+   */
+  public static async rewriteWithTone(
+    apiKey: string,
+    model: string,
+    text: string,
+    tone: string
+  ): Promise<string> {
+    return this.generateText(
+      apiKey,
+      model,
+      `Rewrite in ${tone} tone:\n\n${text}`,
+      `You are a professional rewriter. Rewrite the text in a ${tone} tone. Return ONLY the rewritten text.`
     );
   }
 

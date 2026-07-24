@@ -521,3 +521,12 @@
     display: none !important;
   }
 }
+
+/* ─── AI Ghost Text ───────────────────────────────────────────── */
+.ai-ghost-text {
+  color: #94a3b8;
+  opacity: 0.55;
+  font-style: italic;
+  pointer-events: none;
+  user-select: none;
+}

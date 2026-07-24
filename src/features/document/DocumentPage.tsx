@@ -28,6 +28,8 @@ import ImageExtension from '@tiptap/extension-image';
 import { useDocumentStore } from '../../store/documentStore';
 import { PluginService } from '../../services/PluginService';
 import { PlusMenu } from './PlusMenu';
+import { AIGhostTextExtension } from './AIGhostTextExtension';
+import { AIBubbleToolbar } from './AIBubbleToolbar';
 import './DocumentPage.css';
 
 /**
@@ -80,6 +82,7 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({ onEditorReady, onOpe
     ChartExtension,
     PageNumberExtension,
     ImageExtension.configure({ allowBase64: true, inline: true }),
+    AIGhostTextExtension,
   ];
 
   const sharedEditorProps = {
@@ -340,6 +343,7 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({ onEditorReady, onOpe
         >
           <div className="w-full">
             {headerEditor && <PlusMenu editor={headerEditor} onOpenModal={onOpenModal} />}
+            {headerEditor && <AIBubbleToolbar editor={headerEditor} />}
             <EditorContent
               editor={headerEditor}
               className="prose prose-sm max-w-none focus:outline-none"
@@ -360,6 +364,7 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({ onEditorReady, onOpe
         onDoubleClickCapture={handleBodyDoubleClick}
       >
         {editor && <PlusMenu editor={editor} onOpenModal={onOpenModal} />}
+        {editor && <AIBubbleToolbar editor={editor} />}
         <EditorContent
           editor={editor}
           className="prose max-w-none focus:outline-none min-h-full print:text-black"
@@ -404,6 +409,7 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({ onEditorReady, onOpe
         >
           <div className="w-full">
             {footerEditor && <PlusMenu editor={footerEditor} onOpenModal={onOpenModal} />}
+            {footerEditor && <AIBubbleToolbar editor={footerEditor} />}
             <EditorContent
               editor={footerEditor}
               className="prose prose-sm max-w-none focus:outline-none"

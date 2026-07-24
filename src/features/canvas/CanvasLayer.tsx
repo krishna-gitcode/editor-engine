@@ -1,6 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { CanvasEngine } from '../../core/engine/CanvasEngine';
 import { useCanvasStore } from '../../store/canvasStore';
+import { AICanvasPanel } from './AICanvasPanel';
+import { Sparkles } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 import './CanvasLayer.css';
 
 interface CanvasLayerProps {
@@ -16,6 +19,7 @@ export const CanvasLayer: React.FC<CanvasLayerProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<CanvasEngine | null>(null);
+  const [showAIPanel, setShowAIPanel] = useState(false);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -100,6 +104,23 @@ export const CanvasLayer: React.FC<CanvasLayerProps> = ({
   return (
     <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
       <canvas ref={canvasRef} className="block w-full h-full" />
+      <div className="absolute top-4 right-4 pointer-events-auto flex flex-col items-end gap-2 z-50">
+        <button
+          onClick={() => setShowAIPanel(!showAIPanel)}
+          className="bg-slate-800 text-emerald-400 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-2 border border-slate-700 shadow-lg"
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          AI Layout
+        </button>
+        <AnimatePresence>
+          {showAIPanel && engineRef.current?.canvas && (
+            <AICanvasPanel
+              fabricCanvas={engineRef.current.canvas}
+              onClose={() => setShowAIPanel(false)}
+            />
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 };
