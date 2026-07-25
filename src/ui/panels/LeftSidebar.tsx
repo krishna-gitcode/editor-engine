@@ -37,11 +37,11 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ engine, editor: defaul
 
   const TABS = [
     { id: 'canva_studio' as SidebarTab, label: 'Graphics', icon: Sparkles },
-    { id: 'image_studio' as SidebarTab, label: 'Image Studio', icon: ImageIcon },
-    { id: 'shapes' as SidebarTab, label: 'Shapes & Math', icon: Shapes },
-    { id: 'text' as SidebarTab, label: 'Text Presets', icon: Type },
+    { id: 'image_studio' as SidebarTab, label: 'Images', icon: ImageIcon },
+    { id: 'shapes' as SidebarTab, label: 'Shapes', icon: Shapes },
+    { id: 'text' as SidebarTab, label: 'Text', icon: Type },
     { id: 'layers' as SidebarTab, label: 'Layers', icon: Layers },
-    { id: 'search' as SidebarTab, label: 'Web Images', icon: Search },
+    { id: 'search' as SidebarTab, label: 'Web', icon: Search },
     { id: 'templates' as SidebarTab, label: 'Templates', icon: LayoutTemplate },
     { id: 'outline' as SidebarTab, label: 'Outline', icon: List },
   ];
@@ -63,11 +63,11 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ engine, editor: defaul
                   setActiveTab(tab.id);
                 }
               }}
-              className={`sidebar-tab-btn flex-col !h-[48px] !w-[48px] ${isActive ? 'active' : ''}`}
+              className={`sidebar-tab-btn flex-col !h-[56px] !w-[56px] ${isActive ? 'active' : ''}`}
               title={tab.label}
             >
               <Icon className="w-5 h-5 mb-0.5" />
-              <span className="text-[9px] font-medium leading-tight">{tab.label}</span>
+              <span className="text-[10px] font-medium leading-tight">{tab.label}</span>
             </button>
           );
         })}

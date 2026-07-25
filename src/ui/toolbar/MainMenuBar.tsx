@@ -108,9 +108,12 @@ export const MainMenuBar: React.FC<MainMenuBarProps> = ({
       {/* Brand & Title */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2 font-bold text-sm text-white tracking-wide">
-          <div className="w-6 h-6 rounded bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-xs shadow-md font-extrabold">
-            GL
-          </div>
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
+            <rect x="2" y="2" width="9" height="9" rx="2" fill="#10b981"/>
+            <rect x="13" y="2" width="9" height="9" rx="2" fill="#0d9488" opacity="0.7"/>
+            <rect x="2" y="13" width="9" height="9" rx="2" fill="#0d9488" opacity="0.7"/>
+            <rect x="13" y="13" width="9" height="9" rx="2" fill="#10b981" opacity="0.4"/>
+          </svg>
           <span>GridLeaf Editor</span>
         </div>
 
@@ -126,35 +129,35 @@ export const MainMenuBar: React.FC<MainMenuBarProps> = ({
           {showFileMenu && (
             <div className="absolute left-0 top-9 w-48 glass-tier-2 rounded-xl p-1.5 flex flex-col gap-1 z-50 text-xs" style={{ color: 'var(--ee-text-primary)' }}>
               <button onClick={handleImportDOCX} className="flex items-center gap-2.5 px-3 py-2 rounded hover:bg-slate-800 text-left">
-                <Upload className="w-4 h-4 text-violet-400" />
+                <Upload className="w-4 h-4 text-slate-400" />
                 <span>Import Word (DOCX)</span>
               </button>
               
               <div className="h-px bg-slate-800 my-1" />
 
               <button onClick={handleExportJSON} className="flex items-center gap-2.5 px-3 py-2 rounded hover:bg-slate-800 text-left">
-                <FileCode className="w-4 h-4 text-indigo-400" />
+                <FileCode className="w-4 h-4 text-slate-400" />
                 <span>Save JSON Template</span>
               </button>
               <button onClick={handleExportMarkdown} className="flex items-center gap-2.5 px-3 py-2 rounded hover:bg-slate-800 text-left">
-                <FileText className="w-4 h-4 text-emerald-400" />
+                <FileText className="w-4 h-4 text-slate-400" />
                 <span>Export Markdown</span>
               </button>
               <button onClick={handleExportDOCX} className="flex items-center gap-2.5 px-3 py-2 rounded hover:bg-slate-800 text-left">
-                <FileText className="w-4 h-4 text-blue-500" />
+                <FileText className="w-4 h-4 text-slate-400" />
                 <span>Export Word (DOCX)</span>
               </button>
               <button onClick={handleExportPDF} className="flex items-center gap-2.5 px-3 py-2 rounded hover:bg-slate-800 text-left">
-                <Download className="w-4 h-4 text-pink-400" />
+                <Download className="w-4 h-4 text-slate-400" />
                 <span>Export Multi-page PDF</span>
               </button>
               <button onClick={handleExportPNG} className="flex items-center gap-2.5 px-3 py-2 rounded hover:bg-slate-800 text-left">
-                <Share2 className="w-4 h-4 text-blue-400" />
+                <Share2 className="w-4 h-4 text-slate-400" />
                 <span>Export High-Res PNG</span>
               </button>
               <div className="h-px bg-slate-800 my-1" />
               <button onClick={() => window.print()} className="flex items-center gap-2.5 px-3 py-2 rounded hover:bg-slate-800 text-left">
-                <Printer className="w-4 h-4 text-amber-400" />
+                <Printer className="w-4 h-4 text-slate-400" />
                 <span>Print Document</span>
               </button>
             </div>
