@@ -61,7 +61,7 @@ html.light {
 
 /* Tier 1 — Background panels, sidebar */
 .glass-tier-1 {
-  background: rgba(13, 17, 23, 0.75);
+  background: color-mix(in oklch, var(--ee-surface-1) 75%, transparent);
   backdrop-filter: blur(24px) saturate(160%);
   border: 1px solid var(--ee-border);
   box-shadow: var(--ee-shadow-sm);
@@ -69,7 +69,7 @@ html.light {
 
 /* Tier 2 — Floating panels, modals, dropdowns */
 .glass-tier-2 {
-  background: rgba(19, 24, 32, 0.85);
+  background: color-mix(in oklch, var(--ee-surface-1) 85%, transparent);
   backdrop-filter: blur(32px) saturate(180%);
   border: 1px solid var(--ee-border-strong);
   box-shadow: var(--ee-shadow-float);
@@ -77,17 +77,12 @@ html.light {
 
 /* Tier 3 — Tooltips, context menus (highest elevation) */
 .glass-tier-3 {
-  background: rgba(26, 32, 48, 0.95);
+  background: color-mix(in oklch, var(--ee-surface-2) 95%, transparent);
   backdrop-filter: blur(40px) saturate(200%);
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid var(--ee-border-strong);
   box-shadow: var(--ee-shadow-float),
               inset 0 1px 0 rgba(255,255,255,0.08);
 }
-
-/* Light mode tiers */
-html.light .glass-tier-1 { background: rgba(255,255,255,0.7); }
-html.light .glass-tier-2 { background: rgba(255,255,255,0.88); }
-html.light .glass-tier-3 { background: rgba(255,255,255,0.96); }
 
 @tailwind base;
 @tailwind components;
@@ -102,6 +97,18 @@ html.light .glass-tier-3 { background: rgba(255,255,255,0.96); }
 /* ═══════════════════════════════════════════════════════════════════
    GLASSMORPHISM DESIGN SYSTEM
    ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Animated Gradient Border Properties ─────────────────────── */
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes borderSpin {
+  to { --angle: 360deg; }
+}
+
 @layer components {
   /* ─── Glass Panels ───────────────────────────────────────────── */
   .glass-panel {
@@ -156,15 +163,6 @@ html.light .glass-tier-3 { background: rgba(255,255,255,0.96); }
   }
 
   /* ─── Animated Gradient Border ───────────────────────────────── */
-  @property --angle {
-    syntax: '<angle>';
-    initial-value: 0deg;
-    inherits: false;
-  }
-
-  @keyframes borderSpin {
-    to { --angle: 360deg; }
-  }
 
   .gradient-border-animated {
     position: relative;
@@ -337,11 +335,13 @@ html.light body, body.light-theme {
   color: #0f172a !important;
 }
 
-html.light [class*="bg-[#0f172a]"], html.light .bg-slate-950 {
+html.light [class*="bg-[#0f172a]"] {
   background-color: #f8fafc !important;
   border-color: #e2e8f0 !important;
   color: #0f172a !important;
 }
+
+html.light .bg-slate-950 { background-color: var(--ee-surface-0) !important; }
 
 html.light .bg-slate-900 {
   background-color: #ffffff !important;
@@ -353,9 +353,11 @@ html.light [class*="bg-slate-900/60"], html.light [class*="bg-slate-950/60"] {
   background-color: rgba(248, 250, 252, 0.85) !important;
 }
 
-html.light .border-slate-800, html.light .border-slate-700 {
+html.light .border-slate-700 {
   border-color: #cbd5e1 !important;
 }
+
+html.light .border-slate-800 { border-color: var(--ee-border) !important; }
 
 html.light .text-slate-100, html.light .text-slate-200, html.light .text-slate-300, html.light .text-white {
   color: #1e293b !important;
@@ -377,8 +379,8 @@ html.light [class*="hover:bg-slate-800"]:hover {
 
 /* ─── Light Theme Glassmorphism ────────────────────────────────── */
 html.light .glass-menu {
-  background: rgba(255, 255, 255, 0.8) !important;
-  border-color: rgba(226, 232, 240, 0.7) !important;
+  background: color-mix(in oklch, var(--ee-surface-1) 80%, transparent);
+  border-color: var(--ee-border);
 }
 
 

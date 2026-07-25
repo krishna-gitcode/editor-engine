@@ -24,6 +24,7 @@ export const MainMenuBar: React.FC<MainMenuBarProps> = ({
   const setTheme = useEditorStore((s) => s.setTheme);
 
   const [showFileMenu, setShowFileMenu] = useState(false);
+  const [errorToast, setErrorToast] = useState<string | null>(null);
 
   useEffect(() => {
     document.documentElement.classList.toggle('light', theme === 'light');
@@ -80,7 +81,8 @@ export const MainMenuBar: React.FC<MainMenuBarProps> = ({
             await ImportEngine.importDOCX(file, editor);
           } catch (error) {
             console.error("Failed to import DOCX", error);
-            alert("Failed to import DOCX file.");
+            setErrorToast("Failed to import DOCX file.");
+            setTimeout(() => setErrorToast(null), 3000);
           }
         }
       }
@@ -110,7 +112,7 @@ export const MainMenuBar: React.FC<MainMenuBarProps> = ({
           </button>
 
           {showFileMenu && (
-            <div className="absolute left-0 top-9 w-48 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-1.5 flex flex-col gap-1 z-50 text-xs text-slate-200">
+            <div className="absolute left-0 top-9 w-48 glass-tier-2 rounded-xl p-1.5 flex flex-col gap-1 z-50 text-xs" style={{ color: 'var(--ee-text-primary)' }}>
               <button onClick={handleImportDOCX} className="flex items-center gap-2.5 px-3 py-2 rounded hover:bg-slate-800 text-left">
                 <Upload className="w-4 h-4 text-violet-400" />
                 <span>Import Word (DOCX)</span>
@@ -147,6 +149,12 @@ export const MainMenuBar: React.FC<MainMenuBarProps> = ({
           )}
         </div>
       </div>
+
+      {errorToast && (
+        <div className="absolute top-14 left-4 glass-tier-3 text-red-400 px-4 py-2 rounded-lg shadow-lg text-sm z-50">
+          {errorToast}
+        </div>
+      )}
 
       {/* Mode Switcher & Zoom */}
       <div className="flex items-center gap-4">

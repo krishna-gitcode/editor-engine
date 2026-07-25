@@ -5,6 +5,7 @@ import { OpenRouterService } from '../../services/OpenRouterService';
 import { parseMarkdownToTipTap } from '../../services/markdownToHtml';
 import { useAIStore } from '../../store/aiStore';
 import { useDocumentStore } from '../../store/documentStore';
+import { useWorkspaceStore } from '../../store/workspaceStore';
 
 interface PlusMenuProps {
   editor: any;
@@ -26,19 +27,24 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
 
   const { isStreaming, setStreaming, clearStreamingText, selectedModel, apiKey } = useAIStore();
   const leftMargin = useDocumentStore((s) => (s.pages.find((p) => p.id === s.activePageId) || s.pages[0])?.margins.left ?? 72);
+  const zoom = useWorkspaceStore(s => s.zoom);
 
   useEffect(() => {
+    let rafId: number;
     const updatePosition = () => {
-      if (!editor || !editor.isEditable || !isActive) return;
-      try {
-        const { from } = editor.state.selection;
-        const coords = editor.view.coordsAtPos(from);
-        const editorRect = editor.view.dom.getBoundingClientRect();
-        const relativeTop = coords.top - editorRect.top - 2;
-        setTopPos(Math.max(0, relativeTop));
-      } catch (e) {
-        // Fallback or ignore
-      }
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        if (!editor || !editor.isEditable || !isActive) return;
+        try {
+          const { from } = editor.state.selection;
+          const coords = editor.view.coordsAtPos(from);
+          const editorRect = editor.view.dom.getBoundingClientRect();
+          const relativeTop = coords.top - editorRect.top - 2;
+          setTopPos(Math.max(0, relativeTop));
+        } catch (e) {
+          // Fallback or ignore
+        }
+      });
     };
 
     updatePosition();
@@ -49,6 +55,7 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
     }
     
     return () => {
+      cancelAnimationFrame(rafId);
       if (editor) {
         editor.off('selectionUpdate', updatePosition);
         editor.off('update', updatePosition);
@@ -227,7 +234,7 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
     }
   };
 
-  const leftPos = Math.max(-40, 4 - leftMargin);
+  const leftPos = Math.max(-40, (4 - leftMargin) / zoom);
 
   return (
     <div className="absolute print:hidden transition-all duration-150" style={{ left: leftPos, top: topPos, zIndex: 9999 }} data-html2canvas-ignore="true">

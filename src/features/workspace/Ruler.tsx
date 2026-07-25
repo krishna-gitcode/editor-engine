@@ -77,14 +77,12 @@ export const Ruler: React.FC<RulerProps> = ({ orientation, length, zoom = 1.0 })
           key={`minor-${i}`}
           className={`absolute border-slate-700/50 ${
             orientation === 'horizontal'
-              ? 'border-l top-4.5 h-1.5'
-              : 'border-t left-4.5 w-1.5'
+              ? 'border-l h-1.5'
+              : 'border-t w-1.5'
           }`}
-          style={
-            orientation === 'horizontal'
-              ? { left: `${i * 10 * zoom}px` }
-              : { top: `${i * 10 * zoom}px` }
-          }
+          style={{
+            ...(orientation === 'horizontal' ? { top: '18px', left: `${i * 10 * zoom}px` } : { left: '18px', top: `${i * 10 * zoom}px` })
+          }}
         />
       ))}
 

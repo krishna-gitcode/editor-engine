@@ -180,13 +180,15 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor: defaultEditor, onOpenM
           ))}
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={toggleRibbonMinimized}
-            className="p-1.5 rounded hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
-            title={isRibbonMinimized ? 'Expand Ribbon' : 'Minimize Ribbon'}
-          >
-            {isRibbonMinimized ? <Maximize2 className="w-3.5 h-3.5" /> : <Minimize2 className="w-3.5 h-3.5" />}
-          </button>
+          <Tooltip label={isRibbonMinimized ? 'Expand Ribbon' : 'Minimize Ribbon'}>
+            <button
+              onClick={toggleRibbonMinimized}
+              className="p-1.5 rounded hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+            
+  >
+              {isRibbonMinimized ? <Maximize2 className="w-3.5 h-3.5" /> : <Minimize2 className="w-3.5 h-3.5" />}
+            </button>
+          </Tooltip>
         </div>
       </div>
 
@@ -215,29 +217,35 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor: defaultEditor, onOpenM
             <>
               {/* History Group */}
               <div className="flex items-center gap-1 border-r border-slate-800 pr-4">
-                <button
-                  onClick={() => editor.chain().focus().undo().run()}
-                  disabled={!editor.can().undo()}
-                  className="p-1.5 rounded hover:bg-slate-800 text-slate-300 disabled:opacity-30 disabled:hover:bg-transparent"
-                  title="Undo (Ctrl+Z)"
-                >
-                  <Undo className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => editor.chain().focus().redo().run()}
-                  disabled={!editor.can().redo()}
-                  className="p-1.5 rounded hover:bg-slate-800 text-slate-300 disabled:opacity-30 disabled:hover:bg-transparent"
-                  title="Redo (Ctrl+Y)"
-                >
-                  <Redo className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}
-                  className="p-1.5 rounded hover:bg-slate-800 text-slate-300"
-                  title="Clear All Formatting"
-                >
-                  <RemoveFormatting className="w-4 h-4" />
-                </button>
+                <Tooltip label="Undo (Ctrl+Z)">
+                  <button
+                    onClick={() => editor.chain().focus().undo().run()}
+                    disabled={!editor.can().undo()}
+                    className="p-1.5 rounded hover:bg-slate-800 text-slate-300 disabled:opacity-30 disabled:hover:bg-transparent"
+                  
+                  >
+                    <Undo className="w-4 h-4" />
+                  </button>
+                </Tooltip>
+                <Tooltip label="Redo (Ctrl+Y)">
+                  <button
+                    onClick={() => editor.chain().focus().redo().run()}
+                    disabled={!editor.can().redo()}
+                    className="p-1.5 rounded hover:bg-slate-800 text-slate-300 disabled:opacity-30 disabled:hover:bg-transparent"
+                  
+                  >
+                    <Redo className="w-4 h-4" />
+                  </button>
+                </Tooltip>
+                <Tooltip label="Clear All Formatting">
+                  <button
+                    onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}
+                    className="p-1.5 rounded hover:bg-slate-800 text-slate-300"
+                  
+                  >
+                    <RemoveFormatting className="w-4 h-4" />
+                  </button>
+                </Tooltip>
               </div>
 
               {/* Typography Group */}
@@ -259,13 +267,13 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor: defaultEditor, onOpenM
                 </select>
 
                 <Tooltip label="Manage Google & Custom Fonts">
-<button
+  <button
                   onClick={onOpenFontManager}
                   className="p-1.5 bg-slate-800 hover:bg-slate-700 rounded text-indigo-400"
                 >
                   <Type className="w-4 h-4" />
                 </button>
-</Tooltip>
+  </Tooltip>
 
                 <select
                   value={fontSize}
@@ -277,66 +285,82 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor: defaultEditor, onOpenM
                   ))}
                 </select>
 
-                <button
-                  onClick={() => adjustFontSizeStep(2)}
-                  className="px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded text-xs font-semibold text-slate-300"
-                  title="Increase Font Size (A+)"
-                >
-                  A+
-                </button>
-                <button
-                  onClick={() => adjustFontSizeStep(-2)}
-                  className="px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded text-xs font-semibold text-slate-300"
-                  title="Decrease Font Size (A-)"
-                >
-                  A-
-                </button>
+                <Tooltip label="Increase Font Size (A+)">
+                  <button
+                    onClick={() => adjustFontSizeStep(2)}
+                    className="px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded text-xs font-semibold text-slate-300"
+                  
+                  >
+                    A+
+                  </button>
+                </Tooltip>
+                <Tooltip label="Decrease Font Size (A-)">
+                  <button
+                    onClick={() => adjustFontSizeStep(-2)}
+                    className="px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded text-xs font-semibold text-slate-300"
+                  
+                  >
+                    A-
+                  </button>
+                </Tooltip>
               </div>
 
               {/* Formatting Group */}
               <div className="flex items-center gap-1 border-r border-slate-800 pr-4">
-                <button
-                  onClick={() => editor.chain().focus().toggleBold().run()}
-                  className={`p-1.5 rounded transition-colors ${editor.isActive('bold') ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300'}`}
-                  title="Bold (Ctrl+B)"
-                >
-                  <Bold className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => editor.chain().focus().toggleItalic().run()}
-                  className={`p-1.5 rounded transition-colors ${editor.isActive('italic') ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300'}`}
-                  title="Italic (Ctrl+I)"
-                >
-                  <Italic className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => editor.chain().focus().toggleUnderline().run()}
-                  className={`p-1.5 rounded transition-colors ${editor.isActive('underline') ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300'}`}
-                  title="Underline (Ctrl+U)"
-                >
-                  <Underline className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => editor.chain().focus().toggleStrike().run()}
-                  className={`p-1.5 rounded transition-colors ${editor.isActive('strike') ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300'}`}
-                  title="Strikethrough"
-                >
-                  <Strikethrough className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => (editor.commands as any).toggleSubscript?.()}
-                  className={`px-1.5 py-1 rounded text-xs font-mono transition-colors ${editor.isActive('subscript') ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300'}`}
-                  title="Subscript (X₂)"
-                >
-                  X₂
-                </button>
-                <button
-                  onClick={() => (editor.commands as any).toggleSuperscript?.()}
-                  className={`px-1.5 py-1 rounded text-xs font-mono transition-colors ${editor.isActive('superscript') ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300'}`}
-                  title="Superscript (X²)"
-                >
-                  X²
-                </button>
+                <Tooltip label="Bold (Ctrl+B)">
+                  <button
+                    onClick={() => editor.chain().focus().toggleBold().run()}
+                    className={`p-1.5 rounded transition-colors ${editor.isActive('bold') ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300'}`}
+                  
+                  >
+                    <Bold className="w-4 h-4" />
+                  </button>
+                </Tooltip>
+                <Tooltip label="Italic (Ctrl+I)">
+                  <button
+                    onClick={() => editor.chain().focus().toggleItalic().run()}
+                    className={`p-1.5 rounded transition-colors ${editor.isActive('italic') ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300'}`}
+                  
+                  >
+                    <Italic className="w-4 h-4" />
+                  </button>
+                </Tooltip>
+                <Tooltip label="Underline (Ctrl+U)">
+                  <button
+                    onClick={() => editor.chain().focus().toggleUnderline().run()}
+                    className={`p-1.5 rounded transition-colors ${editor.isActive('underline') ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300'}`}
+                  
+                  >
+                    <Underline className="w-4 h-4" />
+                  </button>
+                </Tooltip>
+                <Tooltip label="Strikethrough">
+                  <button
+                    onClick={() => editor.chain().focus().toggleStrike().run()}
+                    className={`p-1.5 rounded transition-colors ${editor.isActive('strike') ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300'}`}
+                  
+                  >
+                    <Strikethrough className="w-4 h-4" />
+                  </button>
+                </Tooltip>
+                <Tooltip label="Subscript (X₂)">
+                  <button
+                    onClick={() => (editor.commands as any).toggleSubscript?.()}
+                    className={`px-1.5 py-1 rounded text-xs font-mono transition-colors ${editor.isActive('subscript') ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300'}`}
+                  
+                  >
+                    X₂
+                  </button>
+                </Tooltip>
+                <Tooltip label="Superscript (X²)">
+                  <button
+                    onClick={() => (editor.commands as any).toggleSuperscript?.()}
+                    className={`px-1.5 py-1 rounded text-xs font-mono transition-colors ${editor.isActive('superscript') ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300'}`}
+                  
+                  >
+                    X²
+                  </button>
+                </Tooltip>
               </div>
 
               {/* Color & Effects Group */}
@@ -375,34 +399,42 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor: defaultEditor, onOpenM
 
               {/* Alignment & Line Spacing Group */}
               <div className="flex items-center gap-1 border-r border-slate-800 pr-4">
-                <button
-                  onClick={() => editor.chain().focus().setTextAlign('left').run()}
-                  className={`p-1.5 rounded ${editor.isActive({ textAlign: 'left' }) ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300'}`}
-                  title="Align Left"
-                >
-                  <AlignLeft className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => editor.chain().focus().setTextAlign('center').run()}
-                  className={`p-1.5 rounded ${editor.isActive({ textAlign: 'center' }) ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300'}`}
-                  title="Align Center"
-                >
-                  <AlignCenter className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => editor.chain().focus().setTextAlign('right').run()}
-                  className={`p-1.5 rounded ${editor.isActive({ textAlign: 'right' }) ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300'}`}
-                  title="Align Right"
-                >
-                  <AlignRight className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => editor.chain().focus().setTextAlign('justify').run()}
-                  className={`p-1.5 rounded ${editor.isActive({ textAlign: 'justify' }) ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300'}`}
-                  title="Justify"
-                >
-                  <AlignJustify className="w-4 h-4" />
-                </button>
+                <Tooltip label="Align Left">
+                  <button
+                    onClick={() => editor.chain().focus().setTextAlign('left').run()}
+                    className={`p-1.5 rounded ${editor.isActive({ textAlign: 'left' }) ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300'}`}
+                  
+                  >
+                    <AlignLeft className="w-4 h-4" />
+                  </button>
+                </Tooltip>
+                <Tooltip label="Align Center">
+                  <button
+                    onClick={() => editor.chain().focus().setTextAlign('center').run()}
+                    className={`p-1.5 rounded ${editor.isActive({ textAlign: 'center' }) ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300'}`}
+                  
+                  >
+                    <AlignCenter className="w-4 h-4" />
+                  </button>
+                </Tooltip>
+                <Tooltip label="Align Right">
+                  <button
+                    onClick={() => editor.chain().focus().setTextAlign('right').run()}
+                    className={`p-1.5 rounded ${editor.isActive({ textAlign: 'right' }) ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300'}`}
+                  
+                  >
+                    <AlignRight className="w-4 h-4" />
+                  </button>
+                </Tooltip>
+                <Tooltip label="Justify">
+                  <button
+                    onClick={() => editor.chain().focus().setTextAlign('justify').run()}
+                    className={`p-1.5 rounded ${editor.isActive({ textAlign: 'justify' }) ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300'}`}
+                  
+                  >
+                    <AlignJustify className="w-4 h-4" />
+                  </button>
+                </Tooltip>
 
                 <select
                   value={lineSpacing}
@@ -424,20 +456,24 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor: defaultEditor, onOpenM
               <div className="flex items-center gap-1">
                 <ListDropdown editor={editor} isOrdered={false} />
                 <ListDropdown editor={editor} isOrdered={true} />
-                <button
-                  onClick={() => (editor.commands as any).indent?.()}
-                  className="p-1.5 hover:bg-slate-800 rounded text-slate-300"
-                  title="Indent Right"
-                >
-                  <Indent className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => (editor.commands as any).outdent?.()}
-                  className="p-1.5 hover:bg-slate-800 rounded text-slate-300"
-                  title="Indent Left"
-                >
-                  <Outdent className="w-4 h-4" />
-                </button>
+                <Tooltip label="Indent Right">
+                  <button
+                    onClick={() => (editor.commands as any).indent?.()}
+                    className="p-1.5 hover:bg-slate-800 rounded text-slate-300"
+                  
+                  >
+                    <Indent className="w-4 h-4" />
+                  </button>
+                </Tooltip>
+                <Tooltip label="Indent Left">
+                  <button
+                    onClick={() => (editor.commands as any).outdent?.()}
+                    className="p-1.5 hover:bg-slate-800 rounded text-slate-300"
+                  
+                  >
+                    <Outdent className="w-4 h-4" />
+                  </button>
+                </Tooltip>
               </div>
             </>
           )}
@@ -509,19 +545,21 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor: defaultEditor, onOpenM
                 💡 Callout Box
               </button>
 
-              <button
-                onClick={() => {
-                  const sym = prompt('Choose special character symbol:\n1: ©  2: ™  3: ®  4: ₹  5: °  6: ±  7: ≤  8: ≥  9: √  10: π', '©');
-                  if (sym) {
-                    const symbols: Record<string, string> = { '1': '©', '2': '™', '3': '®', '4': '₹', '5': '°', '6': '±', '7': '≤', '8': '≥', '9': '√', '10': 'π' };
-                    editor.chain().focus().insertContent(symbols[sym] || sym).run();
-                  }
-                }}
-                className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs border border-slate-700 text-amber-300 font-mono"
-                title="Special Symbol / Character"
-              >
-                Ω Symbol
-              </button>
+              <Tooltip label="Special Symbol / Character">
+                <button
+                  onClick={() => {
+                    const sym = prompt('Choose special character symbol:\n1: ©  2: ™  3: ®  4: ₹  5: °  6: ±  7: ≤  8: ≥  9: √  10: π', '©');
+                    if (sym) {
+                      const symbols: Record<string, string> = { '1': '©', '2': '™', '3': '®', '4': '₹', '5': '°', '6': '±', '7': '≤', '8': '≥', '9': '√', '10': 'π' };
+                      editor.chain().focus().insertContent(symbols[sym] || sym).run();
+                    }
+                  }}
+                  className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs border border-slate-700 text-amber-300 font-mono"
+                
+                >
+                  Ω Symbol
+                </button>
+              </Tooltip>
 
               <button
                 onClick={() => {
@@ -550,14 +588,16 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor: defaultEditor, onOpenM
 
               <div className="h-4 w-px bg-slate-800 mx-1" />
 
-              <button
-                onClick={() => (editor.commands as any).insertPageNumber?.({ type: 'current' })}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600/30 hover:bg-indigo-600/50 rounded-lg text-xs border border-indigo-500/50 text-indigo-300 transition-colors"
-                title="Insert Dynamic Page Number"
-              >
-                <Hash className="w-3.5 h-3.5" />
-                <span>Page #</span>
-              </button>
+              <Tooltip label="Insert Dynamic Page Number">
+                <button
+                  onClick={() => (editor.commands as any).insertPageNumber?.({ type: 'current' })}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600/30 hover:bg-indigo-600/50 rounded-lg text-xs border border-indigo-500/50 text-indigo-300 transition-colors"
+                
+                >
+                  <Hash className="w-3.5 h-3.5" />
+                  <span>Page #</span>
+                </button>
+              </Tooltip>
             </div>
           )}
 
@@ -664,7 +704,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor: defaultEditor, onOpenM
                 >
                   <span>🔗 Link All Sides</span>
                 </button>
-</Tooltip>
+  </Tooltip>
 
                 {/* Individual Sliders & Numeric inputs for Top, Bottom, Left, Right */}
                 <div className="flex items-center gap-2.5 text-[11px]">

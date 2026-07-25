@@ -57,6 +57,7 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({ onEditorReady, onOpe
 
   const activePage = pages.find((p) => p.id === activePageId) || pages[0];
   const { top, right, bottom, left } = activePage.margins;
+  const paginateDebounce = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // ─── Active Zone State ────────────────────────────────────────
   const [activeZone, setActiveZone] = useState<ActiveZone>('body');
@@ -201,7 +202,8 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({ onEditorReady, onOpe
       updatePageContent(state.activePageId, editor.getHTML());
       
       // Auto-paginate check
-      setTimeout(() => {
+      clearTimeout(paginateDebounce.current);
+      paginateDebounce.current = setTimeout(() => {
         const pmDom = editor.view.dom as HTMLElement;
         const bodyZone = pmDom.closest('.doc-body-zone') as HTMLElement;
         if (pmDom && bodyZone) {
@@ -235,7 +237,7 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({ onEditorReady, onOpe
              }
            }
         }
-      }, 0);
+      }, 500);
     },
     onFocus: ({ editor }) => {
       setActiveZone('body');

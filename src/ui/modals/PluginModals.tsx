@@ -503,20 +503,20 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
   return (
     <AnimatePresence>
       {activeModal && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        <motion.div key="modal-root" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <div
             className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm"
             onClick={onClose}
           />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.92, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 8 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-              className="glass-tier-2 rounded-2xl w-full max-w-4xl overflow-hidden flex flex-col gradient-border-animated pointer-events-auto"
-            >
+          <motion.div
+            key="modal-panel"
+            initial={{ opacity: 0, scale: 0.92, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
+          >
+            <div className="glass-tier-2 rounded-2xl w-full max-w-4xl overflow-hidden flex flex-col gradient-border-animated pointer-events-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-950">
           <div className="flex items-center gap-2 font-semibold text-slate-100">
@@ -1185,9 +1185,9 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
             </>
           )}
         </div>
-            </motion.div>
-          </div>
-        </>
+            </div>
+          </motion.div>
+        </motion.div>
       )}
     </AnimatePresence>
   );
