@@ -63,6 +63,13 @@ export default function Editor() {
     };
   }, []);
 
+  React.useEffect(() => {
+    if (!contextMenu.visible) return;
+    const close = () => setContextMenu(s => ({ ...s, visible: false }));
+    document.addEventListener('click', close, { once: true });
+    return () => document.removeEventListener('click', close);
+  }, [contextMenu.visible]);
+
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     setContextMenu({
