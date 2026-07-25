@@ -69,7 +69,8 @@ export const AIBubbleToolbar: React.FC<AIBubbleToolbarProps> = ({ editor }) => {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 8 }}
-          className="flex items-center gap-1 p-1 bg-slate-900/95 backdrop-blur-md border border-slate-700 rounded-xl shadow-2xl"
+          className="flex items-center gap-1 p-1 glass-tier-2 rounded-xl"
+          onMouseDown={(e) => e.preventDefault()}
         >
           {buttons.map(btn => (
             <button

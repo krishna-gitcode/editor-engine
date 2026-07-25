@@ -505,7 +505,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
       {activeModal && (
         <motion.div key="modal-root" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
           <div
-            className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm"
+            className="fixed inset-0 z-50 /80 backdrop-blur-sm" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}
             onClick={onClose}
           />
           <motion.div
@@ -518,7 +518,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
           >
             <div className="glass-tier-2 rounded-2xl w-full max-w-4xl overflow-hidden flex flex-col gradient-border-animated pointer-events-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-950">
+        <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: 'var(--ee-border)', background: 'var(--ee-surface-1)' }}>
           <div className="flex items-center gap-2 font-semibold text-slate-100">
             {activeModal === 'mathjax' && (
               <>
@@ -554,7 +554,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
 
         {/* OpenRouter Mode Tabs + Model Selector */}
         {activeModal === 'openrouter' && (
-          <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900 px-6 pt-2 gap-4 text-xs">
+          <div className="flex items-center justify-between border-b px-6 pt-2 gap-4 text-xs" style={{ borderColor: 'var(--ee-border)', background: 'var(--ee-surface-2)' }}>
             <div className="flex gap-4">
               <button
                 onClick={() => setOpenrouterTab('generator')}
@@ -585,9 +585,9 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                 onChange={(e) => setSelectedModel(e.target.value)}
                 className="bg-transparent border-none outline-none text-emerald-300 font-mono text-[11px] appearance-none pr-4 w-[160px] cursor-pointer truncate"
               >
-                <option value="openrouter/free" className="bg-slate-900 text-slate-200">Default (openrouter/free)</option>
+                <option value="openrouter/free" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)' }}>Default (openrouter/free)</option>
                 {availableModels.map(model => (
-                  <option key={model.id} value={model.id} className="bg-slate-900 text-slate-200">
+                  <option key={model.id} value={model.id} style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)' }}>
                     {model.name || model.id} {model.isVision ? '👁️' : ''}
                   </option>
                 ))}
@@ -612,7 +612,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                     onChange={(e) =>
                       activeModal === 'mathjax' ? setLatex(e.target.value) : setAbcNotation(e.target.value)
                     }
-                    className="w-full h-44 bg-slate-950 border border-slate-800 rounded-xl p-3 font-mono text-xs text-slate-100 focus:outline-none focus:border-indigo-500 resize-none"
+                    className="w-full h-44 border rounded-xl p-3 font-mono text-xs focus:outline-none focus:border-indigo-500 resize-none" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}
                   />
                 </div>
 
@@ -656,7 +656,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                         <select
                           value={abcInstrument}
                           onChange={(e) => { setAbcInstrument(Number(e.target.value)); setIsAbcPlaying(false); }}
-                          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-pink-500 appearance-none pr-8"
+                          className="w-full border rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-pink-500 appearance-none pr-8" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}
                         >
                           <option value={0}>🎹 Acoustic Grand Piano</option>
                           <option value={25}>🎸 Acoustic Guitar (Steel)</option>
@@ -735,7 +735,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                     <span className="text-[11px] font-medium text-slate-400 block mb-1.5">MIDI Audio Synthesizer</span>
                     <div
                       ref={abcAudioRef}
-                      className="w-full p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-center"
+                      className="w-full p-3 rounded-xl border flex items-center justify-center" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}
                     />
                   </div>
                 )}
@@ -786,7 +786,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                       value={aiPrompt}
                       onChange={(e) => setAiPrompt(e.target.value)}
                       placeholder="Describe what you want to write or generate..."
-                      className="w-full h-44 bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-transparent resize-none relative z-10"
+                      className="w-full h-44 border rounded-xl p-3 text-xs focus:outline-none focus:border-transparent resize-none relative z-10" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}
                     />
                   </div>
                 </div>
@@ -830,7 +830,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                       </button>
                     )}
                   </div>
-                  <div className="flex-1 min-h-[180px] p-4 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 overflow-y-auto whitespace-pre-wrap leading-relaxed">
+                  <div className="flex-1 min-h-[180px] p-4 border rounded-xl overflow-y-auto whitespace-pre-wrap leading-relaxed" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}>
                     {aiOutput || <span className="text-slate-500 italic">Generated AI content will appear here...</span>}
                   </div>
                 </div>
@@ -873,7 +873,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                   <div className="grid grid-cols-3 gap-2">
                     <button
                       onClick={() => ocrFileInputRef.current?.click()}
-                      className="py-5 px-3 rounded-xl border-2 border-dashed border-slate-800 hover:border-emerald-500/60 bg-slate-950 flex flex-col items-center justify-center gap-1.5 text-slate-400 hover:text-emerald-300 transition-colors"
+                      className="py-5 px-3 rounded-xl border-2 border-dashed hover:border-emerald-500/60 flex flex-col items-center justify-center gap-1.5 text-slate-400 hover:text-emerald-300 transition-colors" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}
                     >
                       <UploadCloud className="w-5 h-5 text-emerald-400" />
                       <span className="text-center text-[11px] font-medium">Image / PDF</span>
@@ -881,7 +881,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
 
                     <button
                       onClick={() => { ocrFileInputRef.current!.accept = 'application/pdf,.pdf'; ocrFileInputRef.current?.click(); }}
-                      className="py-5 px-3 rounded-xl border-2 border-dashed border-slate-800 hover:border-red-500/60 bg-slate-950 flex flex-col items-center justify-center gap-1.5 text-slate-400 hover:text-red-300 transition-colors"
+                      className="py-5 px-3 rounded-xl border-2 border-dashed hover:border-red-500/60 flex flex-col items-center justify-center gap-1.5 text-slate-400 hover:text-red-300 transition-colors" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}
                     >
                       <FileType2 className="w-5 h-5 text-red-400" />
                       <span className="text-center text-[11px] font-medium">PDF (Multi-page)</span>
@@ -889,7 +889,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
 
                     <button
                       onClick={handleGrabCanvasImage}
-                      className="py-5 px-3 rounded-xl border-2 border-dashed border-slate-800 hover:border-cyan-500/60 bg-slate-950 flex flex-col items-center justify-center gap-1.5 text-slate-400 hover:text-cyan-300 transition-colors"
+                      className="py-5 px-3 rounded-xl border-2 border-dashed hover:border-cyan-500/60 flex flex-col items-center justify-center gap-1.5 text-slate-400 hover:text-cyan-300 transition-colors" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}
                     >
                       <ImageIcon className="w-5 h-5 text-cyan-400" />
                       <span className="text-center text-[11px] font-medium">Canvas Object</span>
@@ -931,7 +931,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                         </button>
                       </div>
                     </div>
-                    <div className="p-1.5 bg-slate-950 rounded-xl border border-slate-800 max-h-36 overflow-hidden flex items-center justify-center">
+                    <div className="p-1.5 rounded-xl border max-h-36 overflow-hidden flex items-center justify-center" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}>
                       <img
                         src={pdfPages[pdfPreviewIndex]?.dataUrl}
                         alt={`Page ${pdfPreviewIndex + 1}`}
@@ -951,7 +951,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
 
                 {/* Single image preview */}
                 {!isPdfMode && ocrImage && (
-                  <div className="p-2 bg-slate-950 rounded-xl border border-slate-800 max-h-36 overflow-hidden flex items-center justify-center relative group">
+                  <div className="p-2 rounded-xl border max-h-36 overflow-hidden flex items-center justify-center relative group" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}>
                     <img src={ocrImage} alt="OCR Target" className="max-h-32 object-contain rounded" />
                     <button
                       onClick={() => setOcrImage(null)}
@@ -967,7 +967,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                   <textarea
                     value={ocrPrompt}
                     onChange={(e) => setOcrPrompt(e.target.value)}
-                    className="w-full h-16 bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 resize-none"
+                    className="w-full h-16 border rounded-xl p-3 text-xs focus:outline-none focus:border-emerald-500 resize-none" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}
                   />
                 </div>
 
@@ -1018,7 +1018,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                       </button>
                     )}
                   </div>
-                  <div className="flex-1 min-h-[180px] p-4 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 overflow-y-auto whitespace-pre-wrap font-mono text-xs leading-relaxed">
+                  <div className="flex-1 min-h-[180px] p-4 border rounded-xl overflow-y-auto whitespace-pre-wrap font-mono text-xs leading-relaxed" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}>
                     {ocrOutput || <span className="text-slate-500 italic">Extracted document text, tables, and OCR output will appear here...</span>}
                   </div>
                 </div>
@@ -1048,7 +1048,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
             <>
               <div className="flex flex-col gap-4">
                 {/* Tabs */}
-                <div className="flex p-1 bg-slate-950 border border-slate-800 rounded-xl gap-1">
+                <div className="flex p-1 border rounded-xl gap-1" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}>
                   <button
                     onClick={() => setChartMode('manual')}
                     className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${chartMode === 'manual' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white'
@@ -1069,7 +1069,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                   <div className="space-y-3.5 animate-in fade-in duration-150">
                     <div>
                       <label className="block text-[11px] font-medium text-slate-400 mb-1">Chart Type</label>
-                      <div className="grid grid-cols-4 gap-1.5 bg-slate-950 p-1.5 border border-slate-800 rounded-xl">
+                      <div className="grid grid-cols-4 gap-1.5 p-1.5 border rounded-xl" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}>
                         {(['bar', 'line', 'pie', 'doughnut'] as const).map((t) => (
                           <button
                             key={t}
@@ -1090,7 +1090,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                         value={chartTitle}
                         onChange={(e) => setChartTitle(e.target.value)}
                         placeholder="e.g. Quarterly Performance 2025"
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100 focus:outline-none focus:border-amber-500"
+                        className="w-full border rounded-xl p-2.5 text-xs focus:outline-none focus:border-amber-500" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}
                       />
                     </div>
 
@@ -1101,7 +1101,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                         value={chartLabels}
                         onChange={(e) => setChartLabels(e.target.value)}
                         placeholder="e.g. Jan, Feb, Mar, Apr"
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100 focus:outline-none focus:border-amber-500 font-mono"
+                        className="w-full border rounded-xl p-2.5 text-xs focus:outline-none focus:border-amber-500 font-mono" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}
                       />
                     </div>
 
@@ -1112,7 +1112,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                         value={chartDataValues}
                         onChange={(e) => setChartDataValues(e.target.value)}
                         placeholder="e.g. 45, 78, 62, 90"
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100 focus:outline-none focus:border-amber-500 font-mono"
+                        className="w-full border rounded-xl p-2.5 text-xs focus:outline-none focus:border-amber-500 font-mono" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}
                       />
                     </div>
                   </div>
@@ -1124,7 +1124,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                         value={chartPrompt}
                         onChange={(e) => setChartPrompt(e.target.value)}
                         placeholder="e.g. Bar chart comparing quarterly revenue 2024 vs 2025..."
-                        className="w-full h-36 bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-amber-500 resize-none"
+                        className="w-full h-36 border rounded-xl p-3 text-xs focus:outline-none focus:border-amber-500 resize-none" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}
                       />
                     </div>
                     <div className="flex flex-wrap gap-1.5">
@@ -1150,7 +1150,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                     <span className="text-[11px] font-medium text-slate-400">Chart Preview & Configuration</span>
                     {chartOutput && chartMode === 'ai' && <button onClick={() => navigator.clipboard.writeText(chartOutput)} className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-white"><Copy className="w-3 h-3" /><span>Copy JSON</span></button>}
                   </div>
-                  <div className="flex-1 min-h-[180px] p-4 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 overflow-y-auto font-mono text-xs leading-relaxed flex flex-col justify-center items-center gap-2">
+                  <div className="flex-1 min-h-[180px] p-4 border rounded-xl overflow-y-auto font-mono text-xs leading-relaxed flex flex-col justify-center items-center gap-2" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}>
                     {chartMode === 'manual' ? (
                       <div className="text-center space-y-1">
                         <div className="text-base font-sans font-bold text-amber-400">📊 {chartTitle || 'Untitled Chart'}</div>

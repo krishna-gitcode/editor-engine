@@ -63,6 +63,8 @@
   overflow: hidden;
   width: auto;
 }
+/* NOTE: The document page is always white (Word-style). 
+   If a "dark document" mode is ever added, this hardcoded #f8fafc background must become a token. */
 .ProseMirror table th {
   font-weight: 600;
   text-align: left;
@@ -352,6 +354,9 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* NOTE: The document page is always white (Word-style). 
+   These hardcoded light colors (#475569 and #1e293b) are intentionally used here so that 
+   header/footer text remains legible on the white paper in both light and dark UI modes. */
 .doc-zone-content .ProseMirror {
   min-height: 20px !important;
   font-size: 11px;

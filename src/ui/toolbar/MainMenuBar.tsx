@@ -28,7 +28,6 @@ export const MainMenuBar: React.FC<MainMenuBarProps> = ({
 
   useEffect(() => {
     document.documentElement.classList.toggle('light', theme === 'light');
-    document.body.classList.toggle('light-theme', theme === 'light');
   }, [theme]);
 
   const handleExportPNG = () => {
@@ -194,7 +193,7 @@ export const MainMenuBar: React.FC<MainMenuBarProps> = ({
           className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 transition-colors"
           title="Toggle Theme"
         >
-          {theme === 'dark' ? <Moon className="w-4 h-4 text-indigo-400" /> : <Sun className="w-4 h-4 text-amber-400" />}
+          {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-400" />}
         </button>
       </div>
     </div>

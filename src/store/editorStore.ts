@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 export type ActiveTool = 
   | 'select' 
@@ -47,34 +48,42 @@ interface EditorStoreState {
   setTheme: (theme: 'dark' | 'light') => void;
 }
 
-export const useEditorStore = create<EditorStoreState>((set) => ({
-  activeTool: 'select',
-  activeTab: 'canva_studio',
-  ribbonTab: 'home',
-  isRibbonMinimized: false,
-  showRightSidebar: true,
-  customFonts: [
-    { name: 'Inter', url: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap' },
-    { name: 'Outfit', url: 'https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap' },
-  ],
-  theme: 'dark',
-  setActiveTool: (activeTool) => set({ activeTool }),
-  setActiveTab: (activeTab) => set({ activeTab }),
-  setRibbonTab: (ribbonTab) => set({ ribbonTab }),
-  toggleRibbonMinimized: () => set((s) => ({ isRibbonMinimized: !s.isRibbonMinimized })),
-  toggleRightSidebar: () => set((s) => ({ showRightSidebar: !s.showRightSidebar })),
-  setShowRightSidebar: (showRightSidebar) => set({ showRightSidebar }),
-  addCustomFont: (font) => set((s) => {
-    if (s.customFonts.some((f) => f.name === font.name)) return s;
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = font.url;
-    document.head.appendChild(link);
-    return { customFonts: [...s.customFonts, font] };
-  }),
-  removeCustomFont: (name) => set((s) => ({
-    customFonts: s.customFonts.filter((f) => f.name !== name)
-  })),
-  setTheme: (theme) => set({ theme }),
-}));
+export const useEditorStore = create<EditorStoreState>()(
+  persist(
+    (set) => ({
+      activeTool: 'select',
+      activeTab: 'canva_studio',
+      ribbonTab: 'home',
+      isRibbonMinimized: false,
+      showRightSidebar: true,
+      customFonts: [
+        { name: 'Inter', url: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap' },
+        { name: 'Outfit', url: 'https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap' },
+      ],
+      theme: 'dark',
+      setActiveTool: (activeTool) => set({ activeTool }),
+      setActiveTab: (activeTab) => set({ activeTab }),
+      setRibbonTab: (ribbonTab) => set({ ribbonTab }),
+      toggleRibbonMinimized: () => set((s) => ({ isRibbonMinimized: !s.isRibbonMinimized })),
+      toggleRightSidebar: () => set((s) => ({ showRightSidebar: !s.showRightSidebar })),
+      setShowRightSidebar: (showRightSidebar) => set({ showRightSidebar }),
+      addCustomFont: (font) => set((s) => {
+        if (s.customFonts.some((f) => f.name === font.name)) return s;
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = font.url;
+        document.head.appendChild(link);
+        return { customFonts: [...s.customFonts, font] };
+      }),
+      removeCustomFont: (name) => set((s) => ({
+        customFonts: s.customFonts.filter((f) => f.name !== name)
+      })),
+      setTheme: (theme) => set({ theme }),
+    }),
+    {
+      name: 'editor-engine-prefs',
+      partialize: (state) => ({ theme: state.theme }),
+    }
+  )
+);
 

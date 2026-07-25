@@ -73,7 +73,8 @@ export default function Editor() {
   };
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden bg-[#0f172a] text-slate-100 select-none">
+    <div className="w-full h-full flex flex-col overflow-hidden select-none"
+         style={{ background: 'var(--ee-bg)', color: 'var(--ee-text-primary)' }}>
       {/* Top Navigation Chrome */}
       <MainMenuBar
         engine={engineRef.current || (window as any).__canvasEngine}
