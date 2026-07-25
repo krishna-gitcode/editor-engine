@@ -394,10 +394,14 @@ html.light .bg-slate-800 {
   color: #0f172a !important;
 }
 
-html.light [class*="hover:bg-slate-800"]:hover,
-html.light [class*="hover:bg-slate-700"]:hover {
-  background-color: #e2e8f0 !important;
-  color: #0f172a !important;
+html.light [class*="hover:bg-slate-8"]:hover,
+html.light [class*="hover:bg-slate-7"]:hover {
+  background-color: var(--ee-surface-3) !important;
+  color: var(--ee-text-primary) !important;
+}
+html.light [class*="hover:bg-slate-9"]:hover {
+  background-color: var(--ee-surface-2) !important;
+  color: var(--ee-text-primary) !important;
 }
 
 /* ─── Light Theme Glassmorphism ────────────────────────────────── */
