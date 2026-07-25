@@ -505,7 +505,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
       {activeModal && (
         <motion.div key="modal-root" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
           <div
-            className="fixed inset-0 z-50 /80 backdrop-blur-sm" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}
+            className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm"
             onClick={onClose}
           />
           <motion.div

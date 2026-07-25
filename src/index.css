@@ -108,16 +108,6 @@ html.light [class*="bg-slate-950/"] { background-color: color-mix(in oklch, var(
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  body {
-    @apply bg-[#0f172a] text-slate-100 antialiased overflow-hidden select-none;
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   GLASSMORPHISM DESIGN SYSTEM
-   ═══════════════════════════════════════════════════════════════════ */
-
 /* ─── Animated Gradient Border Properties ─────────────────────── */
 @property --angle {
   syntax: '<angle>';
@@ -128,6 +118,18 @@ html.light [class*="bg-slate-950/"] { background-color: color-mix(in oklch, var(
 @keyframes borderSpin {
   to { --angle: 360deg; }
 }
+
+@layer base {
+  body {
+    @apply bg-[#0f172a] text-slate-100 antialiased overflow-hidden select-none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   GLASSMORPHISM DESIGN SYSTEM
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Property and Keyframes moved to top-level */
 
 @layer components {
   /* ─── Glass Panels ───────────────────────────────────────────── */
@@ -392,7 +394,8 @@ html.light .bg-slate-800 {
   color: #0f172a !important;
 }
 
-html.light [class*="hover:bg-slate-800"]:hover {
+html.light [class*="hover:bg-slate-800"]:hover,
+html.light [class*="hover:bg-slate-700"]:hover {
   background-color: #e2e8f0 !important;
   color: #0f172a !important;
 }
