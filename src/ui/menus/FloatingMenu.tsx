@@ -436,20 +436,24 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor: defaultEdito
 
       {/* Fabric Canvas Object Floating Toolbar */}
       <AnimatePresence>
-        {selectedObject && selectedObject.left !== undefined && selectedObject.top !== undefined && (
-          <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
-            className="absolute flex flex-col gap-1 pointer-events-auto"
-            style={{
-              left: `${selectedObject.left}px`,
-              top: `${Math.max(10, selectedObject.top - 52)}px`,
-              zIndex: 9999,
-            }}
-          >
-            {/* Main toolbar row */}
+        {selectedObject && selectedObject.left !== undefined && selectedObject.top !== undefined && (() => {
+          const canvasEl = engine?.canvas?.getElement()?.getBoundingClientRect();
+          const adjustedLeft = (canvasEl?.left ?? 0) + selectedObject.left;
+          const adjustedTop = (canvasEl?.top ?? 0) + selectedObject.top - 52;
+          return (
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
+              className="absolute flex flex-col gap-1 pointer-events-auto"
+              style={{
+                left: `${adjustedLeft}px`,
+                top: `${Math.max(10, adjustedTop)}px`,
+                zIndex: 9999,
+              }}
+            >
+              {/* Main toolbar row */}
             <div className="flex items-center gap-1.5 p-1 glass-menu rounded-xl text-xs text-slate-200">
               <input
                 type="color"
@@ -516,7 +520,7 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor: defaultEdito
             </div>
           )}
           </motion.div>
-        )}
+        })()}
       </AnimatePresence>
     </>
   );
