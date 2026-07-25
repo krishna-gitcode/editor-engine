@@ -78,6 +78,7 @@ export default function Editor() {
       {/* Top Navigation Chrome */}
       <MainMenuBar
         engine={engineRef.current || (window as any).__canvasEngine}
+        editor={editorInstance || (window as any).__activeEditor}
         isCanvasMode={isCanvasMode}
         setIsCanvasMode={setIsCanvasMode}
         onOpenPreview={() => setShowPreviewModal(true)}

@@ -7,6 +7,7 @@ import './MainMenuBar.css';
 
 interface MainMenuBarProps {
   engine: any;
+  editor?: any;
   isCanvasMode: boolean;
   setIsCanvasMode: (mode: boolean | ((m: boolean) => boolean)) => void;
   onOpenPreview?: () => void;
@@ -15,6 +16,7 @@ interface MainMenuBarProps {
 
 export const MainMenuBar: React.FC<MainMenuBarProps> = ({
   engine,
+  editor,
   isCanvasMode,
   setIsCanvasMode,
   onOpenPreview,
@@ -52,17 +54,17 @@ export const MainMenuBar: React.FC<MainMenuBarProps> = ({
   };
 
   const handleExportMarkdown = () => {
-    const editor = (window as any).__activeEditor;
-    if (editor) {
-      ExportEngine.exportToMarkdown(editor.getHTML(), `document-${Date.now()}.md`);
+    const activeEditor = editor || (window as any).__activeEditor;
+    if (activeEditor) {
+      ExportEngine.exportToMarkdown(activeEditor.getHTML(), `document-${Date.now()}.md`);
     }
     setShowFileMenu(false);
   };
 
   const handleExportDOCX = () => {
-    const editor = (window as any).__activeEditor;
-    if (editor) {
-      ExportEngine.exportToDOCX(editor.getHTML(), `document-${Date.now()}.docx`);
+    const activeEditor = editor || (window as any).__activeEditor;
+    if (activeEditor) {
+      ExportEngine.exportToDOCX(activeEditor.getHTML(), `document-${Date.now()}.docx`);
     }
     setShowFileMenu(false);
   };
@@ -74,10 +76,10 @@ export const MainMenuBar: React.FC<MainMenuBarProps> = ({
     input.onchange = async (e: any) => {
       const file = e.target.files?.[0];
       if (file) {
-        const editor = (window as any).__activeEditor;
-        if (editor) {
+        const activeEditor = editor || (window as any).__activeEditor;
+        if (activeEditor) {
           try {
-            await ImportEngine.importDOCX(file, editor);
+            await ImportEngine.importDOCX(file, activeEditor);
           } catch (error) {
             console.error("Failed to import DOCX", error);
             setErrorToast("Failed to import DOCX file.");
