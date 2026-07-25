@@ -32,6 +32,17 @@ export const MainMenuBar: React.FC<MainMenuBarProps> = ({
     document.documentElement.classList.toggle('light', theme === 'light');
   }, [theme]);
 
+  useEffect(() => {
+    if (!showFileMenu) return;
+    const close = () => setShowFileMenu(false);
+    // Add on next tick so we don't immediately catch the open click
+    const timer = setTimeout(() => document.addEventListener('click', close, { once: true }), 0);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('click', close);
+    };
+  }, [showFileMenu]);
+
   const handleExportPNG = () => {
     const el = document.querySelector('.prose')?.parentElement || document.body;
     ExportEngine.exportToPNG(el as HTMLElement, `editor-export-${Date.now()}.png`);
