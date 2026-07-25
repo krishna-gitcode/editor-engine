@@ -12,6 +12,7 @@ import {
 import './Toolbar.css';
 import { ColorPickerDropdown } from '../../ui/menus/ColorPickerDropdown';
 import { ListDropdown } from '../../ui/menus/ListDropdown';
+import { Tooltip } from '../../ui/Tooltip';
 
 interface ToolbarProps {
   editor: any;
@@ -200,6 +201,15 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor: defaultEditor, onOpenM
             className="overflow-hidden bg-slate-900/40"
           >
             <div className="p-3 flex items-center gap-5 min-h-[68px] text-xs text-slate-200 flex-wrap">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={ribbonTab}
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 4 }}
+                  transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+                  className="flex items-center gap-5 flex-wrap w-full"
+                >
               {/* HOME TAB */}
           {ribbonTab === 'home' && (
             <>
@@ -248,13 +258,14 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor: defaultEditor, onOpenM
                   ))}
                 </select>
 
-                <button
+                <Tooltip label="Manage Google & Custom Fonts">
+<button
                   onClick={onOpenFontManager}
                   className="p-1.5 bg-slate-800 hover:bg-slate-700 rounded text-indigo-400"
-                  title="Manage Google & Custom Fonts"
                 >
                   <Type className="w-4 h-4" />
                 </button>
+</Tooltip>
 
                 <select
                   value={fontSize}
@@ -644,15 +655,16 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor: defaultEditor, onOpenM
                   <option value="zero">Zero Margins (0px)</option>
                 </select>
 
-                <button
+                <Tooltip label="Link all 4 margins together">
+<button
                   onClick={toggleLinkMargins}
                   className={`px-2 py-1 rounded text-xs flex items-center gap-1 border transition-all ${
                     linkMargins ? 'bg-indigo-600 border-indigo-400 text-white font-semibold' : 'bg-slate-800 border-slate-700 text-slate-400'
                   }`}
-                  title="Link all 4 margins together"
                 >
                   <span>🔗 Link All Sides</span>
                 </button>
+</Tooltip>
 
                 {/* Individual Sliders & Numeric inputs for Top, Bottom, Left, Right */}
                 <div className="flex items-center gap-2.5 text-[11px]">
@@ -883,7 +895,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor: defaultEditor, onOpenM
               </button>
             </div>
           )}
-          </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

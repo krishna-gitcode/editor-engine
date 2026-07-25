@@ -195,7 +195,7 @@ export const BottomPageStrip: React.FC = () => {
         {/* Left: Plus icon button replacing 'Document Pages' (Point #2) */}
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
-            onClick={addPage}
+            onClick={() => addPage()}
             className="p-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white shadow-md shadow-indigo-600/20 flex items-center justify-center transition-all"
             title="Add New Page"
           >

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useEditorStore, type SidebarTab } from '../../store/editorStore';
 import { useDocumentStore } from '../../store/documentStore';
 import { FileText, Sparkles, Image as ImageIcon, Shapes, Type, Layers, Search, LayoutTemplate, Plus, Trash2, Sliders } from 'lucide-react';
@@ -61,11 +61,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ engine, editor: defaul
                   setActiveTab(tab.id);
                 }
               }}
-              className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all ${
-                isActive
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-              }`}
+              className={`sidebar-tab-btn flex-col !h-[48px] !w-[48px] ${isActive ? 'active' : ''}`}
               title={tab.label}
             >
               <Icon className="w-5 h-5 mb-0.5" />
@@ -76,8 +72,16 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ engine, editor: defaul
       </div>
 
       {/* Expanded Panel Drawer */}
+      <AnimatePresence mode="wait">
       {activeTab !== null && (
-        <div className="w-72 bg-slate-900 flex flex-col h-full overflow-hidden border-r border-slate-800">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, x: -12, filter: 'blur(4px)' }}
+          animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+          exit={{ opacity: 0, x: -8, filter: 'blur(2px)' }}
+          transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+          className="w-72 glass-tier-1 flex flex-col h-full overflow-hidden border-r border-slate-800"
+        >
           {activeTab === 'canva_studio' && <CanvaStudioPanel engine={engine} editor={editor} />}
           {activeTab === 'image_studio' && <ImageStudioTab engine={engine} />}
           {activeTab === 'shapes' && <ShapeTools engine={engine} onOpenModal={onOpenModal} />}
@@ -88,7 +92,12 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ engine, editor: defaul
           {activeTab === 'templates' && (
             <div className="p-4 flex flex-col gap-3 text-slate-200 overflow-y-auto">
               <h3 className="text-sm font-semibold text-slate-100">Starter Templates</h3>
-              <div className="grid grid-cols-1 gap-2.5">
+              <motion.ul
+                variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
+                initial="hidden"
+                animate="show"
+                className="grid grid-cols-1 gap-2.5"
+              >
                 {[
                   {
                     name: 'Corporate Invoice Template',
@@ -120,11 +129,12 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ engine, editor: defaul
                     orientation: 'landscape' as const,
                   },
                 ].map((t, idx) => (
-                  <motion.div
+                  <motion.li
                     key={idx}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.05, duration: 0.2, type: 'spring' }}
+                    variants={{
+                      hidden: { opacity: 0, x: -8 },
+                      show: { opacity: 1, x: 0, transition: { ease: [0.22, 1, 0.36, 1], duration: 0.2 } }
+                    }}
                     onClick={() => {
                       updatePageContent(activePageId, t.html);
                       updatePageSettings(activePageId, {
@@ -137,13 +147,14 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ engine, editor: defaul
                   >
                     <div className="text-xs font-semibold text-slate-100">{t.name}</div>
                     <div className="text-[11px] text-slate-400 mt-0.5">{t.desc}</div>
-                  </motion.div>
+                  </motion.li>
                 ))}
-              </div>
+              </motion.ul>
             </div>
           )}
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
     </div>
   );
 };

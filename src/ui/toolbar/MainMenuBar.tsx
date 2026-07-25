@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useEditorStore } from '../../store/editorStore';
 import { ExportEngine } from '../../core/engine/ExportEngine';
-import { FileCode, Download, Printer, Share2, Layers, FileText, Moon, Sun, Eye } from 'lucide-react';
+import { ImportEngine } from '../../core/engine/ImportEngine';
+import { FileCode, Download, Printer, Share2, Layers, FileText, Moon, Sun, Eye, Upload } from 'lucide-react';
 import './MainMenuBar.css';
 
 interface MainMenuBarProps {
@@ -50,6 +51,44 @@ export const MainMenuBar: React.FC<MainMenuBarProps> = ({
     setShowFileMenu(false);
   };
 
+  const handleExportMarkdown = () => {
+    const editor = (window as any).__activeEditor;
+    if (editor) {
+      ExportEngine.exportToMarkdown(editor.getHTML(), `document-${Date.now()}.md`);
+    }
+    setShowFileMenu(false);
+  };
+
+  const handleExportDOCX = () => {
+    const editor = (window as any).__activeEditor;
+    if (editor) {
+      ExportEngine.exportToDOCX(editor.getHTML(), `document-${Date.now()}.docx`);
+    }
+    setShowFileMenu(false);
+  };
+
+  const handleImportDOCX = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.docx';
+    input.onchange = async (e: any) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        const editor = (window as any).__activeEditor;
+        if (editor) {
+          try {
+            await ImportEngine.importDOCX(file, editor);
+          } catch (error) {
+            console.error("Failed to import DOCX", error);
+            alert("Failed to import DOCX file.");
+          }
+        }
+      }
+    };
+    input.click();
+    setShowFileMenu(false);
+  };
+
   return (
     <div className="w-full h-12 bg-slate-950 border-b border-slate-800 flex items-center justify-between px-4 select-none z-50 relative print:hidden">
       {/* Brand & Title */}
@@ -72,9 +111,24 @@ export const MainMenuBar: React.FC<MainMenuBarProps> = ({
 
           {showFileMenu && (
             <div className="absolute left-0 top-9 w-48 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-1.5 flex flex-col gap-1 z-50 text-xs text-slate-200">
+              <button onClick={handleImportDOCX} className="flex items-center gap-2.5 px-3 py-2 rounded hover:bg-slate-800 text-left">
+                <Upload className="w-4 h-4 text-violet-400" />
+                <span>Import Word (DOCX)</span>
+              </button>
+              
+              <div className="h-px bg-slate-800 my-1" />
+
               <button onClick={handleExportJSON} className="flex items-center gap-2.5 px-3 py-2 rounded hover:bg-slate-800 text-left">
                 <FileCode className="w-4 h-4 text-indigo-400" />
                 <span>Save JSON Template</span>
+              </button>
+              <button onClick={handleExportMarkdown} className="flex items-center gap-2.5 px-3 py-2 rounded hover:bg-slate-800 text-left">
+                <FileText className="w-4 h-4 text-emerald-400" />
+                <span>Export Markdown</span>
+              </button>
+              <button onClick={handleExportDOCX} className="flex items-center gap-2.5 px-3 py-2 rounded hover:bg-slate-800 text-left">
+                <FileText className="w-4 h-4 text-blue-500" />
+                <span>Export Word (DOCX)</span>
               </button>
               <button onClick={handleExportPDF} className="flex items-center gap-2.5 px-3 py-2 rounded hover:bg-slate-800 text-left">
                 <Download className="w-4 h-4 text-pink-400" />

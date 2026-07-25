@@ -25,7 +25,7 @@ export interface DocumentPageData {
 interface DocumentStoreState {
   pages: DocumentPageData[];
   activePageId: string;
-  addPage: () => void;
+  addPage: (initialContent?: string) => void;
   removePage: (id: string) => void;
   updatePageContent: (id: string, content: string) => void;
   updatePageSettings: (id: string, settings: Partial<DocumentPageData>) => void;
@@ -51,12 +51,12 @@ const DEFAULT_PAGE: DocumentPageData = {
 export const useDocumentStore = create<DocumentStoreState>((set) => ({
   pages: [DEFAULT_PAGE],
   activePageId: 'page-1',
-  addPage: () => set((s) => {
+  addPage: (initialContent = '<p></p>') => set((s) => {
     const newId = `page-${Date.now()}`;
     const newPage: DocumentPageData = {
       ...DEFAULT_PAGE,
       id: newId,
-      content: '<p></p>',
+      content: initialContent,
     };
     return { pages: [...s.pages, newPage], activePageId: newId };
   }),

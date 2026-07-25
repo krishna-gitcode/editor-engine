@@ -24,19 +24,14 @@ export const AIGhostTextExtension = Extension.create({
             const ghostText = useAIStore.getState().ghostText;
             const ghostCursorPos = useAIStore.getState().ghostCursorPos;
 
-            // Important: we need to update decorations if meta changes (which we trigger manually)
+            if (tr.docChanged) return DecorationSet.empty;
+
             const meta = tr.getMeta(ghostTextPluginKey);
             if (meta?.clear || !ghostText) {
               return DecorationSet.empty;
             }
 
-            if (tr.docChanged || tr.selectionSet) {
-               // When user types or moves cursor, the view update clears ghostText from store.
-               // We'll return empty here as well.
-               return DecorationSet.empty;
-            }
-
-            if (ghostText && ghostCursorPos) {
+            if (meta?.render && ghostText && ghostCursorPos) {
               const widget = document.createElement('span');
               widget.className = 'ai-ghost-text';
               widget.textContent = ghostText;

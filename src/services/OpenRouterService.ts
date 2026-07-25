@@ -252,7 +252,7 @@ export class OpenRouterService {
     }
 
     const activeModel = model || import.meta.env.VITE_OPENROUTER_DEFAULT_MODEL || 'google/gemini-2.0-flash-lite-preview-02-05:free';
-    const activeSystemPrompt = systemPrompt || 'You are a helpful, professional AI authoring assistant for GridLeaf Editor. Output clean, well-formatted text or markdown directly usable inside a document.';
+    const activeSystemPrompt = systemPrompt || 'You are a helpful, professional AI authoring assistant for GridLeaf Editor. Output clean, well-formatted text or markdown directly usable inside a document. IMPORTANT: For tables, output markdown tables. If the content contains mathematical equations or scientific notation, wrap them EXACTLY in <mathjax>...</mathjax> tags. If it contains music notation, wrap it EXACTLY in <abcjs>...</abcjs> tags. For code snippets, use fenced code blocks (```).';
 
     try {
       const response = await fetch(this.API_URL, {

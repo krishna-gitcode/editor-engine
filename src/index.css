@@ -1,3 +1,94 @@
+/* ══ EDITOR ENGINE DESIGN TOKENS ══════════════════════════════════ */
+:root {
+  /* Surfaces — dark mode default */
+  --ee-bg:           #080b14;        /* deepest background */
+  --ee-surface-0:    #0d1117;        /* workspace floor */
+  --ee-surface-1:    #131820;        /* panels, sidebar */
+  --ee-surface-2:    #1a2030;        /* cards, ribbon */
+  --ee-surface-3:    #212840;        /* hover states */
+  --ee-border:       rgba(255,255,255,0.07);
+  --ee-border-strong:rgba(255,255,255,0.12);
+
+  /* Text */
+  --ee-text-primary:  #e8eaf0;
+  --ee-text-secondary:#8892a4;
+  --ee-text-faint:    #4a5568;
+
+  /* Accent — Electric Indigo */
+  --ee-accent:        #6366f1;
+  --ee-accent-glow:   rgba(99,102,241,0.25);
+  --ee-accent-subtle: rgba(99,102,241,0.08);
+
+  /* AI Accent — Emerald */
+  --ee-ai:            #10b981;
+  --ee-ai-glow:       rgba(16,185,129,0.2);
+
+  /* Document page */
+  --ee-page-bg:       #ffffff;
+  --ee-page-shadow:   0 4px 32px rgba(0,0,0,0.5), 0 1px 4px rgba(0,0,0,0.3);
+
+  /* Elevation system */
+  --ee-shadow-sm:     0 1px 3px rgba(0,0,0,0.3), 0 0 0 1px var(--ee-border);
+  --ee-shadow-md:     0 4px 16px rgba(0,0,0,0.4), 0 0 0 1px var(--ee-border);
+  --ee-shadow-lg:     0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px var(--ee-border-strong);
+  --ee-shadow-float:  0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px var(--ee-border-strong),
+                      inset 0 1px 0 rgba(255,255,255,0.06);
+
+  /* Motion */
+  --ee-ease-spring:   cubic-bezier(0.22, 1, 0.36, 1);
+  --ee-ease-bounce:   cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ee-duration-fast: 150ms;
+  --ee-duration-base: 250ms;
+  --ee-duration-slow: 400ms;
+}
+
+/* Light mode tokens — single place, no !important needed */
+html.light {
+  --ee-bg:            #f0f2f7;
+  --ee-surface-0:     #e8ebf2;
+  --ee-surface-1:     #ffffff;
+  --ee-surface-2:     #f5f7fb;
+  --ee-surface-3:     #ebeef5;
+  --ee-border:        rgba(0,0,0,0.08);
+  --ee-border-strong: rgba(0,0,0,0.14);
+  --ee-text-primary:  #1a1f2e;
+  --ee-text-secondary:#4a5568;
+  --ee-text-faint:    #9aa5b4;
+  --ee-page-shadow:   0 4px 24px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.08);
+}
+
+/* ─── Glass Elevation Tiers ─────────────────────────────────────── */
+
+/* Tier 1 — Background panels, sidebar */
+.glass-tier-1 {
+  background: rgba(13, 17, 23, 0.75);
+  backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid var(--ee-border);
+  box-shadow: var(--ee-shadow-sm);
+}
+
+/* Tier 2 — Floating panels, modals, dropdowns */
+.glass-tier-2 {
+  background: rgba(19, 24, 32, 0.85);
+  backdrop-filter: blur(32px) saturate(180%);
+  border: 1px solid var(--ee-border-strong);
+  box-shadow: var(--ee-shadow-float);
+}
+
+/* Tier 3 — Tooltips, context menus (highest elevation) */
+.glass-tier-3 {
+  background: rgba(26, 32, 48, 0.95);
+  backdrop-filter: blur(40px) saturate(200%);
+  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: var(--ee-shadow-float),
+              inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+/* Light mode tiers */
+html.light .glass-tier-1 { background: rgba(255,255,255,0.7); }
+html.light .glass-tier-2 { background: rgba(255,255,255,0.88); }
+html.light .glass-tier-3 { background: rgba(255,255,255,0.96); }
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -14,11 +105,11 @@
 @layer components {
   /* ─── Glass Panels ───────────────────────────────────────────── */
   .glass-panel {
-    @apply bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 shadow-2xl;
-    box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.04),
-      0 8px 32px -4px rgba(0, 0, 0, 0.4),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.04);
+    background: color-mix(in oklch, var(--ee-surface-1) 70%, transparent);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid var(--ee-border);
+    box-shadow: var(--ee-shadow-lg);
   }
   
   .glass-menu {
@@ -65,40 +156,116 @@
   }
 
   /* ─── Animated Gradient Border ───────────────────────────────── */
-  .gradient-border {
+  @property --angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+  }
+
+  @keyframes borderSpin {
+    to { --angle: 360deg; }
+  }
+
+  .gradient-border-animated {
     position: relative;
   }
-  .gradient-border::before {
+  .gradient-border-animated::before {
     content: '';
     position: absolute;
     inset: -1px;
     border-radius: inherit;
     padding: 1px;
-    background: linear-gradient(
-      135deg,
-      rgba(99, 102, 241, 0.3),
-      rgba(168, 85, 247, 0.2),
-      rgba(236, 72, 153, 0.1),
-      transparent 60%
+    background: conic-gradient(
+      from var(--angle),
+      transparent 0%,
+      var(--ee-accent) 20%,
+      var(--ee-ai) 40%,
+      rgba(168,85,247,0.6) 60%,
+      transparent 80%
     );
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box,
+                  linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
-    pointer-events: none;
+    animation: borderSpin 4s linear infinite;
+    opacity: 0;
+    transition: opacity var(--ee-duration-base) var(--ee-ease-spring);
+  }
+  .gradient-border-animated:hover::before,
+  .gradient-border-animated:focus-within::before {
+    opacity: 1;
   }
 }
 
-/* ─── Ribbon Buttons ────────────────────────────────────────────── */
+/* ─── Ribbon Buttons — Industry Level ──────────────────────────── */
 .ribbon-btn {
-  @apply flex flex-col items-center justify-center gap-1 p-2 rounded-lg text-xs transition-all duration-200 active:scale-95 hover:bg-slate-800/50 text-slate-300 hover:text-white;
+  position: relative;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 3px; padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 11px; font-weight: 500;
+  color: var(--ee-text-secondary);
+  transition: all var(--ee-duration-fast) var(--ee-ease-spring);
+  cursor: pointer;
+  user-select: none;
 }
 .ribbon-btn:hover {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  color: var(--ee-text-primary);
+  background: var(--ee-surface-3);
+  transform: translateY(-1px);
+  box-shadow: var(--ee-shadow-sm);
 }
-.ribbon-tab-active {
-  @apply border-b-2 border-indigo-500 text-indigo-400 font-medium;
+.ribbon-btn:hover svg {
+  filter: drop-shadow(0 0 6px var(--ee-accent-glow));
+}
+.ribbon-btn:active {
+  transform: translateY(0) scale(0.95);
+  background: var(--ee-surface-2);
+}
+.ribbon-btn.active {
+  color: var(--ee-accent);
+  background: var(--ee-accent-subtle);
+}
+.ribbon-btn.active::after {
+  content: '';
+  position: absolute; bottom: 2px;
+  left: 50%; transform: translateX(-50%);
+  width: 16px; height: 2px;
+  background: var(--ee-accent);
+  border-radius: 9999px;
+  box-shadow: 0 0 8px var(--ee-accent-glow);
 }
 
+/* ─── Sidebar Icon Tabs ─────────────────────────────────────────── */
+.sidebar-tab-btn {
+  position: relative;
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 10px;
+  color: var(--ee-text-faint);
+  transition: all var(--ee-duration-fast) var(--ee-ease-spring);
+  cursor: pointer;
+}
+.sidebar-tab-btn:hover {
+  color: var(--ee-text-primary);
+  background: var(--ee-surface-3);
+}
+.sidebar-tab-btn.active {
+  color: var(--ee-accent);
+  background: var(--ee-accent-subtle);
+  box-shadow: 0 0 0 1px rgba(99,102,241,0.3),
+              0 0 16px rgba(99,102,241,0.15);
+}
+.sidebar-tab-btn.active::before {
+  content: '';
+  position: absolute; left: -1px;
+  top: 50%; transform: translateY(-50%);
+  width: 3px; height: 60%;
+  background: var(--ee-accent);
+  border-radius: 0 3px 3px 0;
+  box-shadow: 2px 0 8px var(--ee-accent-glow);
+}
 
 /* ═══════════════════════════════════════════════════════════════════
    MOTION UI — Global Animations
@@ -209,14 +376,6 @@ html.light [class*="hover:bg-slate-800"]:hover {
 }
 
 /* ─── Light Theme Glassmorphism ────────────────────────────────── */
-html.light .glass-panel {
-  background: rgba(255, 255, 255, 0.7) !important;
-  border-color: rgba(226, 232, 240, 0.6) !important;
-  box-shadow: 
-    0 0 0 1px rgba(0, 0, 0, 0.04),
-    0 8px 32px -4px rgba(0, 0, 0, 0.1) !important;
-}
-
 html.light .glass-menu {
   background: rgba(255, 255, 255, 0.8) !important;
   border-color: rgba(226, 232, 240, 0.7) !important;
@@ -294,4 +453,47 @@ html.light .glass-menu {
     padding: 2cm !important;
     box-shadow: none !important;
   }
+}
+
+/* ─── Custom Scrollbars ─────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ee-surface-3) transparent;
+}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--ee-surface-3);
+  border-radius: 9999px;
+  border: 1px solid var(--ee-border);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(99,102,241,0.3);
+}
+
+/* ─── Focus Rings — keyboard accessible + beautiful ─────────────── */
+*:focus-visible {
+  outline: 2px solid var(--ee-accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+  box-shadow: 0 0 0 4px var(--ee-accent-subtle);
+}
+/* Suppress focus ring on mouse click */
+*:focus:not(:focus-visible) { outline: none; }
+
+/* ─── Skeleton Shimmer ───────────────────────────────────────────── */
+@keyframes skeletonShimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--ee-surface-2) 0%,
+    var(--ee-surface-3) 40%,
+    var(--ee-surface-2) 80%
+  );
+  background-size: 800px 100%;
+  animation: skeletonShimmer 1.6s ease-in-out infinite;
+  border-radius: 4px;
 }

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { Sparkles, Search } from 'lucide-react';
+import { Sparkles, Search, Loader2, Wand2 } from 'lucide-react';
+import { useAIStore } from '../../store/aiStore';
+import { generateCanvasLayout } from '../../features/canvas/AICanvasService';
 
 interface CanvaStudioPanelProps {
   engine: any;
@@ -114,6 +116,35 @@ const CATEGORIES = ['All', 'Badges', 'Arrows', 'Bubbles', 'Education', 'Musical'
 export const CanvaStudioPanel: React.FC<CanvaStudioPanelProps> = ({ engine, editor }) => {
   const [activeCategory, setActiveCategory] = useState('All');
   const [query, setQuery] = useState('');
+  const [aiLayoutPrompt, setAiLayoutPrompt] = useState('');
+  const [isGeneratingLayout, setIsGeneratingLayout] = useState(false);
+  const [layoutError, setLayoutError] = useState<string | null>(null);
+
+  const { apiKey, selectedModel } = useAIStore();
+
+  const handleGenerateLayout = async () => {
+    if (!engine || !aiLayoutPrompt.trim()) return;
+    setIsGeneratingLayout(true);
+    setLayoutError(null);
+    try {
+      const objects = await generateCanvasLayout(aiLayoutPrompt, apiKey, selectedModel);
+      // Wait for engine/fabric context
+      if (engine.canvas) {
+        // use fabric util to enliven objects
+        (window as any).fabric.util.enlivenObjects(objects, (enlivenedObjects: any[]) => {
+          enlivenedObjects.forEach((obj) => {
+            engine.canvas.add(obj);
+          });
+          engine.canvas.renderAll();
+        }, '');
+      }
+      setAiLayoutPrompt('');
+    } catch (err: any) {
+      setLayoutError(err.message || 'Failed to generate layout.');
+    } finally {
+      setIsGeneratingLayout(false);
+    }
+  };
 
   const filtered = VECTOR_LIBRARY.filter((item) => {
     const matchCat = activeCategory === 'All' || item.category === activeCategory;
@@ -150,6 +181,35 @@ export const CanvaStudioPanel: React.FC<CanvaStudioPanelProps> = ({ engine, edit
           <Sparkles className="w-4 h-4 text-amber-400" />
           Vector Elements Studio
         </h3>
+
+        {/* AI Canvas Layout Generator */}
+        <div className="mb-4 bg-slate-900/50 p-2 rounded-xl border border-amber-900/40">
+          <label className="text-[10px] font-semibold text-amber-400 mb-1 flex items-center gap-1.5 uppercase tracking-wide">
+            <Wand2 className="w-3 h-3" /> AI Page Designer
+          </label>
+          <div className="flex flex-col gap-1.5">
+            <div className="w-full gradient-border-animated rounded-lg">
+              <input
+                type="text"
+                placeholder="e.g. 'hero section with dark background...'"
+                value={aiLayoutPrompt}
+                onChange={(e) => setAiLayoutPrompt(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleGenerateLayout(); }}
+                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-transparent relative z-10"
+              />
+            </div>
+            {layoutError && <div className="text-[10px] text-red-400 leading-tight">{layoutError}</div>}
+            <button
+              onClick={handleGenerateLayout}
+              disabled={isGeneratingLayout || !aiLayoutPrompt.trim()}
+              className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white text-[11px] font-medium transition-colors"
+            >
+              {isGeneratingLayout ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+              {isGeneratingLayout ? 'Generating Layout...' : 'Generate Layout on Canvas'}
+            </button>
+          </div>
+        </div>
+
         {/* Search */}
         <div className="relative mb-2">
           <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" />

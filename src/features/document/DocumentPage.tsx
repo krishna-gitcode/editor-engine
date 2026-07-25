@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { EditorContent, useEditor } from '@tiptap/react';
 import { Selection } from '@tiptap/pm/state';
+import { DOMSerializer } from '@tiptap/pm/model';
 import StarterKit from '@tiptap/starter-kit';
 import TextStyle from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
@@ -48,6 +49,9 @@ interface DocumentPageProps {
 export const DocumentPage: React.FC<DocumentPageProps> = ({ onEditorReady, onOpenModal }) => {
   const pages = useDocumentStore((s) => s.pages);
   const activePageId = useDocumentStore((s) => s.activePageId);
+  const addPage = useDocumentStore((s) => s.addPage);
+  const removePage = useDocumentStore((s) => s.removePage);
+  const setActivePageId = useDocumentStore((s) => s.setActivePageId);
   const updatePageContent = useDocumentStore((s) => s.updatePageContent);
   const updatePageSettings = useDocumentStore((s) => s.updatePageSettings);
 
@@ -85,8 +89,38 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({ onEditorReady, onOpe
     AIGhostTextExtension,
   ];
 
+  const lastDeleteActionTime = useRef<number>(0);
+
   const sharedEditorProps = {
     handleKeyDown: (view: any, event: KeyboardEvent) => {
+      if (event.key === 'Backspace' || event.key === 'Delete') {
+        lastDeleteActionTime.current = Date.now();
+        
+        // Handle deleting the page if they backspace on an already empty page
+        const pmDom = view.dom as HTMLElement;
+        const bodyZone = pmDom.closest('.doc-body-zone');
+        if (bodyZone) {
+          const isEmpty = view.state.doc.textContent.length === 0 && view.state.doc.childCount <= 1;
+          const state = useDocumentStore.getState();
+          if (isEmpty && state.pages.length > 1) {
+            const activeIndex = state.pages.findIndex(p => p.id === state.activePageId);
+            if (activeIndex > 0) {
+              const prevPage = state.pages[activeIndex - 1];
+              state.setActivePageId(prevPage.id);
+              state.removePage(state.activePageId);
+              event.preventDefault();
+              return true;
+            } else if (activeIndex === 0 && state.pages.length > 1) {
+              const nextPage = state.pages[activeIndex + 1];
+              state.setActivePageId(nextPage.id);
+              state.removePage(state.activePageId);
+              event.preventDefault();
+              return true;
+            }
+          }
+        }
+      }
+      
       if (event.key === 'Delete' || event.key === 'Backspace') {
         const { selection, tr } = view.state;
         if (selection && (selection as any).node) {
@@ -124,7 +158,7 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({ onEditorReady, onOpe
               }
             }
           }
-        } catch (err) {}
+        } catch (err) { }
       }
       return false;
     },
@@ -162,7 +196,47 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({ onEditorReady, onOpe
     content: activePage.content,
     editorProps: sharedEditorProps,
     editable: true,
-    onUpdate: ({ editor }) => updatePageContent(activePage.id, editor.getHTML()),
+    onUpdate: ({ editor }) => {
+      const state = useDocumentStore.getState();
+      updatePageContent(state.activePageId, editor.getHTML());
+      
+      // Auto-paginate check
+      setTimeout(() => {
+        const pmDom = editor.view.dom as HTMLElement;
+        const bodyZone = pmDom.closest('.doc-body-zone') as HTMLElement;
+        if (pmDom && bodyZone) {
+           const availableHeight = bodyZone.clientHeight;
+           // If content exceeds available body height
+           if (pmDom.scrollHeight > availableHeight + 10) {
+             const doc = editor.state.doc;
+             if (doc.childCount > 1) {
+               const { $from } = editor.state.selection;
+               
+               // Safely get the top-level block being edited
+               const depth = $from.depth;
+               if (depth >= 1) {
+                 const blockNode = $from.node(1);
+                 const blockStart = $from.start(1) - 1;
+                 const blockEnd = blockStart + blockNode.nodeSize;
+                 
+                 // Get HTML of the overflowing block
+                 const fragment = doc.slice(blockStart, blockEnd).content;
+                 const div = document.createElement('div');
+                 const domFragment = DOMSerializer.fromSchema(editor.state.schema).serializeFragment(fragment);
+                 div.appendChild(domFragment);
+                 const movedHtml = div.innerHTML;
+
+                 // Delete from current page
+                 editor.chain().deleteRange({ from: blockStart, to: blockEnd }).run();
+                 
+                 // Create new page with the overflowing text
+                 state.addPage(movedHtml);
+               }
+             }
+           }
+        }
+      }, 0);
+    },
     onFocus: ({ editor }) => {
       setActiveZone('body');
       setActiveEditorGlobally(editor);

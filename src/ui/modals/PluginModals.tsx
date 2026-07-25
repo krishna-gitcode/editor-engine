@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { PluginService } from '../../services/PluginService';
 import { OpenRouterService, FREE_OPENROUTER_MODELS } from '../../services/OpenRouterService';
 import { PdfService, PdfPageImage } from '../../services/PdfService';
@@ -500,8 +501,22 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col">
+    <AnimatePresence>
+      {activeModal && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm"
+            onClick={onClose}
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 8 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              className="glass-tier-2 rounded-2xl w-full max-w-4xl overflow-hidden flex flex-col gradient-border-animated pointer-events-auto"
+            >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-950">
           <div className="flex items-center gap-2 font-semibold text-slate-100">
@@ -766,12 +781,14 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                       </button>
                     </div>
                   </div>
-                  <textarea
-                    value={aiPrompt}
-                    onChange={(e) => setAiPrompt(e.target.value)}
-                    placeholder="Describe what you want to write or generate..."
-                    className="w-full h-44 bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 resize-none"
-                  />
+                  <div className="w-full gradient-border-animated rounded-xl">
+                    <textarea
+                      value={aiPrompt}
+                      onChange={(e) => setAiPrompt(e.target.value)}
+                      placeholder="Describe what you want to write or generate..."
+                      className="w-full h-44 bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-transparent resize-none relative z-10"
+                    />
+                  </div>
                 </div>
 
                 {aiError && (
@@ -1168,7 +1185,10 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
             </>
           )}
         </div>
-      </div>
-    </div>
+            </motion.div>
+          </div>
+        </>
+      )}
+    </AnimatePresence>
   );
 };
