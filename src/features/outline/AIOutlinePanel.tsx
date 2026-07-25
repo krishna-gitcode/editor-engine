@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, List, ChevronRight, Loader2, RefreshCw, Copy, Check, AlertCircle } from 'lucide-react';
+import { useEditorStore } from '../../store/editorStore';
 
 interface OutlineItem {
     id: string;
@@ -34,8 +35,7 @@ const LEVEL_STYLES: Record<number, { size: string; weight: string; opacity: stri
     6: { size: 'text-[10px]', weight: 'font-normal', opacity: 'opacity-50' },
 };
 
-async function generateAIOutline(topic: string, signal: AbortSignal, onChunk: (text: string) => void): Promise<void> {
-    const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+async function generateAIOutline(topic: string, signal: AbortSignal, onChunk: (text: string) => void, apiKey: string): Promise<void> {
     const systemPrompt = `You are an expert document architect. Output a hierarchical outline using markdown heading syntax (# H1, ## H2, ### H3). Output ONLY heading lines, no other text.`;
     const userPrompt = `Generate a comprehensive document outline for: "${topic}"`;
 
@@ -82,6 +82,7 @@ function insertOutlineIntoEditor(editor: any, items: OutlineItem[]) {
 }
 
 export const AIOutlinePanel: React.FC<AIOutlinePanelProps> = ({ editor }) => {
+    const openRouterApiKey = useEditorStore((s) => s.openRouterApiKey) || import.meta.env.VITE_OPENROUTER_API_KEY;
     const [liveItems, setLiveItems] = useState<OutlineItem[]>([]);
     const [aiItems, setAiItems] = useState<OutlineItem[]>([]);
     const [topic, setTopic] = useState('');
@@ -113,7 +114,7 @@ export const AIOutlinePanel: React.FC<AIOutlinePanelProps> = ({ editor }) => {
         setLoading(true); setError(null); setAiItems([]); setActiveView('ai');
         let acc = '';
         try {
-            await generateAIOutline(topic, controller.signal, (chunk) => { acc += chunk; setAiItems(parseMarkdownOutline(acc)); });
+            await generateAIOutline(topic, controller.signal, (chunk) => { acc += chunk; setAiItems(parseMarkdownOutline(acc)); }, openRouterApiKey);
         } catch (e: any) {
             if (e?.name !== 'AbortError') setError(e?.message || 'Generation failed');
         } finally { setLoading(false); }

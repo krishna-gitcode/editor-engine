@@ -38,6 +38,7 @@ interface EditorStoreState {
   showRightSidebar: boolean;
   customFonts: CustomFont[];
   theme: 'dark' | 'light';
+  openRouterApiKey: string;
   setActiveTool: (tool: ActiveTool) => void;
   setActiveTab: (tab: SidebarTab | null) => void;
   setRibbonTab: (tab: RibbonTab) => void;
@@ -47,6 +48,7 @@ interface EditorStoreState {
   addCustomFont: (font: CustomFont) => void;
   removeCustomFont: (name: string) => void;
   setTheme: (theme: 'dark' | 'light') => void;
+  setOpenRouterApiKey: (key: string) => void;
 }
 
 export const useEditorStore = create<EditorStoreState>()(
@@ -62,6 +64,7 @@ export const useEditorStore = create<EditorStoreState>()(
         { name: 'Outfit', url: 'https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap' },
       ],
       theme: 'dark',
+      openRouterApiKey: '',
       setActiveTool: (activeTool) => set({ activeTool }),
       setActiveTab: (activeTab) => set({ activeTab }),
       setRibbonTab: (ribbonTab) => set({ ribbonTab }),
@@ -80,10 +83,11 @@ export const useEditorStore = create<EditorStoreState>()(
         customFonts: s.customFonts.filter((f) => f.name !== name)
       })),
       setTheme: (theme) => set({ theme }),
+      setOpenRouterApiKey: (openRouterApiKey) => set({ openRouterApiKey }),
     }),
     {
       name: 'editor-engine-prefs',
-      partialize: (state) => ({ theme: state.theme }),
+      partialize: (state) => ({ theme: state.theme, openRouterApiKey: state.openRouterApiKey }),
     }
   )
 );

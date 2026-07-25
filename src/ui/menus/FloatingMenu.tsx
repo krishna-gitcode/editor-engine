@@ -6,8 +6,11 @@ import { OpenRouterService } from '../../services/OpenRouterService';
 import { parseMarkdownToTipTap } from '../../services/markdownToHtml';
 import {
   Bold, Italic, Underline, Trash2, Copy, Layers, Sparkles, Wand2,
-  Loader2, Check, X as XIcon, SpellCheck, Pencil,
+  Loader2, Check, X as XIcon, SpellCheck, Pencil, Settings,
+  AlignLeft, Briefcase, MessageCircle, CheckCircle, Maximize2,
 } from 'lucide-react';
+import { useEditorStore } from '../../store/editorStore';
+import { useAIStore } from '../../store/aiStore';
 import './FloatingMenu.css';
 
 interface FloatingMenuProps {
@@ -16,13 +19,20 @@ interface FloatingMenuProps {
   onOpenModal?: (type: 'mathjax' | 'abcjs' | 'openrouter') => void;
 }
 
-type AiMode = 'generate' | 'enhance' | 'grammar' | null;
 
-const DEFAULT_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '';
 const DEFAULT_MODEL = import.meta.env.VITE_OPENROUTER_DEFAULT_MODEL || 'openrouter/free';
 
 export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor: defaultEditor, engine, onOpenModal }) => {
   const selectedObject = useCanvasStore((s) => s.selectedObjectProps);
+  const openRouterApiKey = (useEditorStore((s) => s.openRouterApiKey) || import.meta.env.VITE_OPENROUTER_API_KEY || '') as string;
+
+  // Global AI state from aiStore (also used by quick-action buttons)
+  const { isAIPanelOpen, aiPanelMode, setAIPanelOpen, setAIPanelMode, apiKey: storeApiKey, selectedModel: storeModel } = useAIStore();
+  const effectiveApiKey = openRouterApiKey || storeApiKey;
+  const effectiveModel = storeModel || DEFAULT_MODEL;
+
+  // Quick-action processing state (for the merged AIBubbleToolbar actions)
+  const [quickActionProcessing, setQuickActionProcessing] = useState<string | null>(null);
 
   const [editor, setActiveEditor] = useState<any>(defaultEditor || (window as any).__activeEditor);
 
@@ -34,8 +44,6 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor: defaultEdito
     return () => window.removeEventListener('activeEditorChanged', handleActiveEditorChanged);
   }, [defaultEditor]);
 
-  // Inline AI state
-  const [aiMode, setAiMode] = useState<AiMode>(null);
   const [aiPrompt, setAiPrompt] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -48,10 +56,32 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor: defaultEdito
   const [canvasEnhanceError, setCanvasEnhanceError] = useState<string | null>(null);
 
   const closeAiPanel = () => {
-    setAiMode(null);
+    setAIPanelOpen(false);
     setAiError(null);
     setAiPrompt('');
     setAiStatusMsg('');
+  };
+
+  /**
+   * Parse markdown and insert into editor — never falls back to raw string.
+   * If the parser produces nothing, wraps the text in a plain paragraph.
+   */
+  const insertMarkdownContent = (markdownText: string, from?: number, to?: number) => {
+    if (!editor) return;
+    let nodes: object[] = parseMarkdownToTipTap(markdownText);
+    if (nodes.length === 0) {
+      // Wrap as plain paragraph so markdown syntax is never inserted verbatim
+      nodes = [{ type: 'paragraph', content: [{ type: 'text', text: markdownText.trim() }] }];
+    }
+    if (from !== undefined && to !== undefined) {
+      editor.chain().focus().deleteRange({ from, to }).insertContentAt(from, nodes).run();
+    } else {
+      editor.chain().focus().insertContent(nodes).run();
+    }
+    // Trigger auto-pagination immediately after large content insertions
+    setTimeout(() => {
+      (window as any).__repaginate?.();
+    }, 200);
   };
 
   // ─── Generate new content at cursor position ───────────────────────────────
@@ -61,13 +91,8 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor: defaultEdito
     setAiError(null);
     setAiStatusMsg('Generating with AI...');
     try {
-      const result = await OpenRouterService.generateText(DEFAULT_API_KEY, DEFAULT_MODEL, aiPrompt);
-      const nodes = parseMarkdownToTipTap(result);
-      if (nodes.length > 0) {
-        editor.chain().focus().insertContent(nodes).run();
-      } else {
-        editor.chain().focus().insertContent(result).run();
-      }
+      const result = await OpenRouterService.generateText(openRouterApiKey, DEFAULT_MODEL, aiPrompt);
+      insertMarkdownContent(result);
       setAiPrompt('');
       closeAiPanel();
     } catch (err: any) {
@@ -95,10 +120,8 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor: defaultEdito
     setAiError(null);
     setAiStatusMsg('Enhancing selected text...');
     try {
-      const enhanced = await OpenRouterService.enhanceText(DEFAULT_API_KEY, DEFAULT_MODEL, selectedText);
-      // Replace selection with enhanced text nodes
-      const nodes = parseMarkdownToTipTap(enhanced);
-      editor.chain().focus().deleteRange({ from, to }).insertContentAt(from, nodes.length > 0 ? nodes : enhanced).run();
+      const enhanced = await OpenRouterService.enhanceText(openRouterApiKey, DEFAULT_MODEL, selectedText);
+      insertMarkdownContent(enhanced, from, to);
       closeAiPanel();
     } catch (err: any) {
       setAiError(err.message || 'Enhancement failed.');
@@ -133,17 +156,15 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor: defaultEdito
     setAiError(null);
     setAiStatusMsg(isSelectionMode ? 'Checking selected text...' : 'Checking full document...');
     try {
-      const corrected = await OpenRouterService.checkSpellingGrammar(DEFAULT_API_KEY, DEFAULT_MODEL, textToCheck);
+      const corrected = await OpenRouterService.checkSpellingGrammar(openRouterApiKey, DEFAULT_MODEL, textToCheck);
       const nodes = parseMarkdownToTipTap(corrected);
 
       if (isSelectionMode) {
-        editor.chain().focus().deleteRange({ from, to }).insertContentAt(from, nodes.length > 0 ? nodes : corrected).run();
+        insertMarkdownContent(corrected, from, to);
       } else {
-        if (nodes.length > 0) {
-          editor.chain().focus().setContent(nodes).run();
-        } else {
-          editor.chain().focus().setContent(corrected).run();
-        }
+        const nodes = parseMarkdownToTipTap(corrected);
+        const content = nodes.length > 0 ? nodes : [{ type: 'paragraph', content: [{ type: 'text', text: corrected.trim() }] }];
+        editor.chain().focus().setContent(content as any).run();
       }
       closeAiPanel();
     } catch (err: any) {
@@ -163,7 +184,7 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor: defaultEdito
       const obj = engine.canvas?.getActiveObject();
       const currentText = obj?.text || '';
       const result = await OpenRouterService.enhanceText(
-        DEFAULT_API_KEY,
+        openRouterApiKey,
         DEFAULT_MODEL,
         currentText || canvasEnhancePrompt,
         canvasEnhancePrompt
@@ -181,11 +202,12 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor: defaultEdito
     }
   };
 
-  const toggleMode = (mode: AiMode) => {
-    if (aiMode === mode) {
+  const toggleMode = (mode: 'generate' | 'rewrite' | 'chat' | 'canvas') => {
+    if (isAIPanelOpen && aiPanelMode === mode) {
       closeAiPanel();
     } else {
-      setAiMode(mode);
+      setAIPanelMode(mode);
+      setAIPanelOpen(true);
       setAiError(null);
       setAiStatusMsg('');
     }
@@ -240,47 +262,32 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor: defaultEdito
               {/* Divider */}
               <div className="h-4 w-px bg-slate-700 mx-1" />
 
-              {/* AI Generate at cursor */}
-              <button
-                onMouseDown={(e) => { e.preventDefault(); toggleMode('generate'); }}
-                className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-all ${
-                  aiMode === 'generate'
-                    ? 'bg-emerald-600 text-white'
-                    : 'hover:bg-emerald-900/60 text-emerald-400 hover:text-emerald-200'
-                }`}
-                title="Generate new content with AI at cursor position"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>AI Generate</span>
-              </button>
-
-              {/* Enhance selected text */}
-              <button
-                onMouseDown={(e) => { e.preventDefault(); toggleMode('enhance'); }}
-                className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-all ${
-                  aiMode === 'enhance'
-                    ? 'bg-violet-600 text-white'
-                    : 'hover:bg-violet-900/60 text-violet-400 hover:text-violet-200'
-                }`}
-                title="Enhance selected text with AI (replaces selection)"
-              >
-                <Pencil className="w-3.5 h-3.5" />
-                <span>Enhance</span>
-              </button>
-
-              {/* Spelling & Grammar */}
-              <button
-                onMouseDown={(e) => { e.preventDefault(); toggleMode('grammar'); }}
-                className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-all ${
-                  aiMode === 'grammar'
-                    ? 'bg-sky-600 text-white'
-                    : 'hover:bg-sky-900/60 text-sky-400 hover:text-sky-200'
-                }`}
-                title="Fix spelling and grammar with AI"
-              >
-                <SpellCheck className="w-3.5 h-3.5" />
-                <span>Spell Check</span>
-              </button>
+              {/* AI Buttons or Configure */}
+              {!openRouterApiKey ? (
+                <button
+                  onMouseDown={(e) => { e.preventDefault(); onOpenModal?.('openrouter'); }}
+                  className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium text-emerald-400 hover:bg-emerald-900/60 hover:text-emerald-200 transition-all"
+                  title="Configure AI API Key"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                  <span>Configure AI &rarr;</span>
+                </button>
+              ) : (
+                <>
+                  <button
+                    onMouseDown={(e) => { e.preventDefault(); toggleMode('generate'); }}
+                    className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-all ${
+                      isAIPanelOpen && aiPanelMode === 'generate'
+                        ? 'bg-emerald-600 text-white'
+                        : 'hover:bg-emerald-900/60 text-emerald-400 hover:text-emerald-200'
+                    }`}
+                    title="Generate new content with AI at cursor position"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>AI Generate</span>
+                  </button>
+                </>
+              )}
 
               {/* Full Studio shortcut */}
               <button
@@ -293,9 +300,60 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor: defaultEdito
               </button>
             </div>
 
+            {/* ── Quick AI Actions Row (merged from AIBubbleToolbar) ── */}
+            {effectiveApiKey && (
+              <div className="flex items-center gap-0.5 px-1 pb-1 pt-0 border-t border-slate-700/40 flex-wrap">
+                <span className="text-[9px] text-slate-500 font-medium px-1 py-0.5">AI Quick:</span>
+                {([
+                  { id: 'enhance', icon: Sparkles, label: 'Enhance', color: 'text-emerald-400', hover: 'hover:bg-emerald-400/10',
+                    fn: (t: string) => OpenRouterService.enhanceText(effectiveApiKey, effectiveModel, t) },
+                  { id: 'summarize', icon: AlignLeft, label: 'Summarize', color: 'text-sky-400', hover: 'hover:bg-sky-400/10',
+                    fn: (t: string) => OpenRouterService.summarizeText(effectiveApiKey, effectiveModel, t) },
+                  { id: 'formal', icon: Briefcase, label: 'Formal', color: 'text-indigo-400', hover: 'hover:bg-indigo-400/10',
+                    fn: (t: string) => OpenRouterService.rewriteWithTone(effectiveApiKey, effectiveModel, t, 'formal') },
+                  { id: 'casual', icon: MessageCircle, label: 'Casual', color: 'text-violet-400', hover: 'hover:bg-violet-400/10',
+                    fn: (t: string) => OpenRouterService.rewriteWithTone(effectiveApiKey, effectiveModel, t, 'casual') },
+                  { id: 'grammar', icon: CheckCircle, label: 'Fix Grammar', color: 'text-green-400', hover: 'hover:bg-green-400/10',
+                    fn: (t: string) => OpenRouterService.checkSpellingGrammar(effectiveApiKey, effectiveModel, t) },
+                  { id: 'expand', icon: Maximize2, label: 'Expand', color: 'text-orange-400', hover: 'hover:bg-orange-400/10',
+                    fn: (t: string) => OpenRouterService.expandText(effectiveApiKey, effectiveModel, t) },
+                ] as const).map((btn) => (
+                  <button
+                    key={btn.id}
+                    disabled={quickActionProcessing !== null}
+                    onMouseDown={async (e) => {
+                      e.preventDefault();
+                      if (!editor) return;
+                      const { from, to, empty } = editor.state.selection;
+                      if (empty) return;
+                      const selectedText = editor.state.doc.textBetween(from, to, '\n');
+                      setQuickActionProcessing(btn.id);
+                      try {
+                        const result = await (btn as any).fn(selectedText);
+                        insertMarkdownContent(result, from, to);
+                      } catch (err: any) {
+                        // silent
+                      } finally {
+                        setQuickActionProcessing(null);
+                      }
+                    }}
+                    className={`p-1.5 rounded-lg transition-colors flex items-center gap-1 text-[10px] font-medium ${
+                      btn.hover
+                    } disabled:opacity-40 group`}
+                    title={btn.label}
+                  >
+                    {quickActionProcessing === btn.id
+                      ? <Loader2 className={`w-3.5 h-3.5 animate-spin ${btn.color}`} />
+                      : <btn.icon className={`w-3.5 h-3.5 ${btn.color} group-hover:scale-110 transition-transform`} />}
+                    <span className={btn.color}>{btn.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* ── AI Generate Panel ── */}
             <AnimatePresence>
-              {aiMode === 'generate' && (
+              {isAIPanelOpen && aiPanelMode === 'generate' && (
                 <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
                   <div className="px-2 pb-2 flex flex-col gap-1.5 border-t border-slate-700/50 pt-2">
                     <p className="text-[10px] text-emerald-400 font-medium px-0.5">
@@ -336,7 +394,7 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor: defaultEdito
 
             {/* ── Enhance Panel ── */}
             <AnimatePresence>
-              {aiMode === 'enhance' && (
+              {isAIPanelOpen && aiPanelMode === 'rewrite' && (
                 <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
                   <div className="px-2 pb-2 flex flex-col gap-1.5 border-t border-slate-700/50 pt-2">
                     <p className="text-[10px] text-violet-400 font-medium px-0.5">
@@ -364,9 +422,8 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor: defaultEdito
                               const { from, to, empty } = editor.state.selection;
                               if (empty) { setAiError('Select text first.'); setIsProcessing(false); return; }
                               const selectedText = editor.state.doc.textBetween(from, to, '\n');
-                              const enhanced = await OpenRouterService.enhanceText(DEFAULT_API_KEY, DEFAULT_MODEL, selectedText, aiPrompt);
-                              const nodes = parseMarkdownToTipTap(enhanced);
-                              editor.chain().focus().deleteRange({ from, to }).insertContentAt(from, nodes.length > 0 ? nodes : enhanced).run();
+                              const enhanced = await OpenRouterService.enhanceText(openRouterApiKey, DEFAULT_MODEL, selectedText, aiPrompt);
+                              insertMarkdownContent(enhanced, from, to);
                               closeAiPanel();
                             } catch (err: any) {
                               setAiError(err.message || 'Enhancement failed.');
@@ -400,7 +457,7 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor: defaultEdito
 
             {/* ── Spelling & Grammar Panel ── */}
             <AnimatePresence>
-              {aiMode === 'grammar' && (
+              {isAIPanelOpen && aiPanelMode === 'chat' && (
                 <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
                   <div className="px-2 pb-2 flex flex-col gap-2 border-t border-slate-700/50 pt-2">
                     <p className="text-[10px] text-sky-400 font-medium px-0.5">
@@ -469,19 +526,31 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor: defaultEdito
               <Copy className="w-3.5 h-3.5" />
             </button>
 
-            {/* Enhance with AI (canvas) */}
-            <button
-              onClick={() => { setShowCanvasEnhance((v) => !v); setCanvasEnhanceError(null); }}
-              className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-all ${
-                showCanvasEnhance
-                  ? 'bg-violet-600 text-white'
-                  : 'hover:bg-violet-900/60 text-violet-400 hover:text-violet-200'
-              }`}
-              title="Enhance canvas object text with AI"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Enhance</span>
-            </button>
+            <div className="h-4 w-px bg-slate-700 mx-1" />
+              
+              {!openRouterApiKey ? (
+                <button
+                  onMouseDown={(e) => { e.preventDefault(); onOpenModal?.('openrouter'); }}
+                  className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium text-emerald-400 hover:bg-emerald-900/60 hover:text-emerald-200 transition-all"
+                  title="Configure AI API Key"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                  <span>Configure AI &rarr;</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowCanvasEnhance(!showCanvasEnhance)}
+                  className={`flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-medium transition-all ${
+                    showCanvasEnhance
+                      ? 'bg-emerald-600 text-white shadow shadow-emerald-500/20'
+                      : 'hover:bg-emerald-900/60 text-emerald-400'
+                  }`}
+                  title="AI Enhance Object"
+                >
+                  <Wand2 className="w-3.5 h-3.5" />
+                  <span>Enhance</span>
+                </button>
+              )}
 
             <button onClick={() => engine?.deleteSelected()} className="p-1 hover:bg-slate-800 rounded text-red-400" title="Delete">
               <Trash2 className="w-3.5 h-3.5" />

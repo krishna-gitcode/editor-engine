@@ -4,15 +4,15 @@ interface AIStore {
   // Streaming state
   isStreaming: boolean;
   streamingText: string;        // accumulates streamed tokens for display
-  
+
   // Config (persisted per session)
   selectedModel: string;         // default: from VITE_OPENROUTER_DEFAULT_MODEL or 'google/gemini-2.0-flash-lite-preview-02-05:free'
   apiKey: string;                // default: from VITE_OPENROUTER_API_KEY or ''
-  
+
   // Ghost text (inline autocomplete)
   ghostText: string;
   ghostCursorPos: number;
-  
+
   // AI Panel UI state
   isAIPanelOpen: boolean;
   aiPanelMode: 'generate' | 'rewrite' | 'chat' | 'canvas';
@@ -34,13 +34,13 @@ interface AIStore {
 export const useAIStore = create<AIStore>((set) => ({
   isStreaming: false,
   streamingText: '',
-  
+
   selectedModel: import.meta.env.VITE_OPENROUTER_DEFAULT_MODEL || 'google/gemini-2.0-flash-lite-preview-02-05:free',
   apiKey: import.meta.env.VITE_OPENROUTER_API_KEY || '',
-  
+
   ghostText: '',
   ghostCursorPos: 0,
-  
+
   isAIPanelOpen: false,
   aiPanelMode: 'generate',
   lastAIError: null,

@@ -30,7 +30,6 @@ import { useDocumentStore } from '../../store/documentStore';
 import { PluginService } from '../../services/PluginService';
 import { PlusMenu } from './PlusMenu';
 import { AIGhostTextExtension } from './AIGhostTextExtension';
-import { AIBubbleToolbar } from './AIBubbleToolbar';
 import './DocumentPage.css';
 
 /**
@@ -191,6 +190,106 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({ onEditorReady, onOpe
     },
   });
 
+  // ─── Auto-Paginate Engine ──────────────────────────────────────
+  /**
+   * Compute the available body content height in pixels for the active page.
+   * We cannot rely on bodyZone.clientHeight because document-page-surface has
+   * overflow-y:auto and grows unboundedly. Instead we derive the height from
+   * the page's paper size, orientation, and margins.
+   *
+   * Standard paper at 96 dpi:
+   *   A4  portrait  : 1122 × 794  (297mm × 210mm)
+   *   A4  landscape : 794  × 1122
+   *   Letter portrait : 1056 × 816 (11in × 8.5in)
+   *   A3  portrait  : 1587 × 1123 (420mm × 297mm)
+   */
+  const getPageContentHeight = useCallback((): number => {
+    const PAGE_HEIGHTS: Record<string, { portrait: number; landscape: number }> = {
+      A4:     { portrait: 1122, landscape: 794  },
+      Letter: { portrait: 1056, landscape: 816  },
+      A3:     { portrait: 1587, landscape: 1123 },
+      Custom: { portrait: activePage.customHeight ?? 1000, landscape: activePage.customWidth ?? 800 },
+    };
+    const key = activePage.pageSize in PAGE_HEIGHTS ? activePage.pageSize : 'A4';
+    const totalHeight = PAGE_HEIGHTS[key][activePage.orientation];
+    const { top, bottom } = activePage.margins;
+    // Subtract margins AND header/footer zones from total page height
+    const headerZoneH = Math.max(top, 48);
+    const footerZoneH = Math.max(bottom, 48);
+    return totalHeight - headerZoneH - footerZoneH;
+  }, [activePage]);
+
+  /**
+   * Loop-based paginate: collects blocks overflowing the computed page height
+   * and moves them (all at once per iteration) to a new page.
+   * Runs until content fits or the safety guard fires.
+   */
+  const runPaginate = useCallback((ed: any) => {
+    if (!ed) return;
+    const pmDom = ed.view.dom as HTMLElement;
+    if (!pmDom) return;
+
+    const maxContentHeight = getPageContentHeight();
+    let guard = 0;
+    const MAX_ITERATIONS = 40;
+
+    while (guard < MAX_ITERATIONS) {
+      guard++;
+
+      // pmDom.scrollHeight is accurate even inside overflow-y:auto containers
+      if (pmDom.scrollHeight <= maxContentHeight + 24) break;
+
+      const doc = ed.state.doc;
+      if (doc.childCount < 2) break;
+
+      // Collect ALL blocks whose top edge exceeds maxContentHeight
+      // Walk dom children (they correspond 1-to-1 with top-level ProseMirror nodes)
+      const domChildren = Array.from(pmDom.children) as HTMLElement[];
+      const editorTop = pmDom.getBoundingClientRect().top;
+
+      // Find index of first overflowing block
+      let firstOverflowIndex = -1;
+      for (let ci = domChildren.length - 1; ci >= 1; ci--) {
+        const childTop = domChildren[ci].getBoundingClientRect().top - editorTop;
+        if (childTop < maxContentHeight - 10) {
+          // This block starts within the page, so overflow starts at ci+1
+          firstOverflowIndex = ci + 1;
+          break;
+        }
+      }
+      if (firstOverflowIndex === -1) firstOverflowIndex = domChildren.length - 1; // at least the last block
+
+      if (firstOverflowIndex >= domChildren.length) break; // nothing overflowing
+
+      // Build offset map
+      const offsetMap: { offset: number; node: any }[] = [];
+      doc.forEach((node: any, offset: number) => { offsetMap.push({ offset, node }); });
+
+      // Collect blocks from firstOverflowIndex to end
+      const blocksToMove = offsetMap.slice(firstOverflowIndex);
+      if (blocksToMove.length === 0) break;
+
+      // Serialize all overflowing blocks to HTML
+      const div = document.createElement('div');
+      for (const { offset, node } of blocksToMove) {
+        const frag = doc.slice(offset, offset + node.nodeSize).content;
+        const domFrag = DOMSerializer.fromSchema(ed.state.schema).serializeFragment(frag);
+        div.appendChild(domFrag);
+      }
+      const movedHtml = div.innerHTML;
+
+      // Delete range from first overflow block to doc end in one transaction
+      const deleteFrom = blocksToMove[0].offset;
+      const lastBlock = blocksToMove[blocksToMove.length - 1];
+      const deleteTo = lastBlock.offset + lastBlock.node.nodeSize;
+      ed.chain().deleteRange({ from: deleteFrom, to: deleteTo }).run();
+
+      // Create a new page with the overflowing content
+      useDocumentStore.getState().addPage(movedHtml);
+    }
+  }, [getPageContentHeight]);
+
+
   // ─── Body Editor ───────────────────────────────────────────────
   const editor = useEditor({
     extensions: sharedExtensions,
@@ -200,44 +299,10 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({ onEditorReady, onOpe
     onUpdate: ({ editor }) => {
       const state = useDocumentStore.getState();
       updatePageContent(state.activePageId, editor.getHTML());
-      
-      // Auto-paginate check
-      clearTimeout(paginateDebounce.current);
-      paginateDebounce.current = setTimeout(() => {
-        const pmDom = editor.view.dom as HTMLElement;
-        const bodyZone = pmDom.closest('.doc-body-zone') as HTMLElement;
-        if (pmDom && bodyZone) {
-           const availableHeight = bodyZone.clientHeight;
-           // If content exceeds available body height
-           if (pmDom.scrollHeight > availableHeight + 10) {
-             const doc = editor.state.doc;
-             if (doc.childCount > 1) {
-               const { $from } = editor.state.selection;
-               
-               // Safely get the top-level block being edited
-               const depth = $from.depth;
-               if (depth >= 1) {
-                 const blockNode = $from.node(1);
-                 const blockStart = $from.start(1) - 1;
-                 const blockEnd = blockStart + blockNode.nodeSize;
-                 
-                 // Get HTML of the overflowing block
-                 const fragment = doc.slice(blockStart, blockEnd).content;
-                 const div = document.createElement('div');
-                 const domFragment = DOMSerializer.fromSchema(editor.state.schema).serializeFragment(fragment);
-                 div.appendChild(domFragment);
-                 const movedHtml = div.innerHTML;
 
-                 // Delete from current page
-                 editor.chain().deleteRange({ from: blockStart, to: blockEnd }).run();
-                 
-                 // Create new page with the overflowing text
-                 state.addPage(movedHtml);
-               }
-             }
-           }
-        }
-      }, 500);
+      // Debounced auto-paginate
+      clearTimeout(paginateDebounce.current);
+      paginateDebounce.current = setTimeout(() => runPaginate(editor), 400);
     },
     onFocus: ({ editor }) => {
       setActiveZone('body');
@@ -249,6 +314,14 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({ onEditorReady, onOpe
     (window as any).__activeEditor = activeEd;
     window.dispatchEvent(new Event('activeEditorChanged'));
   };
+
+  // Expose __repaginate globally after editor is available
+  useEffect(() => {
+    if (editor) {
+      (window as any).__repaginate = () => runPaginate(editor);
+    }
+    return () => { delete (window as any).__repaginate; };
+  }, [editor, runPaginate]);
 
   // ─── Zone Click Handlers ───────────────────────────────────────
   const handleHeaderZoneClick = useCallback(() => {
@@ -419,7 +492,6 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({ onEditorReady, onOpe
         >
           <div className="w-full">
             {headerEditor && <PlusMenu editor={headerEditor} onOpenModal={onOpenModal} />}
-            {headerEditor && <AIBubbleToolbar editor={headerEditor} />}
             <EditorContent
               editor={headerEditor}
               className="prose prose-sm max-w-none focus:outline-none"
@@ -440,7 +512,6 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({ onEditorReady, onOpe
         onDoubleClickCapture={handleBodyDoubleClick}
       >
         {editor && <PlusMenu editor={editor} onOpenModal={onOpenModal} />}
-        {editor && <AIBubbleToolbar editor={editor} />}
         <EditorContent
           editor={editor}
           className="prose max-w-none focus:outline-none min-h-full print:text-black"
@@ -485,7 +556,6 @@ export const DocumentPage: React.FC<DocumentPageProps> = ({ onEditorReady, onOpe
         >
           <div className="w-full">
             {footerEditor && <PlusMenu editor={footerEditor} onOpenModal={onOpenModal} />}
-            {footerEditor && <AIBubbleToolbar editor={footerEditor} />}
             <EditorContent
               editor={footerEditor}
               className="prose prose-sm max-w-none focus:outline-none"

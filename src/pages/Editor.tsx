@@ -18,7 +18,7 @@ import './Editor.css';
 
 export default function Editor() {
   const showRightSidebar = useEditorStore((s) => s.showRightSidebar);
-  const [isCanvasMode, setIsCanvasMode] = useState<boolean>(true);
+  const [isCanvasMode, setIsCanvasMode] = useState<boolean>(false);
   const [activeModal, setActiveModal] = useState<'mathjax' | 'abcjs' | 'openrouter' | null>(null);
   const [showFontManager, setShowFontManager] = useState<boolean>(false);
   const [showPreviewModal, setShowPreviewModal] = useState<boolean>(false);

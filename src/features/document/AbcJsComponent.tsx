@@ -41,7 +41,8 @@ export const AbcJsComponent: React.FC<NodeViewProps> = ({ node, updateAttributes
         <div
           ref={containerRef}
           contentEditable={false}
-          className="p-4 bg-white border border-slate-200 rounded-xl overflow-x-auto text-xs font-mono text-slate-800 shadow-sm transition-all select-none min-h-[80px]"
+          className="p-4 bg-white border border-slate-200 rounded-xl overflow-auto text-xs font-mono text-slate-800 shadow-sm transition-all select-none min-h-[80px]"
+          style={{ resize: 'both', minWidth: '150px', minHeight: '80px' }}
           data-abc={abc}
         />
       </div>

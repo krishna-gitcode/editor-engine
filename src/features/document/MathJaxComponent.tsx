@@ -43,7 +43,8 @@ export const MathJaxComponent: React.FC<NodeViewProps> = ({ node, updateAttribut
         <div
           ref={containerRef}
           contentEditable={false}
-          className="p-3 min-h-[44px] flex items-center justify-center text-slate-100 overflow-x-auto select-text bg-slate-950/60 rounded-lg border border-slate-800"
+          className="p-3 min-h-[44px] flex items-center justify-center text-slate-100 overflow-auto select-text bg-slate-950/60 rounded-lg border border-slate-800"
+          style={{ resize: 'both', minWidth: '100px', minHeight: '60px' }}
           data-latex={latex}
         />
       </div>

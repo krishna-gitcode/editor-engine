@@ -161,7 +161,10 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({ onClose, editor, eng
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center preview-modal-backdrop print-modal-wrapper">
-      <div className="preview-modal-container w-[90vw] h-[90vh] flex flex-col overflow-hidden">
+      <div 
+        className="preview-modal-container w-[90vw] h-[90vh] flex flex-col overflow-hidden"
+        style={{ resize: 'both' }}
+      >
         
         {/* ─── Glassmorphic Header ─── */}
         <div className="preview-modal-header h-14 flex items-center justify-between px-6 shrink-0">

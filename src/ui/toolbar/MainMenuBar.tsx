@@ -131,6 +131,7 @@ export const MainMenuBar: React.FC<MainMenuBarProps> = ({
               <button onClick={handleImportDOCX} className="flex items-center gap-2.5 px-3 py-2 rounded hover:bg-slate-800 text-left">
                 <Upload className="w-4 h-4 text-slate-400" />
                 <span>Import Word (DOCX)</span>
+                <span className="ml-auto text-slate-600 text-[10px]">Ctrl+I</span>
               </button>
               
               <div className="h-px bg-slate-800 my-1" />
@@ -138,18 +139,22 @@ export const MainMenuBar: React.FC<MainMenuBarProps> = ({
               <button onClick={handleExportJSON} className="flex items-center gap-2.5 px-3 py-2 rounded hover:bg-slate-800 text-left">
                 <FileCode className="w-4 h-4 text-slate-400" />
                 <span>Save JSON Template</span>
+                <span className="ml-auto text-slate-600 text-[10px]">Ctrl+S</span>
               </button>
               <button onClick={handleExportMarkdown} className="flex items-center gap-2.5 px-3 py-2 rounded hover:bg-slate-800 text-left">
                 <FileText className="w-4 h-4 text-slate-400" />
                 <span>Export Markdown</span>
+                <span className="ml-auto text-slate-600 text-[10px]">Ctrl+M</span>
               </button>
               <button onClick={handleExportDOCX} className="flex items-center gap-2.5 px-3 py-2 rounded hover:bg-slate-800 text-left">
                 <FileText className="w-4 h-4 text-slate-400" />
                 <span>Export Word (DOCX)</span>
+                <span className="ml-auto text-slate-600 text-[10px]">Ctrl+D</span>
               </button>
               <button onClick={handleExportPDF} className="flex items-center gap-2.5 px-3 py-2 rounded hover:bg-slate-800 text-left">
                 <Download className="w-4 h-4 text-slate-400" />
                 <span>Export Multi-page PDF</span>
+                <span className="ml-auto text-slate-600 text-[10px]">Ctrl+E</span>
               </button>
               <button onClick={handleExportPNG} className="flex items-center gap-2.5 px-3 py-2 rounded hover:bg-slate-800 text-left">
                 <Share2 className="w-4 h-4 text-slate-400" />
@@ -159,6 +164,7 @@ export const MainMenuBar: React.FC<MainMenuBarProps> = ({
               <button onClick={() => window.print()} className="flex items-center gap-2.5 px-3 py-2 rounded hover:bg-slate-800 text-left">
                 <Printer className="w-4 h-4 text-slate-400" />
                 <span>Print Document</span>
+                <span className="ml-auto text-slate-600 text-[10px]">Ctrl+P</span>
               </button>
             </div>
           )}
@@ -166,7 +172,7 @@ export const MainMenuBar: React.FC<MainMenuBarProps> = ({
       </div>
 
       {errorToast && (
-        <div className="absolute top-14 left-4 glass-tier-3 text-red-400 px-4 py-2 rounded-lg shadow-lg text-sm z-50">
+        <div className="fixed bottom-4 right-4 glass-tier-3 text-red-400 px-4 py-2 rounded-lg shadow-lg text-sm z-[9999]">
           {errorToast}
         </div>
       )}

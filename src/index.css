@@ -12,6 +12,7 @@
   /* Text */
   --ee-text-primary:  #e8eaf0;
   --ee-text-secondary:#8892a4;
+  --ee-text-muted:    #64748b;
   --ee-text-faint:    #4a5568;
 
   /* Accent — Electric Indigo */
@@ -53,6 +54,7 @@ html.light {
   --ee-border-strong: rgba(0,0,0,0.14);
   --ee-text-primary:  #1a1f2e;
   --ee-text-secondary:#4a5568;
+  --ee-text-muted:    #718096;
   --ee-text-faint:    #9aa5b4;
   --ee-page-shadow:   0 4px 24px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.08);
 }
@@ -225,6 +227,7 @@ html.light [class*="bg-slate-950/"] { background-color: color-mix(in oklch, var(
     animation: borderSpin 4s linear infinite;
     opacity: 0;
     transition: opacity var(--ee-duration-base) var(--ee-ease-spring);
+    pointer-events: none;
   }
   .gradient-border-animated:hover::before,
   .gradient-border-animated:focus-within::before {

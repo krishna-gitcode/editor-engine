@@ -24,6 +24,7 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
   const [isActive, setIsActive] = useState((window as any).__activeEditor === editor);
   const [topPos, setTopPos] = useState<number>(8);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const menuRef = React.useRef<HTMLDivElement>(null);
 
   const { isStreaming, setStreaming, clearStreamingText, selectedModel, apiKey } = useAIStore();
   const leftMargin = useDocumentStore((s) => (s.pages.find((p) => p.id === s.activePageId) || s.pages[0])?.margins.left ?? 72);
@@ -47,18 +48,30 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
       });
     };
 
+    const handleUpdate = ({ transaction }: any) => {
+      if (transaction?.docChanged && editor && editor.isEditable && isActive) {
+        try {
+          const { $from } = editor.state.selection;
+          if ($from.parent.type.name === 'paragraph' && $from.parent.textContent === '/') {
+            setIsOpen(true);
+          }
+        } catch (e) {}
+      }
+      updatePosition();
+    };
+
     updatePosition();
     
     if (editor) {
       editor.on('selectionUpdate', updatePosition);
-      editor.on('update', updatePosition);
+      editor.on('update', handleUpdate);
     }
     
     return () => {
       cancelAnimationFrame(rafId);
       if (editor) {
         editor.off('selectionUpdate', updatePosition);
-        editor.off('update', updatePosition);
+        editor.off('update', handleUpdate);
       }
     };
   }, [editor, isActive]);
@@ -71,12 +84,43 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
     return () => window.removeEventListener('activeEditorChanged', handleActiveEditorChanged);
   }, [editor]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isOpen && menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+        setPromptMode(null);
+        setShowToneSelector(false);
+        setAiError(null);
+      }
+    };
+    
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
   if (!editor || !editor.isEditable || !isActive) return null;
 
-  const insertTable = () => { editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(); setIsOpen(false); };
-  const insertBlockquote = () => { editor.chain().focus().toggleBlockquote().run(); setIsOpen(false); };
-  const insertCodeBlock = () => { editor.chain().focus().toggleCodeBlock().run(); setIsOpen(false); };
-  const insertImage = () => { fileInputRef.current?.click(); setIsOpen(false); };
+  const prepareInsertion = () => {
+    try {
+      const { $from } = editor.state.selection;
+      if ($from.parent.textContent.trim() === '/') {
+        editor.commands.command(({ tr }: any) => {
+          tr.delete($from.start(), $from.end());
+          return true;
+        });
+      }
+    } catch (e) {}
+  };
+
+  const insertTable = () => { prepareInsertion(); editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(); setIsOpen(false); };
+  const insertBlockquote = () => { prepareInsertion(); editor.chain().focus().toggleBlockquote().run(); setIsOpen(false); };
+  const insertCodeBlock = () => { prepareInsertion(); editor.chain().focus().toggleCodeBlock().run(); setIsOpen(false); };
+  const insertImage = () => { prepareInsertion(); fileInputRef.current?.click(); setIsOpen(false); };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -93,6 +137,8 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
     if (!aiPrompt.trim()) return;
     setAiError(null);
     setStreaming(true);
+    
+    prepareInsertion();
     
     // Insert empty paragraph
     editor.chain().focus().insertContent('\n').run();
@@ -119,6 +165,7 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
     try {
       const systemPrompt = 'You are a music notation expert. Generate valid ABC notation only. Output ONLY the ABC notation starting with X:1, no explanation, no markdown.';
       const result = await OpenRouterService.generateText(apiKey, selectedModel, aiPrompt, systemPrompt);
+      prepareInsertion();
       editor.chain().focus().insertContent(`<abcjs>${result}</abcjs>`).run();
       setAiPrompt('');
       setPromptMode(null);
@@ -137,6 +184,7 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
     try {
       const systemPrompt = 'Output ONLY a JSON object with: { "type": "bar"|"line"|"pie", "labels": [...], "datasets": [{"label": "...", "data": [...]}] }. No explanation, no markdown.';
       const result = await OpenRouterService.generateText(apiKey, selectedModel, aiPrompt, systemPrompt);
+      prepareInsertion();
       editor.chain().focus().insertContent(`<chart data="${encodeURIComponent(result)}"></chart>`).run();
       setAiPrompt('');
       setPromptMode(null);
@@ -155,6 +203,7 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
     try {
       const systemPrompt = 'You are a web developer. Output ONLY a complete self-contained HTML block with inline CSS. Make it visually attractive with dark background, modern fonts, smooth hover effects. No explanation, no markdown, output only the HTML.';
       const result = await OpenRouterService.generateText(apiKey, selectedModel, aiPrompt, systemPrompt);
+      prepareInsertion();
       editor.chain().focus().insertContent(`<iframe src="${encodeURIComponent(result)}"></iframe>`).run();
       setAiPrompt('');
       setPromptMode(null);
@@ -174,6 +223,7 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
       const systemPrompt = 'Output ONLY a valid Markdown table with appropriate headers and rows based on the user description. Do not include markdown code block backticks, just the raw table syntax. No explanations.';
       const result = await OpenRouterService.generateText(apiKey, selectedModel, aiPrompt, systemPrompt);
       const html = parseMarkdownToTipTap(result);
+      prepareInsertion();
       editor.chain().focus().insertContent(html).run();
       setAiPrompt('');
       setPromptMode(null);
@@ -237,7 +287,7 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
   const leftPos = Math.max(-40, (4 - leftMargin) / zoom);
 
   return (
-    <div className="absolute print:hidden transition-all duration-150" style={{ left: leftPos, top: topPos, zIndex: 9999 }} data-html2canvas-ignore="true">
+    <div ref={menuRef} className="absolute print:hidden transition-all duration-150" style={{ left: leftPos, top: topPos, zIndex: 9999 }} data-html2canvas-ignore="true">
       <div className="relative">
         <button
           onClick={() => { setIsOpen(!isOpen); setPromptMode(null); setAiError(null); setShowToneSelector(false); }}
