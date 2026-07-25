@@ -505,7 +505,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
       {activeModal && (
         <motion.div key="modal-root" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
           <div
-            className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm"
+            className="fixed inset-0 z-50 bg-[var(--ee-surface-0)]/80 backdrop-blur-sm"
             onClick={onClose}
           />
           <motion.div
@@ -519,7 +519,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
             <div className="glass-tier-2 rounded-2xl w-full max-w-4xl overflow-hidden flex flex-col gradient-border-animated pointer-events-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: 'var(--ee-border)', background: 'var(--ee-surface-1)' }}>
-          <div className="flex items-center gap-2 font-semibold text-slate-100">
+          <div className="flex items-center gap-2 font-semibold text-[var(--ee-text-primary)]">
             {activeModal === 'mathjax' && (
               <>
                 <Sigma className="w-5 h-5 text-indigo-400" />
@@ -545,7 +545,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
               </>
             )}
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white">
+          <button onClick={onClose} className="p-1 hover:bg-[var(--ee-surface-2)] rounded text-[var(--ee-text-secondary)] hover:text-white">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -560,7 +560,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                 onClick={() => setOpenrouterTab('generator')}
                 className={`flex items-center gap-1.5 pb-2.5 border-b-2 font-medium transition-all ${openrouterTab === 'generator'
                     ? 'border-emerald-500 text-emerald-400'
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                    : 'border-transparent text-[var(--ee-text-secondary)] hover:text-[var(--ee-text-primary)]'
                   }`}
               >
                 <Wand2 className="w-4 h-4" />
@@ -570,7 +570,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                 onClick={() => setOpenrouterTab('ocr')}
                 className={`flex items-center gap-1.5 pb-2.5 border-b-2 font-medium transition-all ${openrouterTab === 'ocr'
                     ? 'border-emerald-500 text-emerald-400'
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                    : 'border-transparent text-[var(--ee-text-secondary)] hover:text-[var(--ee-text-primary)]'
                   }`}
               >
                 <ImageIcon className="w-4 h-4" />
@@ -578,7 +578,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
               </button>
             </div>
             {/* Active Model Selector */}
-            <div className="mb-1.5 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-[11px] text-emerald-300 relative">
+            <div className="mb-1.5 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--ee-surface-2)] border border-[var(--ee-border)] text-[11px] text-emerald-300 relative">
               <Sparkles className="w-3 h-3 text-emerald-400 shrink-0" />
               <select
                 value={selectedModel}
@@ -598,13 +598,13 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
         )}
 
         {/* Content Body */}
-        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto text-xs text-slate-200">
+        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto text-xs text-[var(--ee-text-primary)]">
           {/* ================= MATHJAX / ABCJS ================= */}
           {activeModal !== 'openrouter' && activeModal !== 'chart' && (
             <>
               <div className="flex flex-col gap-4">
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-400 mb-1.5">
+                  <label className="block text-[11px] font-medium text-[var(--ee-text-secondary)] mb-1.5">
                     {activeModal === 'mathjax' ? 'LaTeX Formula Input' : 'ABC Music Notation Input'}
                   </label>
                   <textarea
@@ -618,14 +618,14 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
 
                 {activeModal === 'mathjax' && (
                   <div>
-                    <span className="text-[11px] font-medium text-slate-400 block mb-2">Symbol Palette</span>
+                    <span className="text-[11px] font-medium text-[var(--ee-text-secondary)] block mb-2">Symbol Palette</span>
                     {/* Category tabs */}
                     <div className="flex gap-1 mb-2 flex-wrap">
                       {SYMBOL_CATEGORIES.map((cat, idx) => (
                         <button
                           key={cat.label}
                           onClick={() => setActiveSymbolTab(idx)}
-                          className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all ${activeSymbolTab === idx ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-200'}`}
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all ${activeSymbolTab === idx ? 'bg-indigo-600 text-white' : 'bg-[var(--ee-surface-2)] text-[var(--ee-text-secondary)] hover:text-[var(--ee-text-primary)]'}`}
                         >
                           {cat.label}
                         </button>
@@ -637,7 +637,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                           key={idx}
                           onClick={() => setLatex((l) => l + ' ' + s.code)}
                           title={s.code}
-                          className="p-1.5 rounded bg-slate-800 hover:bg-indigo-600 text-center font-mono text-[10px] font-semibold text-indigo-300 hover:text-white transition-colors leading-tight"
+                          className="p-1.5 rounded bg-[var(--ee-surface-2)] hover:bg-indigo-600 text-center font-mono text-[10px] font-semibold text-indigo-300 hover:text-white transition-colors leading-tight"
                         >
                           {s.label}
                         </button>
@@ -650,9 +650,9 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                   <div className="flex flex-col gap-3">
                     {/* Instrument selector */}
                     <div>
-                      <span className="text-[11px] font-medium text-slate-400 block mb-1.5">Instrument (MIDI Program)</span>
+                      <span className="text-[11px] font-medium text-[var(--ee-text-secondary)] block mb-1.5">Instrument (MIDI Program)</span>
                       <div className="relative">
-                        <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-2.5 pointer-events-none" />
+                        <ChevronDown className="w-3.5 h-3.5 text-[var(--ee-text-secondary)] absolute right-3 top-2.5 pointer-events-none" />
                         <select
                           value={abcInstrument}
                           onChange={(e) => { setAbcInstrument(Number(e.target.value)); setIsAbcPlaying(false); }}
@@ -701,19 +701,19 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                     </div>
                     {/* Preset tunes */}
                     <div>
-                      <span className="text-[11px] font-medium text-slate-400 block mb-1.5">Preset Tune Templates</span>
+                      <span className="text-[11px] font-medium text-[var(--ee-text-secondary)] block mb-1.5">Preset Tune Templates</span>
                       <div className="flex flex-wrap gap-2">
                         <button
                           onClick={() => setAbcNotation('X:1\nT:C Major Scale\nM:4/4\nL:1/4\nK:C\nC D E F | G A B c |]')}
-                          className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"
+                          className="px-3 py-1.5 rounded bg-[var(--ee-surface-2)] hover:bg-[var(--ee-surface-3)] text-[var(--ee-text-primary)] text-xs"
                         >C Major Scale</button>
                         <button
                           onClick={() => setAbcNotation('X:2\nT:Twinkle Twinkle\nM:4/4\nL:1/4\nK:C\nC C G G | A A G2 | F F E E | D D C2 |]')}
-                          className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"
+                          className="px-3 py-1.5 rounded bg-[var(--ee-surface-2)] hover:bg-[var(--ee-surface-3)] text-[var(--ee-text-primary)] text-xs"
                         >Twinkle Melody</button>
                         <button
                           onClick={() => setAbcNotation('X:3\nT:Raga Yaman\nM:4/4\nL:1/4\nK:G\nN G A B ^C | D E F G |]')}
-                          className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"
+                          className="px-3 py-1.5 rounded bg-[var(--ee-surface-2)] hover:bg-[var(--ee-surface-3)] text-[var(--ee-text-primary)] text-xs"
                         >Raga Yaman</button>
                       </div>
                     </div>
@@ -723,16 +723,16 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
 
               <div className="flex flex-col gap-4">
                 <div>
-                  <span className="text-[11px] font-medium text-slate-400 block mb-1.5">Live Render Preview</span>
+                  <span className="text-[11px] font-medium text-[var(--ee-text-secondary)] block mb-1.5">Live Render Preview</span>
                   <div
                     ref={activeModal === 'mathjax' ? mathPreviewRef : abcPreviewRef}
-                    className="w-full min-h-[160px] p-4 bg-white text-slate-900 rounded-xl border border-slate-700 overflow-auto flex items-center justify-center shadow-inner"
+                    className="w-full min-h-[160px] p-4 bg-white text-slate-900 rounded-xl border border-[var(--ee-border)] overflow-auto flex items-center justify-center shadow-inner"
                   />
                 </div>
 
                 {activeModal === 'abcjs' && (
                   <div>
-                    <span className="text-[11px] font-medium text-slate-400 block mb-1.5">MIDI Audio Synthesizer</span>
+                    <span className="text-[11px] font-medium text-[var(--ee-text-secondary)] block mb-1.5">MIDI Audio Synthesizer</span>
                     <div
                       ref={abcAudioRef}
                       className="w-full p-3 rounded-xl border flex items-center justify-center" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}
@@ -743,7 +743,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                 <div className="mt-auto pt-4 flex gap-3">
                   <button
                     onClick={onClose}
-                    className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 font-medium text-slate-300 transition-colors"
+                    className="flex-1 py-2.5 rounded-xl bg-[var(--ee-surface-2)] hover:bg-[var(--ee-surface-3)] font-medium text-[var(--ee-text-primary)] transition-colors"
                   >
                     Cancel
                   </button>
@@ -765,17 +765,17 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
               <div className="flex flex-col gap-4">
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-[11px] font-medium text-slate-400">AI Prompt & Instructions</label>
+                    <label className="text-[11px] font-medium text-[var(--ee-text-secondary)]">AI Prompt & Instructions</label>
                     <div className="flex gap-1.5">
                       <button
                         onClick={() => setAiPrompt('Summarize our document into 5 concise bullet points.')}
-                        className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] text-emerald-300"
+                        className="px-2 py-0.5 rounded bg-[var(--ee-surface-2)] hover:bg-[var(--ee-surface-3)] text-[10px] text-emerald-300"
                       >
                         Summarize
                       </button>
                       <button
                         onClick={() => setAiPrompt('Rewrite the content with a formal, authoritative executive tone.')}
-                        className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] text-emerald-300"
+                        className="px-2 py-0.5 rounded bg-[var(--ee-surface-2)] hover:bg-[var(--ee-surface-3)] text-[10px] text-emerald-300"
                       >
                         Polish Grammar
                       </button>
@@ -819,11 +819,11 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
               <div className="flex flex-col gap-4">
                 <div className="flex-1 flex flex-col">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[11px] font-medium text-slate-400">AI Response Preview</span>
+                    <span className="text-[11px] font-medium text-[var(--ee-text-secondary)]">AI Response Preview</span>
                     {aiOutput && (
                       <button
                         onClick={() => navigator.clipboard.writeText(aiOutput)}
-                        className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-white"
+                        className="flex items-center gap-1 text-[11px] text-[var(--ee-text-secondary)] hover:text-white"
                       >
                         <Copy className="w-3 h-3" />
                         <span>Copy</span>
@@ -831,14 +831,14 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                     )}
                   </div>
                   <div className="flex-1 min-h-[180px] p-4 border rounded-xl overflow-y-auto whitespace-pre-wrap leading-relaxed" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}>
-                    {aiOutput || <span className="text-slate-500 italic">Generated AI content will appear here...</span>}
+                    {aiOutput || <span className="text-[var(--ee-text-faint)] italic">Generated AI content will appear here...</span>}
                   </div>
                 </div>
 
                 <div className="pt-2 flex gap-3">
                   <button
                     onClick={onClose}
-                    className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 font-medium text-slate-300"
+                    className="px-5 py-2.5 rounded-xl bg-[var(--ee-surface-2)] hover:bg-[var(--ee-surface-3)] font-medium text-[var(--ee-text-primary)]"
                   >
                     Close
                   </button>
@@ -860,7 +860,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
             <>
               <div className="flex flex-col gap-4">
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-400 mb-1.5">Document or Image Source</label>
+                  <label className="block text-[11px] font-medium text-[var(--ee-text-secondary)] mb-1.5">Document or Image Source</label>
                   <input
                     type="file"
                     ref={ocrFileInputRef}
@@ -873,7 +873,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                   <div className="grid grid-cols-3 gap-2">
                     <button
                       onClick={() => ocrFileInputRef.current?.click()}
-                      className="py-5 px-3 rounded-xl border-2 border-dashed hover:border-emerald-500/60 flex flex-col items-center justify-center gap-1.5 text-slate-400 hover:text-emerald-300 transition-colors" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}
+                      className="py-5 px-3 rounded-xl border-2 border-dashed hover:border-emerald-500/60 flex flex-col items-center justify-center gap-1.5 text-[var(--ee-text-secondary)] hover:text-emerald-300 transition-colors" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}
                     >
                       <UploadCloud className="w-5 h-5 text-emerald-400" />
                       <span className="text-center text-[11px] font-medium">Image / PDF</span>
@@ -881,7 +881,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
 
                     <button
                       onClick={() => { ocrFileInputRef.current!.accept = 'application/pdf,.pdf'; ocrFileInputRef.current?.click(); }}
-                      className="py-5 px-3 rounded-xl border-2 border-dashed hover:border-red-500/60 flex flex-col items-center justify-center gap-1.5 text-slate-400 hover:text-red-300 transition-colors" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}
+                      className="py-5 px-3 rounded-xl border-2 border-dashed hover:border-red-500/60 flex flex-col items-center justify-center gap-1.5 text-[var(--ee-text-secondary)] hover:text-red-300 transition-colors" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}
                     >
                       <FileType2 className="w-5 h-5 text-red-400" />
                       <span className="text-center text-[11px] font-medium">PDF (Multi-page)</span>
@@ -889,7 +889,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
 
                     <button
                       onClick={handleGrabCanvasImage}
-                      className="py-5 px-3 rounded-xl border-2 border-dashed hover:border-cyan-500/60 flex flex-col items-center justify-center gap-1.5 text-slate-400 hover:text-cyan-300 transition-colors" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}
+                      className="py-5 px-3 rounded-xl border-2 border-dashed hover:border-cyan-500/60 flex flex-col items-center justify-center gap-1.5 text-[var(--ee-text-secondary)] hover:text-cyan-300 transition-colors" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}
                     >
                       <ImageIcon className="w-5 h-5 text-cyan-400" />
                       <span className="text-center text-[11px] font-medium">Canvas Object</span>
@@ -908,17 +908,17 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                         <button
                           onClick={() => setPdfPreviewIndex((i) => Math.max(0, i - 1))}
                           disabled={pdfPreviewIndex === 0}
-                          className="p-0.5 rounded hover:bg-slate-800 disabled:opacity-30 text-slate-400"
+                          className="p-0.5 rounded hover:bg-[var(--ee-surface-2)] disabled:opacity-30 text-[var(--ee-text-secondary)]"
                         >
                           <ChevronLeft className="w-4 h-4" />
                         </button>
-                        <span className="text-[11px] text-slate-400 w-14 text-center">
+                        <span className="text-[11px] text-[var(--ee-text-secondary)] w-14 text-center">
                           {pdfPreviewIndex + 1} / {pdfPages.length}
                         </span>
                         <button
                           onClick={() => setPdfPreviewIndex((i) => Math.min(pdfPages.length - 1, i + 1))}
                           disabled={pdfPreviewIndex === pdfPages.length - 1}
-                          className="p-0.5 rounded hover:bg-slate-800 disabled:opacity-30 text-slate-400"
+                          className="p-0.5 rounded hover:bg-[var(--ee-surface-2)] disabled:opacity-30 text-[var(--ee-text-secondary)]"
                         >
                           <ChevronRight className="w-4 h-4" />
                         </button>
@@ -963,7 +963,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                 )}
 
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-400 mb-1.5">OCR Extraction Instruction</label>
+                  <label className="block text-[11px] font-medium text-[var(--ee-text-secondary)] mb-1.5">OCR Extraction Instruction</label>
                   <textarea
                     value={ocrPrompt}
                     onChange={(e) => setOcrPrompt(e.target.value)}
@@ -1007,11 +1007,11 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
               <div className="flex flex-col gap-4">
                 <div className="flex-1 flex flex-col">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[11px] font-medium text-slate-400">Extracted OCR Text / Markdown</span>
+                    <span className="text-[11px] font-medium text-[var(--ee-text-secondary)]">Extracted OCR Text / Markdown</span>
                     {ocrOutput && (
                       <button
                         onClick={() => navigator.clipboard.writeText(ocrOutput)}
-                        className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-white"
+                        className="flex items-center gap-1 text-[11px] text-[var(--ee-text-secondary)] hover:text-white"
                       >
                         <Copy className="w-3 h-3" />
                         <span>Copy</span>
@@ -1019,14 +1019,14 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                     )}
                   </div>
                   <div className="flex-1 min-h-[180px] p-4 border rounded-xl overflow-y-auto whitespace-pre-wrap font-mono text-xs leading-relaxed" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}>
-                    {ocrOutput || <span className="text-slate-500 italic">Extracted document text, tables, and OCR output will appear here...</span>}
+                    {ocrOutput || <span className="text-[var(--ee-text-faint)] italic">Extracted document text, tables, and OCR output will appear here...</span>}
                   </div>
                 </div>
 
                 <div className="pt-2 flex gap-3">
                   <button
                     onClick={onClose}
-                    className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 font-medium text-slate-300"
+                    className="px-5 py-2.5 rounded-xl bg-[var(--ee-surface-2)] hover:bg-[var(--ee-surface-3)] font-medium text-[var(--ee-text-primary)]"
                   >
                     Close
                   </button>
@@ -1051,14 +1051,14 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                 <div className="flex p-1 border rounded-xl gap-1" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}>
                   <button
                     onClick={() => setChartMode('manual')}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${chartMode === 'manual' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${chartMode === 'manual' ? 'bg-amber-600 text-white shadow' : 'text-[var(--ee-text-secondary)] hover:text-white'
                       }`}
                   >
                     🛠️ Manual Chart Builder
                   </button>
                   <button
                     onClick={() => setChartMode('ai')}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${chartMode === 'ai' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${chartMode === 'ai' ? 'bg-amber-600 text-white shadow' : 'text-[var(--ee-text-secondary)] hover:text-white'
                       }`}
                   >
                     ⚡ AI Chart Generator
@@ -1068,13 +1068,13 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                 {chartMode === 'manual' ? (
                   <div className="space-y-3.5 animate-in fade-in duration-150">
                     <div>
-                      <label className="block text-[11px] font-medium text-slate-400 mb-1">Chart Type</label>
+                      <label className="block text-[11px] font-medium text-[var(--ee-text-secondary)] mb-1">Chart Type</label>
                       <div className="grid grid-cols-4 gap-1.5 p-1.5 border rounded-xl" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}>
                         {(['bar', 'line', 'pie', 'doughnut'] as const).map((t) => (
                           <button
                             key={t}
                             onClick={() => setChartType(t)}
-                            className={`py-1.5 rounded-lg text-[11px] font-medium capitalize transition-all flex items-center justify-center gap-1.5 ${chartType === t ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                            className={`py-1.5 rounded-lg text-[11px] font-medium capitalize transition-all flex items-center justify-center gap-1.5 ${chartType === t ? 'bg-amber-600 text-white shadow' : 'text-[var(--ee-text-secondary)] hover:text-white hover:bg-[var(--ee-surface-1)]'
                               }`}
                           >
                             <span>{t}</span>
@@ -1084,7 +1084,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-medium text-slate-400 mb-1">Chart Title</label>
+                      <label className="block text-[11px] font-medium text-[var(--ee-text-secondary)] mb-1">Chart Title</label>
                       <input
                         type="text"
                         value={chartTitle}
@@ -1095,7 +1095,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-medium text-slate-400 mb-1">Data Labels (comma-separated)</label>
+                      <label className="block text-[11px] font-medium text-[var(--ee-text-secondary)] mb-1">Data Labels (comma-separated)</label>
                       <input
                         type="text"
                         value={chartLabels}
@@ -1106,7 +1106,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-medium text-slate-400 mb-1">Data Values (comma-separated numbers)</label>
+                      <label className="block text-[11px] font-medium text-[var(--ee-text-secondary)] mb-1">Data Values (comma-separated numbers)</label>
                       <input
                         type="text"
                         value={chartDataValues}
@@ -1119,7 +1119,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                 ) : (
                   <div className="space-y-3.5 animate-in fade-in duration-150">
                     <div>
-                      <label className="block text-[11px] font-medium text-slate-400 mb-1.5">Describe Your Chart</label>
+                      <label className="block text-[11px] font-medium text-[var(--ee-text-secondary)] mb-1.5">Describe Your Chart</label>
                       <textarea
                         value={chartPrompt}
                         onChange={(e) => setChartPrompt(e.target.value)}
@@ -1129,7 +1129,7 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                       {['Bar chart for student scores', 'Line chart showing monthly growth', 'Pie chart for budget distribution', 'Compare 2024 vs 2025 revenue'].map((p) => (
-                        <button key={p} onClick={() => setChartPrompt(p)} className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-amber-700 text-[10px] text-amber-300 transition-all">{p}</button>
+                        <button key={p} onClick={() => setChartPrompt(p)} className="px-2.5 py-1 rounded-lg bg-[var(--ee-surface-2)] hover:bg-amber-700 text-[10px] text-amber-300 transition-all">{p}</button>
                       ))}
                     </div>
                     {chartError && <div className="p-3 rounded-lg bg-red-950/50 border border-red-800 text-red-300 text-xs">{chartError}</div>}
@@ -1147,17 +1147,17 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
               <div className="flex flex-col gap-4">
                 <div className="flex-1 flex flex-col">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[11px] font-medium text-slate-400">Chart Preview & Configuration</span>
-                    {chartOutput && chartMode === 'ai' && <button onClick={() => navigator.clipboard.writeText(chartOutput)} className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-white"><Copy className="w-3 h-3" /><span>Copy JSON</span></button>}
+                    <span className="text-[11px] font-medium text-[var(--ee-text-secondary)]">Chart Preview & Configuration</span>
+                    {chartOutput && chartMode === 'ai' && <button onClick={() => navigator.clipboard.writeText(chartOutput)} className="flex items-center gap-1 text-[11px] text-[var(--ee-text-secondary)] hover:text-white"><Copy className="w-3 h-3" /><span>Copy JSON</span></button>}
                   </div>
                   <div className="flex-1 min-h-[180px] p-4 border rounded-xl overflow-y-auto font-mono text-xs leading-relaxed flex flex-col justify-center items-center gap-2" style={{ background: 'var(--ee-surface-0)', color: 'var(--ee-text-primary)', borderColor: 'var(--ee-border)' }}>
                     {chartMode === 'manual' ? (
                       <div className="text-center space-y-1">
                         <div className="text-base font-sans font-bold text-amber-400">📊 {chartTitle || 'Untitled Chart'}</div>
-                        <div className="text-[11px] font-sans text-slate-400 uppercase tracking-wide">Type: {chartType} Chart</div>
-                        <div className="text-xs font-mono text-slate-300 pt-2 border-t border-slate-800">
-                          <div><span className="text-slate-500">Labels:</span> [{chartLabels}]</div>
-                          <div><span className="text-slate-500">Values:</span> [{chartDataValues}]</div>
+                        <div className="text-[11px] font-sans text-[var(--ee-text-secondary)] uppercase tracking-wide">Type: {chartType} Chart</div>
+                        <div className="text-xs font-mono text-[var(--ee-text-primary)] pt-2 border-t border-[var(--ee-border)]">
+                          <div><span className="text-[var(--ee-text-faint)]">Labels:</span> [{chartLabels}]</div>
+                          <div><span className="text-[var(--ee-text-faint)]">Values:</span> [{chartDataValues}]</div>
                         </div>
                         <div className="text-[11px] font-sans text-emerald-400 pt-2">✨ Ready to insert as interactive TipTap chart node</div>
                       </div>
@@ -1165,13 +1165,13 @@ export const PluginModals: React.FC<PluginModalsProps> = ({
                       chartOutput ? (
                         <div className="whitespace-pre-wrap text-left w-full">{chartOutput}</div>
                       ) : (
-                        <span className="text-slate-500 italic text-center">AI chart JSON will appear here. Or switch to Manual Chart Builder tab to create customized charts directly!</span>
+                        <span className="text-[var(--ee-text-faint)] italic text-center">AI chart JSON will appear here. Or switch to Manual Chart Builder tab to create customized charts directly!</span>
                       )
                     )}
                   </div>
                 </div>
                 <div className="pt-2 flex gap-3">
-                  <button onClick={onClose} className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 font-medium text-slate-300">Close</button>
+                  <button onClick={onClose} className="px-5 py-2.5 rounded-xl bg-[var(--ee-surface-2)] hover:bg-[var(--ee-surface-3)] font-medium text-[var(--ee-text-primary)]">Close</button>
                   <button
                     onClick={handleInsertChart}
                     disabled={chartMode === 'ai' && !chartOutput}
