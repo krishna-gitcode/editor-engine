@@ -520,6 +520,7 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor: defaultEdito
             </div>
           )}
           </motion.div>
+          );
         })()}
       </AnimatePresence>
     </>
