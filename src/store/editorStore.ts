@@ -20,7 +20,8 @@ export type SidebarTab =
   | 'text' 
   | 'layers' 
   | 'search' 
-  | 'templates';
+  | 'templates'
+  | 'outline';
 
 export type RibbonTab = 'home' | 'insert' | 'layout' | 'table' | 'plugins';
 
