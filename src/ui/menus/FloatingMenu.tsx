@@ -3,7 +3,7 @@ import { BubbleMenu } from '@tiptap/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCanvasStore } from '../../store/canvasStore';
 import { OpenRouterService } from '../../services/OpenRouterService';
-import { parseMarkdownToTipTap } from '../../services/markdownToHtml';
+import { parseMarkdownToTipTap, getActiveEditorFormat, applyEditorFormatToNodes } from '../../services/markdownToHtml';
 import {
   Bold, Italic, Underline, Trash2, Copy, Layers, Sparkles, Wand2,
   Loader2, Check, X as XIcon, SpellCheck, Pencil, Settings,
@@ -68,11 +68,15 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor: defaultEdito
    */
   const insertMarkdownContent = (markdownText: string, from?: number, to?: number) => {
     if (!editor) return;
+    // Capture the editor's current formatting context (font, size, lineHeight, etc.)
+    const format = getActiveEditorFormat(editor);
     let nodes: object[] = parseMarkdownToTipTap(markdownText);
     if (nodes.length === 0) {
       // Wrap as plain paragraph so markdown syntax is never inserted verbatim
       nodes = [{ type: 'paragraph', content: [{ type: 'text', text: markdownText.trim() }] }];
     }
+    // Apply the active editor format to every generated node
+    nodes = applyEditorFormatToNodes(nodes, format);
     if (from !== undefined && to !== undefined) {
       editor.chain().focus().deleteRange({ from, to }).insertContentAt(from, nodes).run();
     } else {
@@ -157,14 +161,15 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ editor: defaultEdito
     setAiStatusMsg(isSelectionMode ? 'Checking selected text...' : 'Checking full document...');
     try {
       const corrected = await OpenRouterService.checkSpellingGrammar(openRouterApiKey, DEFAULT_MODEL, textToCheck);
-      const nodes = parseMarkdownToTipTap(corrected);
 
       if (isSelectionMode) {
         insertMarkdownContent(corrected, from, to);
       } else {
-        const nodes = parseMarkdownToTipTap(corrected);
+        const format = getActiveEditorFormat(editor);
+        let nodes = parseMarkdownToTipTap(corrected);
         const content = nodes.length > 0 ? nodes : [{ type: 'paragraph', content: [{ type: 'text', text: corrected.trim() }] }];
-        editor.chain().focus().setContent(content as any).run();
+        const formatted = applyEditorFormatToNodes(content, format);
+        editor.chain().focus().setContent(formatted as any).run();
       }
       closeAiPanel();
     } catch (err: any) {

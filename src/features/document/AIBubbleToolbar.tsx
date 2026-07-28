@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, AlignLeft, Briefcase, MessageCircle, CheckCircle, Maximize2, Loader2 } from 'lucide-react';
 import { useAIStore } from '../../store/aiStore';
 import { OpenRouterService } from '../../services/OpenRouterService';
+import { parseMarkdownToTipTap, getActiveEditorFormat, applyEditorFormatToNodes } from '../../services/markdownToHtml';
 
 interface AIBubbleToolbarProps {
   editor: any;
@@ -37,8 +38,18 @@ export const AIBubbleToolbar: React.FC<AIBubbleToolbarProps> = ({ editor }) => {
     setErrorMsg(null);
     try {
       const text = editor.state.doc.textBetween(from, to);
+      // Capture editor format BEFORE the AI call so we can apply it to the result
+      const format = getActiveEditorFormat(editor);
       const result = await handler(text);
-      editor.chain().focus().deleteSelection().insertContent(result).run();
+      // Parse markdown into TipTap nodes and apply editor's active formatting
+      let nodes: object[] = parseMarkdownToTipTap(result);
+      if (nodes.length === 0) {
+        nodes = [{ type: 'paragraph', content: [{ type: 'text', text: result.trim() }] }];
+      }
+      nodes = applyEditorFormatToNodes(nodes, format);
+      editor.chain().focus().deleteSelection().insertContent(nodes).run();
+      // Trigger re-pagination for large insertions
+      setTimeout(() => (window as any).__repaginate?.(), 200);
     } catch (err: any) {
       setErrorMsg(err.message || 'Action failed');
       setTimeout(() => setErrorMsg(null), 3000);

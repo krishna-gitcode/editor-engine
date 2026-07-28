@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Table, Image, Globe, Code, Quote, Sparkles, Loader2, Check, X, Wand2, AlignLeft, Music, BarChart2 } from 'lucide-react';
 import { OpenRouterService } from '../../services/OpenRouterService';
-import { parseMarkdownToTipTap } from '../../services/markdownToHtml';
+import { parseMarkdownToTipTap, getActiveEditorFormat, applyEditorFormatToNodes } from '../../services/markdownToHtml';
 import { useAIStore } from '../../store/aiStore';
 import { useDocumentStore } from '../../store/documentStore';
 import { useWorkspaceStore } from '../../store/workspaceStore';
@@ -140,13 +140,20 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
     
     prepareInsertion();
     
-    // Insert empty paragraph
-    editor.chain().focus().insertContent('\n').run();
+    // Capture the editor's current formatting BEFORE AI call
+    const format = getActiveEditorFormat(editor);
     
     try {
-      for await (const chunk of OpenRouterService.streamText(apiKey, selectedModel, aiPrompt)) {
-        editor.commands.insertContent(chunk);
+      // Use non-streaming generation so we can parse the full markdown response
+      const result = await OpenRouterService.generateText(apiKey, selectedModel, aiPrompt);
+      let nodes: object[] = parseMarkdownToTipTap(result);
+      if (nodes.length === 0) {
+        nodes = [{ type: 'paragraph', content: [{ type: 'text', text: result.trim() }] }];
       }
+      nodes = applyEditorFormatToNodes(nodes, format);
+      editor.chain().focus().insertContent(nodes).run();
+      // Trigger re-pagination for large insertions
+      setTimeout(() => (window as any).__repaginate?.(), 200);
     } catch (err: any) {
       setAiError(err.message || 'AI generation failed.');
     } finally {
@@ -257,9 +264,17 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
       return;
     }
     setShowToneSelector(false);
+    // Capture the editor's current formatting context
+    const format = getActiveEditorFormat(editor);
     try {
       const result = await OpenRouterService.rewriteWithTone(apiKey, selectedModel, text, tone);
-      editor.chain().focus().deleteSelection().insertContent(result).run();
+      let nodes: object[] = parseMarkdownToTipTap(result);
+      if (nodes.length === 0) {
+        nodes = [{ type: 'paragraph', content: [{ type: 'text', text: result.trim() }] }];
+      }
+      nodes = applyEditorFormatToNodes(nodes, format);
+      editor.chain().focus().deleteSelection().insertContent(nodes).run();
+      setTimeout(() => (window as any).__repaginate?.(), 200);
       setIsOpen(false);
     } catch (e) {
       setAiError("Rewrite failed");
@@ -274,9 +289,15 @@ export const PlusMenu: React.FC<PlusMenuProps> = ({ editor, onOpenModal }) => {
       setTimeout(() => setAiError(null), 3000);
       return;
     }
+    // Capture the editor's current formatting context
+    const format = getActiveEditorFormat(editor);
     try {
       const summary = await OpenRouterService.summarizeText(apiKey, selectedModel, text);
-      editor.chain().focus().insertContent({ type: 'blockquote', content: [{ type: 'paragraph', content: [{ type: 'text', text: summary }] }] }).run();
+      let summaryNode: any = { type: 'blockquote', content: [{ type: 'paragraph', content: [{ type: 'text', text: summary }] }] };
+      // Apply format to the inner content
+      const formatted = applyEditorFormatToNodes([summaryNode], format);
+      editor.chain().focus().insertContent(formatted).run();
+      setTimeout(() => (window as any).__repaginate?.(), 200);
       setIsOpen(false);
     } catch (e) {
       setAiError("Summarize failed");

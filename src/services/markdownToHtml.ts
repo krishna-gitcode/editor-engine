@@ -375,6 +375,105 @@ export function parseMarkdownToTipTap(markdown: string): object[] {
   return nodes;
 }
 
+// ─── Editor format preservation ──────────────────────────────────────────────
+
+/**
+ * Read the editor's active text-style marks (fontFamily, fontSize) and
+ * paragraph-level attributes (lineHeight, textAlign) from the current
+ * selection so we can propagate them to AI-generated nodes.
+ */
+export function getActiveEditorFormat(editor: any): {
+  marks: { type: string; attrs?: Record<string, string> }[];
+  blockAttrs: Record<string, string>;
+} {
+  if (!editor) return { marks: [], blockAttrs: {} };
+
+  const marks: { type: string; attrs?: Record<string, string> }[] = [];
+  const blockAttrs: Record<string, string> = {};
+
+  try {
+    // ── Inline marks (textStyle carries fontFamily / fontSize) ──────────
+    const storedMarks = editor.state.storedMarks || editor.state.selection.$from.marks();
+    const textStyleMark = storedMarks?.find((m: any) => m.type.name === 'textStyle');
+    if (textStyleMark) {
+      const attrs: Record<string, string> = {};
+      if (textStyleMark.attrs.fontFamily) attrs.fontFamily = textStyleMark.attrs.fontFamily;
+      if (textStyleMark.attrs.fontSize) attrs.fontSize = textStyleMark.attrs.fontSize;
+      if (Object.keys(attrs).length > 0) {
+        marks.push({ type: 'textStyle', attrs });
+      }
+    }
+
+    // ── Block-level attributes (lineHeight, textAlign) ──────────────────
+    const { $from } = editor.state.selection;
+    const parentNode = $from.parent;
+    if (parentNode) {
+      if (parentNode.attrs.lineHeight) blockAttrs.lineHeight = parentNode.attrs.lineHeight;
+      if (parentNode.attrs.textAlign && parentNode.attrs.textAlign !== 'left') {
+        blockAttrs.textAlign = parentNode.attrs.textAlign;
+      }
+    }
+  } catch (_e) {
+    // Graceful fallback — return empty format
+  }
+
+  return { marks, blockAttrs };
+}
+
+/**
+ * Apply the editor's active formatting to an array of TipTap JSON nodes
+ * produced by `parseMarkdownToTipTap()`.
+ *
+ * - Inline text nodes receive the textStyle marks (fontFamily, fontSize).
+ * - Block-level nodes (paragraph, heading, listItem children) receive
+ *   lineHeight and textAlign attributes.
+ */
+export function applyEditorFormatToNodes(
+  nodes: object[],
+  format: ReturnType<typeof getActiveEditorFormat>,
+): object[] {
+  if (format.marks.length === 0 && Object.keys(format.blockAttrs).length === 0) {
+    return nodes; // nothing to apply
+  }
+
+  return nodes.map((node) => applyFormatRecursive(node as any, format));
+}
+
+function applyFormatRecursive(
+  node: any,
+  format: ReturnType<typeof getActiveEditorFormat>,
+): any {
+  // ─── Text nodes: merge textStyle marks ───────────────────────────────
+  if (node.type === 'text') {
+    if (format.marks.length === 0) return node;
+    const existingMarks: any[] = node.marks || [];
+    // Don't overwrite if textStyle already present (e.g. bold text with explicit font)
+    const hasTextStyle = existingMarks.some((m: any) => m.type === 'textStyle');
+    if (hasTextStyle) return node;
+    return { ...node, marks: [...existingMarks, ...format.marks] };
+  }
+
+  // ─── Block nodes: apply lineHeight/textAlign attrs ───────────────────
+  const blockTypes = ['paragraph', 'heading'];
+  let updated = node;
+  if (blockTypes.includes(node.type) && Object.keys(format.blockAttrs).length > 0) {
+    updated = {
+      ...node,
+      attrs: { ...(node.attrs || {}), ...format.blockAttrs },
+    };
+  }
+
+  // ─── Recurse into children ───────────────────────────────────────────
+  if (updated.content && Array.isArray(updated.content)) {
+    updated = {
+      ...updated,
+      content: updated.content.map((child: any) => applyFormatRecursive(child, format)),
+    };
+  }
+
+  return updated;
+}
+
 // ─── OCR segment parser (kept for OCR tab) ───────────────────────────────────
 
 export interface OcrSegment {

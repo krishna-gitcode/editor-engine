@@ -150,13 +150,46 @@ export class OpenRouterService {
   private static API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
   /**
+   * Sanitize AI response by removing common model artifacts:
+   * - DeepSeek R1 `<think>...</think>` reasoning blocks
+   * - Safety classification lines (e.g. "User Safety: safe")
+   * - Model preamble/meta-commentary before actual content
+   * - Trailing disclaimers
+   */
+  private static sanitizeResponse(raw: string): string {
+    let cleaned = raw;
+
+    // Strip <think>...</think> blocks (DeepSeek R1 chain-of-thought)
+    cleaned = cleaned.replace(/<think>[\s\S]*?<\/think>/gi, '');
+
+    // Strip safety classification lines at the start
+    // Matches patterns like: "User Safety: safe", "Safety: ok", "Content Safety: appropriate"
+    cleaned = cleaned.replace(/^(?:\s*(?:User\s+)?(?:Content\s+)?Safety\s*:\s*\w+\s*\n?)+/i, '');
+
+    // Strip common model preamble lines that aren't actual content
+    const preamblePatterns = [
+      /^(?:Sure[,!.]?\s*(?:here(?:'s| is))?|(?:Of course|Absolutely|Certainly)[,!.]?\s*(?:here(?:'s| is))?|Here(?:'s| is)\s+(?:the|a|an|your))\s*/i,
+      /^(?:I'd be happy to help[.!]?\s*)/i,
+      /^(?:Here you go[.:!]?\s*\n?)/i,
+    ];
+    for (const pat of preamblePatterns) {
+      cleaned = cleaned.replace(pat, '');
+    }
+
+    // Strip trailing disclaimer lines
+    cleaned = cleaned.replace(/\n+---\n*(?:Note:|Disclaimer:|Please note:)[\s\S]*$/i, '');
+
+    return cleaned.trim();
+  }
+
+  /**
    * Generate text or markdown content using OpenRouter API
    */
   public static async generateText(
     apiKey: string,
     model: string,
     prompt: string,
-    systemPrompt = 'You are a helpful, professional AI authoring assistant for GridLeaf Editor. Output clean, well-formatted text or markdown directly usable inside a document. IMPORTANT: For tables, output markdown tables. For mathematical formulas, wrap them exactly in <mathjax>...</mathjax> tags. For ABC sheet music notation, wrap it exactly in <abcjs>...</abcjs> tags. For code snippets, use fenced code blocks (```).'
+    systemPrompt = 'You are a helpful, professional AI authoring assistant for GridLeaf Editor. Output clean, well-formatted text or markdown directly usable inside a document. CRITICAL RULES: 1) Do NOT output any preamble, meta-commentary, safety classifications, or model thinking. 2) Do NOT write lines like "User Safety: safe" or "Here is the text:" — start directly with the requested content. 3) For tables, output markdown tables. 4) For mathematical formulas, wrap them exactly in <mathjax>...</mathjax> tags. 5) For ABC sheet music notation, wrap it exactly in <abcjs>...</abcjs> tags. 6) For code snippets, use fenced code blocks (```).'
   ): Promise<string> {
     const activeKey = (apiKey || import.meta.env.VITE_OPENROUTER_API_KEY || '').trim();
     if (!activeKey) {
@@ -195,7 +228,12 @@ export class OpenRouterService {
       if (!content) {
         throw new Error('Received empty response from AI model.');
       }
-      return content;
+      // Sanitize model artifacts before returning
+      const sanitized = this.sanitizeResponse(content);
+      if (!sanitized) {
+        throw new Error('AI model returned only metadata with no usable content. Try a different model.');
+      }
+      return sanitized;
     } catch (error: any) {
       console.error('OpenRouter generateText error:', error);
       throw new Error(error.message || 'Failed to generate text from OpenRouter API.');
@@ -216,7 +254,7 @@ export class OpenRouterService {
       apiKey,
       model,
       prompt,
-      'You are a professional writing assistant. Improve the given text and return ONLY the rewritten version, with no extra commentary or preamble.'
+      'You are a professional writing assistant. Improve the given text and return ONLY the rewritten version. Do NOT include safety classifications, preamble, thinking tags, or any meta-commentary — output only the improved text.'
     );
   }
 
@@ -233,7 +271,7 @@ export class OpenRouterService {
       apiKey,
       model,
       prompt,
-      'You are a professional proofreader. Fix spelling and grammar errors only. Return ONLY the corrected text without any explanations.'
+      'You are a professional proofreader. Fix spelling and grammar errors only. Return ONLY the corrected text. Do NOT include safety classifications, preamble, thinking tags, or any meta-commentary.'
     );
   }
 
@@ -333,7 +371,7 @@ export class OpenRouterService {
       apiKey,
       model,
       `Summarize the following text:\n\n${text}`,
-      'You are a concise summarizer. Return ONLY a 2-3 sentence summary. No preamble.'
+      'You are a concise summarizer. Return ONLY a 2-3 sentence summary. No preamble, no safety classifications, no thinking tags.'
     );
   }
 
@@ -350,7 +388,7 @@ export class OpenRouterService {
       apiKey,
       model,
       `Expand this text to approximately ${targetLength || '2x'} its length:\n\n${text}`,
-      'You are a professional writer. Expand the text while preserving meaning and tone. Return ONLY the expanded version.'
+      'You are a professional writer. Expand the text while preserving meaning and tone. Return ONLY the expanded version. No preamble, no safety classifications, no thinking tags.'
     );
   }
 
@@ -367,7 +405,7 @@ export class OpenRouterService {
       apiKey,
       model,
       `Rewrite in ${tone} tone:\n\n${text}`,
-      `You are a professional rewriter. Rewrite the text in a ${tone} tone. Return ONLY the rewritten text.`
+      `You are a professional rewriter. Rewrite the text in a ${tone} tone. Return ONLY the rewritten text. No preamble, no safety classifications, no thinking tags.`
     );
   }
 
@@ -428,7 +466,7 @@ export class OpenRouterService {
       if (!content) {
         throw new Error('Received empty OCR response from Vision AI model.');
       }
-      return content;
+      return this.sanitizeResponse(content);
     } catch (error: any) {
       console.error('OpenRouter performOCR error:', error);
       throw new Error(error.message || 'Failed to perform OCR extraction using OpenRouter Vision model.');

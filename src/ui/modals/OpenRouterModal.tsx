@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { OpenRouterService, FREE_OPENROUTER_MODELS } from '../../services/OpenRouterService';
 import { PdfService, PdfPageImage } from '../../services/PdfService';
-import { parseMarkdownToTipTap, parseOcrOutput } from '../../services/markdownToHtml';
+import { parseMarkdownToTipTap, parseOcrOutput, getActiveEditorFormat, applyEditorFormatToNodes } from '../../services/markdownToHtml';
 import { Sparkles, Wand2, Image as ImageIcon, Copy, Loader2, UploadCloud, FileType2, ChevronLeft, ChevronRight, Check, X, ChevronDown } from 'lucide-react';
 
 interface OpenRouterModalProps {
@@ -141,9 +141,15 @@ export const OpenRouterModal: React.FC<OpenRouterModalProps> = ({ onClose, engin
       console.warn('[GridLeaf Editor] No active TipTap editor found. Cannot insert AI content.');
       return false;
     }
-    const nodes = parseMarkdownToTipTap(markdown);
+    // Capture the editor's current formatting context
+    const format = getActiveEditorFormat(activeEditor);
+    let nodes = parseMarkdownToTipTap(markdown);
     if (nodes.length === 0) return false;
+    // Apply the active editor format to every generated node
+    nodes = applyEditorFormatToNodes(nodes, format);
     activeEditor.chain().focus().insertContent(nodes).run();
+    // Trigger re-pagination for large insertions
+    setTimeout(() => (window as any).__repaginate?.(), 200);
     return true;
   };
 
@@ -158,6 +164,8 @@ export const OpenRouterModal: React.FC<OpenRouterModalProps> = ({ onClose, engin
     const activeEditor = editor || (window as any).__activeEditor;
     const segments = parseOcrOutput(text);
     if (activeEditor) {
+      // Capture the editor's current formatting context
+      const format = getActiveEditorFormat(activeEditor);
       for (const seg of segments) {
         if (seg.type === 'mathjax') {
           if (activeEditor.commands.insertMathJax) {
@@ -172,9 +180,13 @@ export const OpenRouterModal: React.FC<OpenRouterModalProps> = ({ onClose, engin
             activeEditor.chain().focus().insertContent({ type: 'abcJs', attrs: { abc: seg.content } }).run();
           }
         } else if (seg.nodes && seg.nodes.length > 0) {
-          activeEditor.chain().focus().insertContent(seg.nodes).run();
+          // Apply editor format to parsed tiptap nodes
+          const formatted = applyEditorFormatToNodes(seg.nodes, format);
+          activeEditor.chain().focus().insertContent(formatted).run();
         }
       }
+      // Trigger re-pagination
+      setTimeout(() => (window as any).__repaginate?.(), 200);
     }
     onClose();
   };
